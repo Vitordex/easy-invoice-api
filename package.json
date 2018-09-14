@@ -1,0 +1,18 @@
+{
+  "name": "orcamento-facil",
+  "version": "0.0.1",
+  "description": "Backend server for the orcamento facil app",
+  "main": "server.js",
+  "repository": "",
+  "author": "Rodrigo Novais <roo.novais@gmail.com>",
+  "dependencies": {
+    "bcrypt": "^3.0.0",
+    "body-parser": "^1.18.3",
+    "express": "^4.16.3",
+    "jsonwebtoken": "^8.3.0",
+    "mongoose": "^5.2.3",
+    "mustache-express": "^1.2.7",
+    "nodemailer": "^4.6.8",
+    "npm": "^6.4.1"
+  }
+}
