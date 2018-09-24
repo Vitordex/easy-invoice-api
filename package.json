@@ -1,18 +1,37 @@
 {
-  "name": "orcamento-facil",
-  "version": "0.0.1",
-  "description": "Backend server for the orcamento facil app",
+  "name": "email-validation",
+  "version": "1.0.0",
+  "description": "An API to get login and email verification",
   "main": "server.js",
-  "repository": "",
-  "author": "Rodrigo Novais <roo.novais@gmail.com>",
+  "scripts": {
+    "test": "mocha $(find -name *.spec.js)",
+    "start": "./scripts/start.sh",
+    "test-unit": "mocha test/unit/",
+    "test-integration": "mocha test/integration/ --timeout 5000"
+  },
+  "author": "Vitor Ribeiro Pais Del Pezzo",
+  "license": "ISC",
+  "repository": {
+    "url": "https://gitlab.com/vitordexjesus/email-validation",
+    "type": "git"
+  },
   "dependencies": {
-    "bcrypt": "^3.0.0",
-    "body-parser": "^1.18.3",
-    "express": "^4.16.3",
+    "bluebird": "^3.5.2",
+    "bunyan": "^1.8.12",
+    "config": "^2.0.1",
+    "joi": "^13.6.0",
     "jsonwebtoken": "^8.3.0",
-    "mongoose": "^5.2.3",
-    "mustache-express": "^1.2.7",
+    "koa": "^2.5.2",
+    "koa-bodyparser": "^4.2.1",
+    "koa-passport": "^4.1.1",
+    "koa-router": "^7.4.0",
+    "moment": "^2.22.2",
+    "mongoose": "^5.2.13",
     "nodemailer": "^4.6.8",
-    "npm": "^6.4.1"
+    "passport-jwt": "^4.0.0"
+  },
+  "devDependencies": {
+    "mocha": "^5.2.0",
+    "sinon": "^6.2.0"
   }
 }

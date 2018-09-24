@@ -1,0 +1,38 @@
+{
+    "server": {
+        "port": 3000,
+        "logger": {
+            "name": "email-validation"
+        }
+    },
+    "auth":{
+        "token": {
+            "expiration": "6h"
+        },
+        "password":{
+            "algorithm": "sha1",
+            "encoding": "hex",
+            "key": "secret"
+        },
+        "optionals": {
+            "expiresIn": "2d"
+        }
+    },
+    "mail": {
+        "options":{
+            "service": "gmail",
+            "auth": {
+                "user": "t35t3t@gmail.com",
+                "pass": "teste"
+            }
+        }
+    },
+    "database": {
+        "auth": {
+            "user": "teste",
+            "pass": "secret",
+            "dbName": "easy-invoice"
+        },
+        "url": "mongodb://mongo:27017/"
+    }
+}
