@@ -1,0 +1,14 @@
+{
+    "mail": {
+        "options":{
+            "auth": {
+                "pass": "EASY_INVOICE_EMAIL_PASSWORD"
+            }
+        }
+    },
+    "database": {
+        "auth": {
+            "pass": "EASY_INVOICE_DB_PASSWORD"
+        }
+    }
+}
