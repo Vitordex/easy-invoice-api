@@ -24,7 +24,6 @@ class User {
             },
             email: {
                 type: String,
-                unique: true,
                 required: true,
                 min: 5,
                 max: 255,

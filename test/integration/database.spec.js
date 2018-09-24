@@ -14,7 +14,7 @@ let createdUser;
 let User;
 
 describe('Database', () => {
-    describe.only('service', () => {
+    describe('service', () => {
         it('Should connect', async () => {
             await databaseService.connect(dbConfigs.url, dbConfigs.auth);
 
