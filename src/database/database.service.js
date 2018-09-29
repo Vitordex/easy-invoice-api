@@ -1,13 +1,15 @@
 const mongoose = require('mongoose');
 const ModelCreator = require('./creator/model.creator');
 
+const { DB } = require('../enums');
+
 class DatabaseService {
     connect(hostUrl, options) {
         return new Promise((resolve, reject) => {
             mongoose.connect(hostUrl, {
                 ...options,
                 auth: {
-                    authdb: 'admin'
+                    authdb: DB.AUTH.DB_NAME
                 },
                 useNewUrlParser: true
             }, (err) => {
@@ -18,11 +20,11 @@ class DatabaseService {
         });
     }
 
-    disconnect(){
+    disconnect() {
         return mongoose.disconnect();
     }
 
-    get ModelCreator(){
+    get ModelCreator() {
         return ModelCreator;
     }
 }

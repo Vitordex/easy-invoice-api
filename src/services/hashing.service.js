@@ -1,7 +1,9 @@
 const crypto = require('crypto');
 
+const enums = require('../enums');
+
 class HashingService {
-    constructor(key, algorithm = 'sha1', encoding = 'utf-8') {
+    constructor(key, algorithm = enums.HASH.SHA1, encoding = enums.HASH.ENCODING) {
         this.key = key;
         this.algorithm = algorithm;
         this.encoding = encoding;

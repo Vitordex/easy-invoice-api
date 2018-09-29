@@ -1,4 +1,6 @@
 const DatabaseService = require('./database.service'); // eslint-disable-line
+const { DB } = require('../enums');
+
 /**
  * Create Customer model
  * @param {DatabaseService} service 
@@ -6,16 +8,16 @@ const DatabaseService = require('./database.service'); // eslint-disable-line
  * @returns {Object} Customer database model
  */
 class Customer {
-    constructor(service){
+    constructor(service) {
         const ModelCreator = service.ModelCreator;
         const creator = new ModelCreator();
-    
-        const Customer = creator.create(creator.names.Customer, {
+
+        const Customer = creator.create(DB.MODELS.CUSTOMER, {
             name: { type: String, required: true, max: 255 },
             address: String,
             document: String
         });
-    
+
         return Customer;
     }
 }

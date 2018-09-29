@@ -1,11 +1,13 @@
 const joi = require('joi');
 
+const enums = require('../enums');
+
 const baseSchema = joi.object().options({
     abortEarly: false
 });
 
 function isValidObject(obj){
-    return typeof(obj) === 'object' && Object.keys(obj).length > 0;
+    return typeof(obj) === enums.JS.OBJECT && Object.keys(obj).length > 0;
 }
 
 class InputValidationService {

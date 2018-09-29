@@ -3,6 +3,8 @@ const passport = require('koa-passport');
 const JwtStrategy = require('passport-jwt').Strategy;
 const ExtractJwt = require('passport-jwt').ExtractJwt;
 
+const { AUTH } = require('../enums');
+
 class AuthService {
     constructor(hash, tokenExpiration, optionals = {}) {
         passport.use(new JwtStrategy({
@@ -11,8 +13,7 @@ class AuthService {
             ignoreExpiration: !tokenExpiration,
             maxAge: tokenExpiration,
             jwtFromRequest: ExtractJwt.fromExtractors([
-                ExtractJwt.fromAuthHeaderAsBearerToken(),
-                ExtractJwt.fromUrlQueryParameter('token')
+                ExtractJwt.fromHeader(AUTH.TOKEN_HEADER)
             ])
         }, (jwt_payload, done) => {
             done(null, true);
@@ -24,7 +25,7 @@ class AuthService {
     }
 
     authenticate() {
-        return passport.authenticate('jwt', { session: false });
+        return passport.authenticate(AUTH.JWT_AUTH_METHOD, { session: false });
     }
 }
 
