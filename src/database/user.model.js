@@ -1,5 +1,8 @@
 const DatabaseService = require('./database.service'); // eslint-disable-line
 
+const enums = require('../enums');
+const dbModels = enums.DB.MODELS;
+
 class User {
     /**
      * Create User model
@@ -11,7 +14,7 @@ class User {
         const ModelCreator = service.ModelCreator;
         const creator = new ModelCreator();
 
-        const User = creator.create(creator.names.User, {
+        const User = creator.create(dbModels.USER, {
             active: {
                 type: Boolean,
                 required: true,
@@ -42,16 +45,11 @@ class User {
             },
             state: {
                 type: String,
-                enum: ['Acre', 'Alagoas', 'Amapá', 'Amazonas', 'Bahia', 'Ceará',
-                    'Espírito Santo', 'Goiás', 'Maranhão', 'Mato Grosso',
-                    'Mato Grosso do Sul', 'Minas Gerais', 'Pará', 'Paraíba',
-                    'Paraná', 'Pernambuco', 'Piauí', 'Rio de Janeiro',
-                    'Rio Grande do Norte', 'Rio Grande do Sul', 'Rondônia',
-                    'Roraima', 'Santa Catarina', 'São Paulo', 'Sergipe', 'Tocantins'],
+                enum: enums.DB.PROPS.STATES,
                 required: true
             },
-            clients: [{ type: creator.types.ObjectId, ref: creator.names.Customer }],
-            invoice: [{ type: creator.types.ObjectId, ref: creator.names.Invoice }],
+            clients: [{ type: creator.types.ObjectId, ref: dbModels.CUSTOMER }],
+            invoice: [{ type: creator.types.ObjectId, ref: dbModels.INVOICE }],
             salary: { type: Number, min: 0 },
             workload: { type: Number, min: 0 },
             document: { type: String },

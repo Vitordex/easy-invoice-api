@@ -2,6 +2,8 @@ Changelog
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+- [2018-09-29] *minor* [#15](https://gitlab.com/roo.novais/easy-invoice/issues/15)
+  **Adicionar enums à strings no código para melhor manutenção**
 - [2018-09-20] *breaking* [#14](https://gitlab.com/roo.novais/easy-invoice/issues/14)
   **Criar model base para os outros models do banco se basearem**
 - [2018-09-20] *breaking* [#13](https://gitlab.com/roo.novais/easy-invoice/issues/13)

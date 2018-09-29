@@ -3,6 +3,10 @@ const Schema = mongoose.Schema;
 const Model = mongoose.Model; // eslint-disable-line
 const baseMethods = require('./base.functions');
 
+const enums = require('../../enums');
+
+const DB_MODELS = enums.DB.MODELS; // eslint-disable-line
+
 class ModelCreator {
     /**
      * A function that creates a model according with the database connection module
@@ -31,8 +35,8 @@ class ModelCreator {
 
         const schema = new Schema(structure, schemaOptionals);
 
-        schema.method('updateOneWithDates', baseMethods.updateOneWithDates);
-        schema.static('updateManyWithDates', baseMethods.updateManyWithDates);
+        schema.method(enums.DB.FUNCTIONS.UPDATE_ONE_DATE, baseMethods.updateOneWithDates);
+        schema.static(enums.DB.FUNCTIONS.UPDATE_MANY_DATE, baseMethods.updateManyWithDates);
 
         return mongoose.model(name, schema);
     }
@@ -47,16 +51,10 @@ class ModelCreator {
 
     /**
      * Getter to return all schema names for this project
-     * @returns {Object} An object with all the type names
+     * @returns {DB_MODELS} An object with all the type names
      */
     get names() {
-        return {
-            User: 'User',
-            Customer: 'Customer',
-            Invoice: 'Invoice',
-            Material: 'Material',
-            Equipment: 'Equipment'
-        };
+        return enums.DB.MODELS;
     }
 }
 
