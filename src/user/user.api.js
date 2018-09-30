@@ -1,6 +1,28 @@
 const Router = require('koa-router');
 
+/* eslint-disable no-unused-vars */
+const UserController = require('./user.controller'); 
+const AuthService = require('./auth.service');
+const UserSchema = require('./user.schema');
+const ValidationMiddleware = require('../services/validation.middleware');
+const MailService = require('../services/mail.service');
+/* eslint-enable no-unused-vars */
+
+function runController(method){
+    return async(context, next) => {
+        await method(context, next);
+    };
+}
+
 class UserApi {
+    /**
+     * @param {Object} params
+     * @param {AuthService} params.authService The authentication service for the protexted routes
+     * @param {MailService} params.mailingService Mailing service to verify
+     * @param {UserController} params.userController The controller with all the methods for user routes
+     * @param {UserSchema} params.userSchema The input validation for user routes
+     * @param {ValidationMiddleware} params.validationMiddleware The middleware for validating route input
+     */
     constructor({
         authService,
         mailingService,
@@ -23,25 +45,19 @@ class UserApi {
         this.router.post(
             '/login',
             this.validationMiddleware.validate(this.userSchema.schemas.login),
-            async (context, next) => {
-                await this.userController.login(context, next);
-            }
+            runController(this.userController.login)
         );
 
         this.router.post(
             '/verify',
             this.validationMiddleware.validate(this.userSchema.schemas.verify),
-            async (context, next) => {
-                await this.userController.verify(context, next);
-            }
+            runController(this.userController.verify)
         );
 
         this.router.patch(
             '/reset/password',
             this.validationMiddleware.validate(this.userSchema.schemas.resetPassword),
-            async (context, next) => {
-                await this.userController.resetPassword(context, next);
-            }
+            runController(this.userController.resetPassword)
         );
     }
 }
