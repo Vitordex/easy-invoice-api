@@ -2,7 +2,7 @@ const passport = require('koa-passport');
 
 const JwtStrategy = require('passport-jwt').Strategy;
 const ExtractJwt = require('passport-jwt').ExtractJwt;
-const User = require('mongoose').Model; // eslint-disable-line
+const User = require('../database/common.types').Model; // eslint-disable-line
 
 const { AUTH } = require('../enums');
 
@@ -25,9 +25,9 @@ class AuthService {
             ])
         }, async (jwt_payload, done) => {
             let user, error;
-            
+
             try {
-                user = await userModel.findById(jwt_payload.id);   
+                user = await userModel.findById(jwt_payload.id);
             } catch (err) {
                 error = err;
             }
