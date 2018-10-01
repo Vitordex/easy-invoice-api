@@ -7,8 +7,6 @@ class User {
     /**
      * Create User model
      * @param {DatabaseService} service 
-     * 
-     * @returns {Object} User database model
      */
     constructor(service) {
         const ModelCreator = service.ModelCreator;
