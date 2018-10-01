@@ -62,6 +62,7 @@ describe('Users component', () => {
         describe('happy path', () => {
             before(() => {
                 sinon.stub(userService, 'findUser').resolves({
+                    active: true,
                     email: testEmail,
                     password: hashedTestPassword,
                     id: 1,
