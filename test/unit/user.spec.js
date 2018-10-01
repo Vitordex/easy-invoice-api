@@ -348,10 +348,10 @@ describe('Users component', () => {
                     }
                 });
 
-                await validationMiddleware.validate(userSchema.schemas.resetPassword)(
+                await validationMiddleware.validate(userSchema.schemas.recover)(
                     context,
                     async () => {
-                        await userController.resetPassword(context, async () => {
+                        await userController.recover(context, async () => {
                             assert(context.status === 200);
                         });
                     }
@@ -377,10 +377,10 @@ describe('Users component', () => {
                     }
                 });
 
-                await validationMiddleware.validate(userSchema.schemas.resetPassword)(
+                await validationMiddleware.validate(userSchema.schemas.recover)(
                     context,
                     async () => {
-                        await userController.resetPassword(context, () => {
+                        await userController.recover(context, () => {
                             const status = context.status;
 
                             assert(status === 401);
@@ -408,10 +408,10 @@ describe('Users component', () => {
                     }
                 });
 
-                await validationMiddleware.validate(userSchema.schemas.resetPassword)(
+                await validationMiddleware.validate(userSchema.schemas.recover)(
                     context,
                     async () => {
-                        await userController.resetPassword(context, () => {
+                        await userController.recover(context, () => {
                             const status = context.status;
 
                             assert(status === 500);
@@ -432,7 +432,7 @@ describe('Users component', () => {
                 });
 
                 await validationMiddleware.validate(
-                    userSchema.schemas.resetPassword
+                    userSchema.schemas.recover
                 )(context);
 
                 assert(context.status === 400);
