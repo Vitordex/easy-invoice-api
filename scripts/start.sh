@@ -1,5 +1,3 @@
-npm i
-
-npm prune --production
+npm i --production
 
 node bin/www
