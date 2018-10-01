@@ -63,7 +63,8 @@ class User {
             maintenance: { type: Number },
             supplies: [{ type: Number }],
             negocioation_margin: { type: Number },
-            bills: [{ type: Number }]
+            bills: [{ type: Number }],
+            deletedAt: Date
         });
 
         return User;

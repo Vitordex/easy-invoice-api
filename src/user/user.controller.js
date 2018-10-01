@@ -34,7 +34,7 @@ class UserController {
         const user = await this.userService.findUser({ email });
 
         if (!user) {
-            context.throw(404, 'Usuário não encontrado');
+            context.throw(404, 'Invalid email or password');
             return next();
         }
 
@@ -42,7 +42,12 @@ class UserController {
         const match = this.userService.matchPassword(password, user.password);
 
         if (!match) {
-            context.throw(401, 'Não autorizado');
+            context.throw(401, 'Invalid email or password');
+            return next();
+        }
+
+        if(!user.active) {
+            context.throw(401, 'Account not activated');
             return next();
         }
 
@@ -58,7 +63,7 @@ class UserController {
 
         const user = await this.userService.findUser({ email });
         if (!user) {
-            context.throw(404, 'Usuário não encontrado');
+            context.throw(404, 'User not found');
             return next();
         }
 
@@ -79,7 +84,7 @@ favor clique no link ${context.request.origin}/users/reset/password?token=${awai
 Se não ignore este email`
             );
         } catch (error) {
-            context.throw(400, 'Email inválido');
+            context.throw(400, 'Invalid email');
             return next();
         }
 
@@ -96,7 +101,7 @@ Se não ignore este email`
         try {
             payload = await emailToken.verify(token);
         } catch (error) {
-            context.throw(401, 'Token inválido');
+            context.throw(401, 'Invalid token');
             return next();
         }
 
@@ -109,7 +114,7 @@ Se não ignore este email`
         try {
             await user.save();
         } catch (error) {
-            context.throw(500, 'Houve um erro ao salvar a senha');
+            context.throw(500, 'Error saving new password');
             return next();
         }
 
@@ -121,8 +126,8 @@ Se não ignore este email`
         const { body } = context.request;
 
         const found = await this.userService.findUser({ email: body.email });
-        if (found.length > 0) {
-            context.throw(400, 'O usuário já existe');
+        if (found) {
+            context.throw(400, 'User already exists');
             return next();
         }
 
@@ -131,7 +136,7 @@ Se não ignore este email`
         try {
             await user.save();
         } catch (error) {
-            context.throw(500, 'Erro ao salvar o usuário');
+            context.throw(500, 'Error saving the user');
             return next();
         }
 
@@ -149,7 +154,7 @@ Se não ignore este email`
                 `${context.request.origin}/users/confirm?token=${await token.hash()}`
             );   
         } catch (error) {
-            context.throw(500, 'Erro ao enviar email de confirmação');
+            context.throw(500, 'Error sending the confirmation email');
             return next();
         }
 
