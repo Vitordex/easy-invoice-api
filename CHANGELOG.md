@@ -2,6 +2,8 @@ Changelog
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+- [2018-09-30] *minor* [#17](https://gitlab.com/roo.novais/easy-invoice/issues/17)
+  **Colocar rotas da branch master na branch dev**
 - [2018-09-30] *minor* [#19](https://gitlab.com/roo.novais/easy-invoice/issues/19)
   **Refatorar chamadas de usuário para caber em função única**
 - [2018-09-30] *minor* [#18](https://gitlab.com/roo.novais/easy-invoice/issues/18)
