@@ -7,8 +7,6 @@ class User {
     /**
      * Create User model
      * @param {DatabaseService} service 
-     * 
-     * @returns {Object} User database model
      */
     constructor(service) {
         const ModelCreator = service.ModelCreator;
@@ -65,7 +63,8 @@ class User {
             maintenance: { type: Number },
             supplies: [{ type: Number }],
             negocioation_margin: { type: Number },
-            bills: [{ type: Number }]
+            bills: [{ type: Number }],
+            deletedAt: Date
         });
 
         return User;

@@ -16,7 +16,7 @@ let User;
 describe('Database', () => {
     describe('service', () => {
         it('Should connect', async () => {
-            await databaseService.connect(dbConfigs.url, dbConfigs.auth);
+            await databaseService.connect(dbConfigs.auth);
 
             User = new UserModel(databaseService); // eslint-disable-line
         });

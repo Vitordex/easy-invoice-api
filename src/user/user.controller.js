@@ -1,6 +1,19 @@
 const JwtToken = require('./jwt.model.js');
 
+/* eslint-disable no-unused-vars */
+const UserService = require('./user.service');
+const MailService = require('../services/mail.service');
+/* eslint-enable no-unused-vars */
+
 class UserController {
+    /**
+     * 
+     * @param {Object} params 
+     * @param {UserService} params.userService
+     * @param {String} params.authHash
+     * @param {Object} params.authConfigs
+     * @param {MailService} params.mailService
+     */
     constructor({
         userService,
         authHash,
@@ -21,7 +34,7 @@ class UserController {
         const user = await this.userService.findUser({ email });
 
         if (!user) {
-            context.throw(404, 'Usuário não encontrado');
+            context.throw(404, 'Invalid email or password');
             return next();
         }
 
@@ -29,7 +42,12 @@ class UserController {
         const match = this.userService.matchPassword(password, user.password);
 
         if (!match) {
-            context.throw(401, 'Não autorizado');
+            context.throw(401, 'Invalid email or password');
+            return next();
+        }
+
+        if(!user.active) {
+            context.throw(401, 'Account not activated');
             return next();
         }
 
@@ -45,7 +63,7 @@ class UserController {
 
         const user = await this.userService.findUser({ email });
         if (!user) {
-            context.throw(404, 'Usuário não encontrado');
+            context.throw(404, 'User not found');
             return next();
         }
 
@@ -66,7 +84,7 @@ favor clique no link ${context.request.origin}/users/reset/password?token=${awai
 Se não ignore este email`
             );
         } catch (error) {
-            context.throw(400, 'Email inválido');
+            context.throw(400, 'Invalid email');
             return next();
         }
 
@@ -74,7 +92,7 @@ Se não ignore este email`
         return next();
     }
 
-    async resetPassword(context, next) {
+    async recover(context, next) {
         const { token } = context.request.query;
         const emailToken = new JwtToken({}, this.hash, this.tokenOptions);
 
@@ -83,7 +101,7 @@ Se não ignore este email`
         try {
             payload = await emailToken.verify(token);
         } catch (error) {
-            context.throw(401, 'Token inválido');
+            context.throw(401, 'Invalid token');
             return next();
         }
 
@@ -96,7 +114,47 @@ Se não ignore este email`
         try {
             await user.save();
         } catch (error) {
-            context.throw(500, 'Houve um erro ao salvar a senha');
+            context.throw(500, 'Error saving new password');
+            return next();
+        }
+
+        context.status = 200;
+        return next();
+    }
+
+    async register(context, next) {
+        const { body } = context.request;
+
+        const found = await this.userService.findUser({ email: body.email });
+        if (found) {
+            context.throw(400, 'User already exists');
+            return next();
+        }
+
+        const user = await this.userService.create(body);
+
+        try {
+            await user.save();
+        } catch (error) {
+            context.throw(500, 'Error saving the user');
+            return next();
+        }
+
+        const token = new JwtToken(
+            { id: user.id },
+            this.hash,
+            this.tokenOptions
+        );
+
+        try {
+            await this.mailService.sendMail(
+                'Suporte <suporte@orcamentofacil.com>',
+                user.email,
+                'Verificação de Email',
+                `${context.request.origin}/users/confirm?token=${await token.hash()}`
+            );   
+        } catch (error) {
+            context.throw(500, 'Error sending the confirmation email');
             return next();
         }
 

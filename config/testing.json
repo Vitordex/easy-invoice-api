@@ -29,10 +29,11 @@
     },
     "database": {
         "auth": {
+            "driver": "mongodb",
+            "host": "mongo:27017",
             "user": "teste",
             "pass": "secret",
             "dbName": "easy-invoice"
-        },
-        "url": "mongodb://mongo:27017/"
+        }
     }
 }
