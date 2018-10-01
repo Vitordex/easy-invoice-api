@@ -35,7 +35,10 @@ class UserService {
      * 
      * @returns {User}
      */
-    create(body) {
+    async create(body) {
+        const password = await this.passwordService.createHash(body.password);
+        body.password = password;
+        
         return new this.User(body);
     }
 }
