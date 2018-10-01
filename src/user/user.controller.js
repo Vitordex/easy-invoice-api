@@ -153,6 +153,7 @@ Se não ignore este email`
             return next();
         }
 
+        context.status = 200;
         return next();
     }
 }
