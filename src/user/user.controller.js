@@ -1,6 +1,19 @@
 const JwtToken = require('./jwt.model.js');
 
+/* eslint-disable no-unused-vars */
+const UserService = require('./user.service');
+const MailService = require('../services/mail.service');
+/* eslint-enable no-unused-vars */
+
 class UserController {
+    /**
+     * 
+     * @param {Object} params 
+     * @param {UserService} params.userService
+     * @param {String} params.authHash
+     * @param {Object} params.authConfigs
+     * @param {MailService} params.mailService
+     */
     constructor({
         userService,
         authHash,
@@ -74,7 +87,7 @@ Se não ignore este email`
         return next();
     }
 
-    async resetPassword(context, next) {
+    async recover(context, next) {
         const { token } = context.request.query;
         const emailToken = new JwtToken({}, this.hash, this.tokenOptions);
 
@@ -101,6 +114,45 @@ Se não ignore este email`
         }
 
         context.status = 200;
+        return next();
+    }
+
+    async register(context, next) {
+        const { body } = context.request;
+
+        const found = await this.userService.findUser({ email: body.email });
+        if (found.length > 0) {
+            context.throw(400, 'O usuário já existe');
+            return next();
+        }
+
+        const user = await this.userService.create(body);
+
+        try {
+            await user.save();
+        } catch (error) {
+            context.throw(500, 'Erro ao salvar o usuário');
+            return next();
+        }
+
+        const token = new JwtToken(
+            { id: user.id },
+            this.hash,
+            this.tokenOptions
+        );
+
+        try {
+            await this.mailService.sendMail(
+                'Suporte <suporte@orcamentofacil.com>',
+                user.email,
+                'Verificação de Email',
+                `${context.request.origin}/users/confirm?token=${await token.hash()}`
+            );   
+        } catch (error) {
+            context.throw(500, 'Erro ao enviar email de confirmação');
+            return next();
+        }
+
         return next();
     }
 }
