@@ -65,6 +65,32 @@ class User {
             negocioation_margin: { type: Number },
             bills: [{ type: Number }],
             deletedAt: Date
+        }, {}, function (){
+            return {
+                active: this.active,
+                name: this.name,
+                email: this.email,
+                phone: this.phone,
+                state: this.state,
+                clients: this.clients,
+                invoice: this.invoice,
+                salary: this.salary,
+                workload: this.workload,
+                document: this.document,
+                address: this.address,
+                registry: this.registry,
+                inss: this.inss,
+                fgts: this.fgts,
+                thirteenth: this.thirteenth,
+                vacation: this.vacation,
+                income: this.income,
+                issqn: this.issqn,
+                rent: this.rent,
+                maintenance: this.maintenance,
+                supplies: this.supplies,
+                negocioation_margin: this.negocioation_margin,
+                bills: this.bills
+            };
         });
 
         return User;

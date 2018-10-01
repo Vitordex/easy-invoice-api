@@ -161,6 +161,34 @@ Se não ignore este email`
         context.status = 200;
         return next();
     }
+
+    async confirm(context, next){
+        const { token } = context.request.query;
+        const emailToken = new JwtToken({}, this.hash, this.tokenOptions);
+
+        let payload;
+
+        try {
+            payload = await emailToken.verify(token);
+        } catch (error) {
+            context.throw(401, 'Invalid token');
+            return next();
+        }
+
+        const user = await this.userService.findUser({_id: payload.id});
+
+        user.active = true;
+
+        try {
+            await user.save();   
+        } catch (error) {
+            context.throw(500, 'Error saving the user');
+            return next();
+        }
+
+        context.status = 200;
+        return next();
+    }
 }
 
 module.exports = UserController;

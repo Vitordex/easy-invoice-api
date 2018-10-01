@@ -16,7 +16,7 @@ class ModelCreator {
      * 
      * @returns {Model} A model created with the specified parameters
      */
-    create(name, structure, optionals = {}) {
+    create(name, structure, optionals = {}, toJson) {
         const updated_local = {};
         Object.keys(structure).forEach((key) => {
             updated_local[key] = {
@@ -34,6 +34,8 @@ class ModelCreator {
         };
 
         const schema = new Schema(structure, schemaOptionals);
+
+        if(toJson) schema.method(enums.DB.FUNCTIONS.TO_JSON, toJson);
 
         schema.method(enums.DB.FUNCTIONS.UPDATE_ONE_DATE, baseMethods.updateOneWithDates);
         schema.static(enums.DB.FUNCTIONS.UPDATE_MANY_DATE, baseMethods.updateManyWithDates);

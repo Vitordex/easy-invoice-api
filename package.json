@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "test": "mocha $(find -name *.spec.js)",
-    "start": "./scripts/start.sh",
+    "start": "bash ./scripts/start.sh",
     "test-unit": "mocha test/unit/",
     "test-integration": "mocha test/integration/ --timeout 5000"
   },

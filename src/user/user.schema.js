@@ -79,7 +79,14 @@ class UserSchema {
                     state: joi.string()
                         .valid(...STATES)
                         .required()
-                }).unknown(true)
+                }).required().unknown(true)
+            }),
+            confirm: this.generateSchema({
+                query: joi.object().keys({
+                    token: joi
+                        .string()
+                        .required()
+                }).required()
             })
         };
     }

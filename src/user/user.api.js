@@ -67,6 +67,14 @@ class UserApi {
                 await this.userController.register(context, next);
             }
         );
+
+        this.router.get(
+            '/confirm',
+            this.validationMiddleware.validate(this.userSchema.schemas.confirm),
+            async (context, next) => {
+                await this.userController.confirm(context, next);
+            }
+        );
     }
 }
 

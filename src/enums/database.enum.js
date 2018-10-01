@@ -2,7 +2,8 @@ module.exports = {
     FUNCTIONS: {
         UPDATE_ONE_DATE: 'updateOneWithDates',
         UPDATE_MANY_DATE: 'updateManyWithDates',
-        DATE_PROP: 'date_local'
+        DATE_PROP: 'date_local',
+        TO_JSON: 'toJSON'
     },
     MODELS: {
         USER: 'User',
