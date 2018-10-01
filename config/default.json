@@ -32,7 +32,7 @@
             "driver": "mongodb+srv",
             "host": "xdgames-cluster-rqe3g.mongodb.net",
             "user": "easy-invoice",
-            "pass": "YE7GiUfa3jBuFMn",
+            "pass": "secret",
             "dbName": "easy-invoice"
         }
     }
