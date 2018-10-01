@@ -8,12 +8,6 @@ const ValidationMiddleware = require('../services/validation.middleware');
 const MailService = require('../services/mail.service');
 /* eslint-enable no-unused-vars */
 
-function runController(method){
-    return async(context, next) => {
-        await method(context, next);
-    };
-}
-
 class UserApi {
     /**
      * @param {Object} params
@@ -45,19 +39,33 @@ class UserApi {
         this.router.post(
             '/login',
             this.validationMiddleware.validate(this.userSchema.schemas.login),
-            runController(this.userController.login)
+            async (context, next) => {
+                await this.userController.login(context, next);
+            }
         );
 
         this.router.post(
             '/verify',
             this.validationMiddleware.validate(this.userSchema.schemas.verify),
-            runController(this.userController.verify)
+            async (context, next) => {
+                await this.userController.verify(context, next);
+            }
         );
 
         this.router.patch(
-            '/reset/password',
-            this.validationMiddleware.validate(this.userSchema.schemas.resetPassword),
-            runController(this.userController.resetPassword)
+            '/recover',
+            this.validationMiddleware.validate(this.userSchema.schemas.recover),
+            async (context, next) => {
+                await this.userController.recover(context, next);
+            }
+        );
+
+        this.router.post(
+            '/register',
+            this.validationMiddleware.validate(this.userSchema.schemas.register),
+            async (context, next) => {
+                await this.userController.register(context, next);
+            }
         );
     }
 }
