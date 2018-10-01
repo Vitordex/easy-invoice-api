@@ -1,5 +1,7 @@
 const joi = require('joi');
 
+const { STATES } = require('../enums').DB.PROPS;
+
 class UserSchema {
     constructor(baseSchema) {
         this.baseSchema = baseSchema;
@@ -35,7 +37,7 @@ class UserSchema {
                         .required()
                 }).required()
             }),
-            resetPassword: this.generateSchema({
+            recover: this.generateSchema({
                 body: joi.object().keys({
                     password: joi
                         .string()
@@ -47,6 +49,37 @@ class UserSchema {
                         .string()
                         .required()
                 }).required()
+            }),
+            register: this.generateSchema({
+                body: joi.object().keys({
+                    email: joi
+                        .string()
+                        .regex(/[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/)
+                        .required()
+                        .min(5)
+                        .max(255),
+                    password: joi
+                        .string()
+                        .regex(/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@!%_\-*?&])[A-Za-z\d$@!%_\-*?&]{8,40}/)
+                        .min(8)
+                        .max(100)
+                        .required(),
+                    phone: joi
+                        .string()
+                        .regex(/(^|(\d{2})|\(\d{2}\))\s(9?\d{4})(\s|-)?(\d{4})($|\n)/)
+                        .max(20)
+                        .required(),
+                    active: joi
+                        .boolean()
+                        .optional(),
+                    name: joi
+                        .string()
+                        .max(255)
+                        .required(),
+                    state: joi.string()
+                        .valid(...STATES)
+                        .required()
+                }).unknown(true)
             })
         };
     }
