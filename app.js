@@ -44,7 +44,7 @@ async function initApp(logger) {
 
     const dbConfigs = config.get('database');
     const databaseService = new DatabaseService();
-    await databaseService.connect(dbConfigs.url, dbConfigs.auth);
+    await databaseService.connect(dbConfigs.auth);
 
     const userModel = new User(databaseService);
     const userService = new UserService(

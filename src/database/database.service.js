@@ -4,10 +4,11 @@ const ModelCreator = require('./creator/model.creator');
 const { DB } = require('../enums');
 
 class DatabaseService {
-    connect(hostUrl, options) {
+    connect(options) {
         return new Promise((resolve, reject) => {
-            mongoose.connect(hostUrl, {
-                ...options,
+            mongoose.connect(`${
+                options.driver
+            }://${options.user}:${options.pass}@${options.host}/${options.dbName}`, {
                 auth: {
                     authdb: DB.AUTH.DB_NAME
                 },
