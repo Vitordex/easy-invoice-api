@@ -18,6 +18,7 @@ const Context = require('./context.model');
 
 const fs = require('fs');
 const hashKey = fs.readFileSync('./server.hash.key', { encoding: 'utf-8' });
+const invalidHash = 'secret';
 
 const authConfigs = config.get('auth');
 
@@ -25,12 +26,21 @@ const authOptionals = authConfigs.optionals;
 
 const hashingOptions = authConfigs.password;
 
+const enums = require('../../src/enums');
+
+/**@type {MailService} */
 let mailService;
+/**@type {HashService} */
 let hashingService;
+/**@type {InputValidationService} */
 let validationMiddleware;
+/**@type {User} */
 let userModel;
+/**@type {UserService} */
 let userService;
+/**@type {UserController} */
 let userController;
+/**@type {UserSchema} */
 let userSchema;
 
 describe('Users component', () => {
@@ -87,10 +97,11 @@ describe('Users component', () => {
                     async () => {
                         await userController.login(context, async () => {
                             const responseBody = context.body;
+                            const headers = context.header;
                             const jwt = await new JwtToken({ id: 1 }, hashKey, authOptionals).hash();
 
                             assert(responseBody.user && responseBody.user.id === 1);
-                            assert(responseBody.token === jwt);
+                            assert(headers[enums.AUTH.TOKEN_HEADER] === jwt);
                         });
                     }
                 );
@@ -325,7 +336,7 @@ describe('Users component', () => {
         });
     });
 
-    describe('reset password route', () => {
+    describe('recover route', () => {
         describe('happy path', () => {
             before(() => {
                 sinon.stub(userService, 'findUser').resolves({
@@ -434,6 +445,110 @@ describe('Users component', () => {
 
                 await validationMiddleware.validate(
                     userSchema.schemas.recover
+                )(context);
+
+                assert(context.status === 400);
+                assert(context.body instanceof Array);
+            });
+        });
+    });
+
+    describe('confirm route', () => {
+        describe('happy path', () => {
+            before(() => {
+                sinon.stub(userService, 'findUser').resolves({
+                    active: true,
+                    email: testEmail,
+                    password: hashedTestPassword,
+                    id: 1,
+                    toJSON: () => ({
+                        email: testEmail,
+                        password: hashedTestPassword,
+                        id: 1
+                    })
+                });
+            });
+
+            it('should return user with id 1', async () => {
+                const context = new Context({
+                    header: {
+                        [enums.AUTH.TOKEN_HEADER]: await new JwtToken({}, hashKey, authOptionals).hash()
+                    }
+                });
+
+                await validationMiddleware.validate(userSchema.schemas.confirm)(
+                    context,
+                    async () => {
+                        await userController.confirm(context, async () => {
+                            const { status } = context;
+
+                            assert(status === 200);
+                        });
+                    }
+                );
+            });
+
+            after(() => {
+                userService.findUser.restore();
+            });
+        });
+
+        describe('invalid customer', () => {
+            before(() => {
+                sinon.stub(userService, 'findUser').resolves(null);
+            });
+
+            it('should throw a 404 error', async () => {
+                const context = new Context({
+                    header: {
+                        [enums.AUTH.TOKEN_HEADER]: await new JwtToken({}, hashKey, authOptionals).hash()
+                    }
+                });
+
+                await validationMiddleware.validate(userSchema.schemas.confirm)(
+                    context,
+                    async () => {
+                        await userController.confirm(context, () => {
+                            const status = context.status;
+
+                            assert(status === 404);
+                        });
+                    }
+                );
+            });
+
+            after(() => {
+                userService.findUser.restore();
+            });
+        });
+
+        describe('invalid token', () => {
+            it('should throw a 401 error', async () => {
+                const context = new Context({
+                    header: {
+                        [enums.AUTH.TOKEN_HEADER]: await new JwtToken({}, invalidHash, authOptionals).hash()
+                    }
+                });
+
+                await validationMiddleware.validate(userSchema.schemas.confirm)(
+                    context,
+                    async () => {
+                        await userController.confirm(context, () => {
+                            const status = context.status;
+
+                            assert(status === 401);
+                        });
+                    }
+                );
+            });
+        });
+
+        describe('wrong input', () => {
+            it('should throw a 404 error', async () => {
+                const context = new Context({});
+
+                await validationMiddleware.validate(
+                    userSchema.schemas.confirm
                 )(context);
 
                 assert(context.status === 400);
