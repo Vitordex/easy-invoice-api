@@ -26,13 +26,14 @@ class AuthService {
         }, async (jwt_payload, done) => {
             let user, error;
 
-            try {
-                user = await userModel.findById(jwt_payload.id);
-            } catch (err) {
-                error = err;
-            }
+            if (jwt_payload.shouldFind)
+                try {
+                    user = await userModel.findById(jwt_payload.id);
+                } catch (err) {
+                    error = err;
+                }
 
-            done(error, user);
+            done(error, user || !jwt_payload.shouldFind);
         }));
     }
 

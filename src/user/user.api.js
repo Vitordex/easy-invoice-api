@@ -54,6 +54,7 @@ class UserApi {
 
         this.router.patch(
             '/recover',
+            this.authService.authenticate(),
             this.validationMiddleware.validate(this.userSchema.schemas.recover),
             async (context, next) => {
                 await this.userController.recover(context, next);

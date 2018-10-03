@@ -1,9 +1,11 @@
-const JwtToken = require('./jwt.model.js');
-
 /* eslint-disable no-unused-vars */
 const UserService = require('./user.service');
 const MailService = require('../services/mail.service');
 /* eslint-enable no-unused-vars */
+
+const JwtToken = require('./jwt.model.js');
+
+const enums = require('../enums');
 
 class UserController {
     /**
@@ -68,7 +70,7 @@ class UserController {
         }
 
         const token = new JwtToken(
-            { id: user.id, email: user.email },
+            { id: user.id, email: user.email, shouldFind: false },
             this.hash,
             this.tokenOptions
         );
@@ -93,7 +95,7 @@ Se não ignore este email`
     }
 
     async recover(context, next) {
-        const { token } = context.request.query;
+        const token = context.request.headers[enums.AUTH.TOKEN_HEADER];
         const emailToken = new JwtToken({}, this.hash, this.tokenOptions);
 
         let payload;

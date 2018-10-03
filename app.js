@@ -64,6 +64,7 @@ async function initApp(logger) {
     const authService = new AuthService(
         hashKey,
         tokenExpiration,
+        userModel,
         authOptionals
     );
 

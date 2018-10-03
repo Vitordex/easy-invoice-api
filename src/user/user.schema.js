@@ -43,11 +43,6 @@ class UserSchema {
                         .string()
                         .min(6)
                         .required()
-                }).required(),
-                query: joi.object().keys({
-                    token: joi
-                        .string()
-                        .required()
                 }).required()
             }),
             register: this.generateSchema({
