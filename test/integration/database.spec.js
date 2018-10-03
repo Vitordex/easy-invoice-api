@@ -28,7 +28,6 @@ describe('Database', () => {
                 email: 'test@test.com',
                 password: 'asd',
                 id: 1,
-                state: 'São Paulo',
                 name: 'Teste ci',
                 phone: '11955555555'
             });
