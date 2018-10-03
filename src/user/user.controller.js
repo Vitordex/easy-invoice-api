@@ -55,7 +55,8 @@ class UserController {
 
         const token = new JwtToken({ id: user.id }, this.hash, this.tokenOptions);
 
-        context.body = { user: this.userService.toJSON(user), token: await token.hash() };
+        context.set(enums.AUTH.TOKEN_HEADER, await token.hash());
+        context.body = { user: this.userService.toJSON(user) };
         context.type = 'json';
         return next();
     }
@@ -165,7 +166,7 @@ Se não ignore este email`
     }
 
     async confirm(context, next){
-        const { token } = context.request.query;
+        const token = context.request.headers[enums.AUTH.TOKEN_HEADER];
         const emailToken = new JwtToken({}, this.hash, this.tokenOptions);
 
         let payload;
@@ -178,6 +179,11 @@ Se não ignore este email`
         }
 
         const user = await this.userService.findUser({_id: payload.id});
+
+        if(!user) {
+            context.throw(404, 'Invalid User');
+            return next();
+        }
 
         user.active = true;
 

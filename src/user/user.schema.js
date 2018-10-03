@@ -1,5 +1,7 @@
 const joi = require('joi');
 
+const enums = require('../enums');
+
 const { STATES } = require('../enums').DB.PROPS;
 
 class UserSchema {
@@ -77,11 +79,11 @@ class UserSchema {
                 }).required().unknown(true)
             }),
             confirm: this.generateSchema({
-                query: joi.object().keys({
-                    token: joi
+                headers: joi.object().keys({
+                    [enums.AUTH.TOKEN_HEADER]: joi
                         .string()
                         .required()
-                }).required()
+                }).required().unknown(true)
             })
         };
     }

@@ -3,6 +3,7 @@ class ContextMock{
         this.status = 200;
         this.body = '';
         this.type = '';
+        this.header = {};
         
         this.request = request;
     }
@@ -10,6 +11,10 @@ class ContextMock{
     throw(status, message){
         this.status = status;
         this.body = message;
+    }
+
+    set(headerName, headerValue){
+        this.header[headerName] = headerValue;
     }
 }
 
