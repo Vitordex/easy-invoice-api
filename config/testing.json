@@ -32,7 +32,7 @@
             "driver": "mongodb",
             "host": "mongo:27017",
             "user": "teste",
-            "pass": "secret",
+            "pass": "",
             "dbName": "easy-invoice"
         }
     }
