@@ -58,7 +58,7 @@ describe('Database', () => {
                 email: 'teste@teste.com',
                 date_local: newDate
             };
-            await createdUser.updateOneWithDates(update);
+            await createdUser.updateWithDates(update);
 
             const user = await User.findById(createdUser._id);
 
@@ -71,7 +71,7 @@ describe('Database', () => {
                 email: 'test@test.com',
                 date_local: new Date(Date.now() - 1000 * 60 * 60).toISOString()
             };
-            await createdUser.updateOneWithDates(update);
+            await createdUser.updateWithDates(update);
 
             const user = await User.findById(createdUser._id);
 

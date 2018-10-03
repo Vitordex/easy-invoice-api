@@ -41,55 +41,57 @@ class User {
                 required: true,
                 max: 20
             },
-            state: {
-                type: String,
-                enum: enums.DB.PROPS.STATES,
-                required: true
+            customers: [{ type: creator.types.ObjectId, ref: dbModels.CUSTOMER }],
+            invoices: [{ type: creator.types.ObjectId, ref: dbModels.INVOICE }],
+            document: String,
+            address: {
+                street: String,
+                number: Number,
+                complement: String,
+                neighborhood: String,
+                zip_code: String,
+                city: String,
+                state: {
+                    type: String,
+                    enum: enums.DB.PROPS.STATES,
+                    required: true
+                }
             },
-            clients: [{ type: creator.types.ObjectId, ref: dbModels.CUSTOMER }],
-            invoice: [{ type: creator.types.ObjectId, ref: dbModels.INVOICE }],
-            salary: { type: Number, min: 0 },
-            workload: { type: Number, min: 0 },
-            document: { type: String },
-            address: { type: String },
-            registry: { type: String },
-            inss: { type: String },
-            fgts: { type: String },
-            thirteenth: { type: Boolean },
-            vacation: { type: Boolean },
-            income: [],
-            issqn: { type: String },
-            rent: { type: Number },
-            maintenance: { type: Number },
-            supplies: [{ type: Number }],
-            negocioation_margin: { type: Number },
-            bills: [{ type: Number }],
+            registry: String,
+            incomes: {
+                salary_intended: Number,
+                workload_intended: Number,
+                thirteenth_salary: Boolean,
+                vacation: Boolean
+            },
+            negocioation_margin: Number,
+            bills: [{
+                inss: Number,
+                fgts: Number,
+                issqn: Number,
+                eati: Number,
+                rent: Number,
+                maintenance: Number,
+                supplies: [{ type: Number }],
+            }],
             deletedAt: Date
-        }, {}, function (){
+        }, {}, function () {
             return {
                 active: this.active,
                 name: this.name,
                 email: this.email,
                 phone: this.phone,
                 state: this.state,
-                clients: this.clients,
+                customers: this.customers,
                 invoice: this.invoice,
                 salary: this.salary,
                 workload: this.workload,
                 document: this.document,
                 address: this.address,
                 registry: this.registry,
-                inss: this.inss,
-                fgts: this.fgts,
-                thirteenth: this.thirteenth,
-                vacation: this.vacation,
-                income: this.income,
-                issqn: this.issqn,
-                rent: this.rent,
-                maintenance: this.maintenance,
-                supplies: this.supplies,
-                negocioation_margin: this.negocioation_margin,
-                bills: this.bills
+                incomes: this.incomes,
+                bills: this.bills,
+                negocioation_margin: this.negocioation_margin
             };
         });
 

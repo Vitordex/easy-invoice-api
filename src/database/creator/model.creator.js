@@ -37,7 +37,7 @@ class ModelCreator {
 
         if(toJson) schema.method(enums.DB.FUNCTIONS.TO_JSON, toJson);
 
-        schema.method(enums.DB.FUNCTIONS.UPDATE_ONE_DATE, baseMethods.updateOneWithDates);
+        schema.method(enums.DB.FUNCTIONS.UPDATE_ONE_DATE, baseMethods.updateWithDates);
         schema.static(enums.DB.FUNCTIONS.UPDATE_MANY_DATE, baseMethods.updateManyWithDates);
 
         return mongoose.model(name, schema);

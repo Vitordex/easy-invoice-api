@@ -1,6 +1,6 @@
 module.exports = {
     FUNCTIONS: {
-        UPDATE_ONE_DATE: 'updateOneWithDates',
+        UPDATE_ONE_DATE: 'updateWithDates',
         UPDATE_MANY_DATE: 'updateManyWithDates',
         DATE_PROP: 'date_local',
         TO_JSON: 'toJSON'
