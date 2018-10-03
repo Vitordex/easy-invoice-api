@@ -33,8 +33,10 @@ test_integration:
   variables:
     NODE_ENV: testing
     MONGO_INITDB_ROOT_USERNAME: teste
-    MONGO_INITDB_ROOT_PASSWORD:  
+    MONGO_INITDB_ROOT_PASSWORD: secret
     MONGO_INITDB_DATABASE: easy-invoice
+  except: 
+    - /^(dev|master)$/
   services: 
     - mongo:latest
   script:
