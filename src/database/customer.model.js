@@ -14,7 +14,19 @@ class Customer {
 
         const Customer = creator.create(DB.MODELS.CUSTOMER, {
             name: { type: String, required: true, max: 255 },
-            address: String,
+            address: {
+                street: String,
+                number: Number,
+                complement: String,
+                neighborhood: String,
+                zip_code: String,
+                city: String,
+                state: {
+                    type: String,
+                    enum: DB.PROPS.STATES,
+                    required: true
+                }
+            },
             document: String
         });
 

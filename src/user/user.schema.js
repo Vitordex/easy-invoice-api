@@ -75,7 +75,7 @@ class UserSchema {
                         .required(),
                     state: joi.string()
                         .valid(...STATES)
-                        .required()
+                        .optional()
                 }).required().unknown(true)
             }),
             confirm: this.generateSchema({

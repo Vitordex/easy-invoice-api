@@ -14,6 +14,12 @@ const UserController = require('./src/user/user.controller');
 const UserSchema = require('./src/user/user.schema');
 const UserRouter = require('./src/user/user.api');
 
+const Customer = require('./src/database/customer.model');
+const CustomerService = require('./src/customer/customer.service');
+const CustomerController = require('./src/customer/customer.controller');
+const CustomerSchema = require('./src/customer/customer.schema');
+const CustomerRouter = require('./src/customer/customer.api');
+
 const fs = require('fs');
 const hashKey = fs.readFileSync('./server.hash.key', { encoding: 'utf-8' });
 
@@ -79,6 +85,22 @@ async function initApp(logger) {
     });
     userApi.buildRoutes();
     app.use(userApi.router.routes());
+
+    const customerModel = new Customer(databaseService);
+    const customerService = new CustomerService(customerModel);
+    const customerController = new CustomerController({
+        userService,
+        authHash: hashKey,
+        authConfigs,
+        customerService
+    });
+
+    const customerSchema = new CustomerSchema(validationMiddleware.baseSchema);
+    const customerApi = new CustomerRouter({
+        authService, customerController, customerSchema, validationMiddleware
+    });
+    customerApi.buildRoutes();
+    app.use(customerApi.router.routes());
 
     return app;
 }
