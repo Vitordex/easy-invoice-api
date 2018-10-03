@@ -24,16 +24,7 @@ class AuthService {
                 ExtractJwt.fromHeader(AUTH.TOKEN_HEADER)
             ])
         }, async (jwt_payload, done) => {
-            let user, error;
-
-            if (jwt_payload.shouldFind)
-                try {
-                    user = await userModel.findById(jwt_payload.id);
-                } catch (err) {
-                    error = err;
-                }
-
-            done(error, user || !jwt_payload.shouldFind);
+            done(null, true);
         }));
     }
 
