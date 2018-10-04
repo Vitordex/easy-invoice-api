@@ -41,16 +41,23 @@ class CustomerController {
             return next();
         }
 
-        const { customerId } = context.request.params;
+        const { customerId } = context.params;
 
-        const customer = await this.customerService.findCustomer({ _id: customerId });
+        let customer;
+
+        try {
+            customer = await this.customerService.findCustomer({ _id: customerId });
+        } catch (error) {
+            context.throw(404, 'Invalid customer id');
+            return next();
+        }
 
         if (!customer) {
             context.throw(404, 'Invalid customer id');
             return next();
         }
 
-        context.body = { customer: customer.toJson() };
+        context.body = { customer: customer.toJSON() };
         context.type = 'json';
         return next();
     }
@@ -100,6 +107,7 @@ class CustomerController {
         }
 
         context.status = 200;
+        context.body = { customerId: customer._id };
         return next();
     }
 
@@ -107,19 +115,43 @@ class CustomerController {
         const token = context.request.headers[enums.AUTH.TOKEN_HEADER];
         const emailToken = new JwtToken({}, this.hash, this.tokenOptions);
 
+        let payload;
+
         try {
-            await emailToken.verify(token);
+            payload = await emailToken.verify(token);
         } catch (error) {
             context.throw(401, 'Invalid token');
             return next();
         }
 
-        const { body, params } = context.request;
+        let user;
 
-        const customer = await this.customerService.findCustomer({ _id: params.customerId });
+        try {
+            user = await this.userService.findUser({ _id: payload.id });
+        } catch (error) {
+            context.throw(401, 'Invalid user');
+            return next();
+        }
+
+        const { params } = context;
+        const { body } = context.request;
+
+        if (!user.customers.find((id) => id.toString() === params.customerId)) {
+            context.throw(403, 'User does not have rights');
+            return next();
+        }
+
+        let customer;
+
+        try {
+            customer = await this.customerService.findCustomer({ _id: params.customerId });
+        } catch (error) {
+            context.throw(404, 'Invalid customer id');
+            return next();
+        }
 
         if (!customer) {
-            context.throw(404, 'Invalid Customer');
+            context.throw(404, 'Invalid customer id');
             return next();
         }
 

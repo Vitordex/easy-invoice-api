@@ -10,7 +10,10 @@ class UserSchema {
     }
 
     generateSchema(keys) {
-        return this.baseSchema.keys(keys);
+        return this.baseSchema.keys({
+            ...keys,
+            headers: joi.object().unknown()
+        });
     }
 
     get schemas() {

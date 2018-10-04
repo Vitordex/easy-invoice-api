@@ -18,11 +18,11 @@ class InputValidationService {
                 input.body = context.request.body;
             if (isValidObject(context.request.query))
                 input.query = context.request.query;
-            if (isValidObject(context.request.params))
-                input.params = context.request.params;
+            if (isValidObject(context.params))
+                input.params = context.params;
             if (isValidObject(context.request.headers))
                 input.headers = context.request.headers;
-                
+
             try {
                 await joi.validate(input, schema);
 

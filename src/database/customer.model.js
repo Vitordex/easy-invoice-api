@@ -27,7 +27,14 @@ class Customer {
                     required: true
                 }
             },
-            document: String
+            document: String,
+            deletedAt: Date
+        }, {}, function (){
+            return {
+                name: this.name,
+                address: this.address,
+                document: this.document
+            };
         });
 
         return Customer;
