@@ -48,15 +48,26 @@ class UserController {
             return next();
         }
 
-        if(!user.active) {
+        if(user.active === 'inactive' || user.active === 'disabled') {
             context.throw(401, 'Account not activated');
+            return next();
+        }
+
+        const sentUser = user.toJSON();
+
+        user.active = 'active';
+
+        try {
+            await user.save();
+        } catch (error) {
+            context.throw(500, 'Error saving the user');
             return next();
         }
 
         const token = new JwtToken({ id: user.id }, this.hash, this.tokenOptions);
 
         context.set(enums.AUTH.TOKEN_HEADER, await token.hash());
-        context.body = { user: this.userService.toJSON(user) };
+        context.body = { user: sentUser };
         context.type = 'json';
         return next();
     }
@@ -185,7 +196,7 @@ Se não ignore este email`
             return next();
         }
 
-        user.active = true;
+        user.active = 'static';
 
         try {
             await user.save();   
