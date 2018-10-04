@@ -81,7 +81,7 @@ describe('Users component', () => {
         describe('happy path', () => {
             before(() => {
                 sinon.stub(userService, 'findUser').resolves({
-                    active: true,
+                    active: 'static',
                     email: testEmail,
                     password: hashedTestPassword,
                     id: 1,
@@ -89,7 +89,8 @@ describe('Users component', () => {
                         email: testEmail,
                         password: hashedTestPassword,
                         id: 1
-                    })
+                    }),
+                    save: () => Promise.resolve(true)
                 });
             });
 
@@ -101,19 +102,21 @@ describe('Users component', () => {
                     }
                 });
 
+                const next = async () => {
+                    await userController.login(context, defaultNext);
+                };
+
                 await validationMiddleware.validate(userSchema.schemas.login)(
                     context,
-                    async () => {
-                        await userController.login(context, async () => {
-                            const responseBody = context.body;
-                            const headers = context.header;
-                            const jwt = await new JwtToken({ id: 1 }, hashKey, authOptionals).hash();
-
-                            assert(responseBody.user && responseBody.user.id === 1);
-                            assert(headers[enums.AUTH.TOKEN_HEADER] === jwt);
-                        });
-                    }
+                    next
                 );
+
+                const responseBody = context.body;
+                const headers = context.header;
+                const jwt = await new JwtToken({ id: 1 }, hashKey, authOptionals).hash();
+
+                assert(responseBody.user && responseBody.user.id === 1);
+                assert(headers[enums.AUTH.TOKEN_HEADER] === jwt);
             });
 
             after(() => {
@@ -134,16 +137,18 @@ describe('Users component', () => {
                     }
                 });
 
+                const next = async () => {
+                    await userController.login(context, defaultNext);
+                };
+
                 await validationMiddleware.validate(userSchema.schemas.login)(
                     context,
-                    async () => {
-                        await userController.login(context, () => {
-                            const status = context.status;
-
-                            assert(status === 404);
-                        });
-                    }
+                    next
                 );
+
+                const status = context.status;
+
+                assert(status === 404);
             });
 
             after(() => {
@@ -174,16 +179,18 @@ describe('Users component', () => {
                     }
                 });
 
+                const next = async () => {
+                    await userController.login(context, defaultNext);
+                };
+
                 await validationMiddleware.validate(userSchema.schemas.login)(
                     context,
-                    async () => {
-                        await userController.login(context, () => {
-                            const status = context.status;
-
-                            assert(status === 401);
-                        });
-                    }
+                    next
                 );
+
+                const status = context.status;
+
+                assert(status === 401);
             });
 
             after(() => {
@@ -496,7 +503,7 @@ describe('Users component', () => {
                 );
 
                 const { status } = context;
-                
+
                 assert(status === 200);
             });
 
