@@ -14,9 +14,10 @@ class User {
 
         const User = creator.create(dbModels.USER, {
             active: {
-                type: Boolean,
+                type: String,
                 required: true,
-                default: false
+                default: 'inactive',
+                enum: enums.DB.PROPS.ACTIVE
             },
             name: {
                 type: String,

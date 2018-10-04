@@ -2,6 +2,8 @@ Changelog
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+- [2018-10-03] *minor* [#24](https://gitlab.com/roo.novais/easy-invoice/issues/24)
+  **Alterar parâmetro active para enum: [active, inactive, disabled, static]**
 - [2018-10-03] *minor* [#22](https://gitlab.com/roo.novais/easy-invoice/issues/22)
   **Refatorar rotas de customer**
 - [2018-10-03] *minor* [#21](https://gitlab.com/roo.novais/easy-invoice/issues/21)
