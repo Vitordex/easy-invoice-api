@@ -61,7 +61,25 @@ class CustomerSchema {
                     [enums.AUTH.TOKEN_HEADER]: joi
                         .string()
                         .required()
-                }).required().unknown(true)
+                }).required().unknown(true),
+                params: joi.object().keys({
+                    customerId: joi.string().required()
+                }),
+                body: joi.object().keys({
+                    name: joi.string(),
+                    address: joi.object().keys({
+                        street: joi.string(),
+                        number: joi.number()
+                            .min(0),
+                        complement: joi.string(),
+                        neighborhood: joi.string(),
+                        zip_code: joi.string(),
+                        city: joi.string(),
+                        state: joi.string()
+                            .valid(enums.DB.PROPS.STATES)
+                    }),
+                    document: joi.string()
+                }).min(1).required()
             })
         };
     }

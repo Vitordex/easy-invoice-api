@@ -10,6 +10,8 @@ class UserSchema {
     }
 
     generateSchema(keys) {
+        if(!keys.headers) keys.headers = joi.object().unknown();
+        
         return this.baseSchema.keys(keys);
     }
 
@@ -27,7 +29,7 @@ class UserSchema {
                         .string()
                         .min(6)
                         .required()
-                }).required()
+                }).required(),
             }),
             verify: this.generateSchema({
                 body: joi.object().keys({
