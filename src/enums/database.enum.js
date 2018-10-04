@@ -19,7 +19,8 @@ module.exports = {
             'Paraná', 'Pernambuco', 'Piauí', 'Rio de Janeiro',
             'Rio Grande do Norte', 'Rio Grande do Sul', 'Rondônia',
             'Roraima', 'Santa Catarina', 'São Paulo', 'Sergipe', 'Tocantins'],
-        RES_TYPE: ['Apartamento', 'Casa', 'Comercial']
+        RES_TYPE: ['Apartamento', 'Casa', 'Comercial'],
+        ACTIVE: ['active', 'inactive', 'disabled', 'static']
     },
     AUTH: {
         DB_NAME: 'admin'
