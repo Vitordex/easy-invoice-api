@@ -17,7 +17,7 @@ class User {
             active: {
                 type: String,
                 required: true,
-                default: 'inactive',
+                default: dbValues.PROPS.ACTIVE.INACTIVE,
                 enum: dbValues.PROPS.ACTIVE.ARRAY
             },
             name: {
