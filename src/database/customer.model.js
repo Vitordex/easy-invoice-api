@@ -1,4 +1,5 @@
 const DatabaseService = require('./database.service'); // eslint-disable-line
+const { DATABASE: dbValues } = require('../values');
 const { DB } = require('../enums');
 
 /**
@@ -23,7 +24,7 @@ class Customer {
                 city: String,
                 state: {
                     type: String,
-                    enum: DB.PROPS.STATES,
+                    enum: dbValues.PROPS.STATES.ARRAY,
                     required: true
                 }
             },

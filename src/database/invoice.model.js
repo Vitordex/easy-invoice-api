@@ -1,4 +1,6 @@
 const DatabaseService = require('./database.service'); // eslint-disable-line
+
+const { DATABASE: dbValues } = require('../values');
 const { DB } = require('../enums');
 const { MODELS } = DB;
 
@@ -28,7 +30,7 @@ class Invoice {
             addition: String,
             discount: String,
             value: Number,
-            type: { type: String, enum: DB.PROPS.RES_TYPE }
+            type: { type: String, enum: dbValues.PROPS.RES_TYPE.ARRAY }
         });
 
         return Invoice;

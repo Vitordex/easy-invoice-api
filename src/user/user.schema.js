@@ -1,8 +1,7 @@
 const joi = require('joi');
 
-const enums = require('../enums');
-
-const { STATES } = require('../enums').DB.PROPS;
+const { AUTH } = require('../enums');
+const { STATES } = require('../values').DATABASE.PROPS;
 
 class UserSchema {
     constructor(baseSchema) {
@@ -10,8 +9,8 @@ class UserSchema {
     }
 
     generateSchema(keys) {
-        if(!keys.headers) keys.headers = joi.object().unknown();
-        
+        if (!keys.headers) keys.headers = joi.object().unknown();
+
         return this.baseSchema.keys(keys);
     }
 
@@ -76,13 +75,13 @@ class UserSchema {
                         .max(255)
                         .required(),
                     state: joi.string()
-                        .valid(...STATES)
+                        .valid(...STATES.ARRAY)
                         .optional()
                 }).required().unknown(true)
             }),
             confirm: this.generateSchema({
                 headers: joi.object().keys({
-                    [enums.AUTH.TOKEN_HEADER]: joi
+                    [AUTH.TOKEN_HEADER]: joi
                         .string()
                         .required()
                 }).required().unknown(true)

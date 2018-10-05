@@ -1,7 +1,8 @@
 const DatabaseService = require('./database.service'); // eslint-disable-line
 
-const enums = require('../enums');
-const dbModels = enums.DB.MODELS;
+const {DATABASE: dbValues} = require('../values');
+const { DB } = require('../enums');
+const dbModels = DB.MODELS;
 
 class User {
     /**
@@ -17,7 +18,7 @@ class User {
                 type: String,
                 required: true,
                 default: 'inactive',
-                enum: enums.DB.PROPS.ACTIVE
+                enum: dbValues.PROPS.ACTIVE.ARRAY
             },
             name: {
                 type: String,
@@ -54,7 +55,7 @@ class User {
                 city: String,
                 state: {
                     type: String,
-                    enum: enums.DB.PROPS.STATES
+                    enum: dbValues.PROPS.STATES.ARRAY
                 }
             },
             registry: String,

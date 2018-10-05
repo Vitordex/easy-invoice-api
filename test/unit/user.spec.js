@@ -26,7 +26,7 @@ const authOptionals = authConfigs.optionals;
 
 const hashingOptions = authConfigs.password;
 
-const enums = require('../../src/enums');
+const { AUTH } = require('../../src/enums');
 
 /**@type {MailService} */
 let mailService;
@@ -116,7 +116,7 @@ describe('Users component', () => {
                 const jwt = await new JwtToken({ id: 1 }, hashKey, authOptionals).hash();
 
                 assert(responseBody.user && responseBody.user.id === 1);
-                assert(headers[enums.AUTH.TOKEN_HEADER] === jwt);
+                assert(headers[AUTH.TOKEN_HEADER] === jwt);
             });
 
             after(() => {
@@ -489,7 +489,7 @@ describe('Users component', () => {
             it('should return user with id 1', async () => {
                 const context = new Context({
                     headers: {
-                        [enums.AUTH.TOKEN_HEADER]: await new JwtToken({}, hashKey, authOptionals).hash()
+                        [AUTH.TOKEN_HEADER]: await new JwtToken({}, hashKey, authOptionals).hash()
                     }
                 });
 
@@ -520,7 +520,7 @@ describe('Users component', () => {
             it('should throw a 404 error', async () => {
                 const context = new Context({
                     headers: {
-                        [enums.AUTH.TOKEN_HEADER]: await new JwtToken({}, hashKey, authOptionals).hash()
+                        [AUTH.TOKEN_HEADER]: await new JwtToken({}, hashKey, authOptionals).hash()
                     }
                 });
 
@@ -547,7 +547,7 @@ describe('Users component', () => {
             it('should throw a 401 error', async () => {
                 const context = new Context({
                     headers: {
-                        [enums.AUTH.TOKEN_HEADER]: await new JwtToken({}, invalidHash, authOptionals).hash()
+                        [AUTH.TOKEN_HEADER]: await new JwtToken({}, invalidHash, authOptionals).hash()
                     }
                 });
 

@@ -1,6 +1,7 @@
 const joi = require('joi');
 
-const enums = require('../enums');
+const { AUTH } = require('../enums');
+const { DATABASE } = require('../values');
 
 class CustomerSchema {
     constructor(baseSchema) {
@@ -15,7 +16,7 @@ class CustomerSchema {
         return {
             getCustomer: this.generateSchema({
                 headers: joi.object().keys({
-                    [enums.AUTH.TOKEN_HEADER]: joi
+                    [AUTH.TOKEN_HEADER]: joi
                         .string()
                         .required()
                 }).required().unknown(true),
@@ -27,7 +28,7 @@ class CustomerSchema {
             }),
             postCustomer: this.generateSchema({
                 headers: joi.object().keys({
-                    [enums.AUTH.TOKEN_HEADER]: joi
+                    [AUTH.TOKEN_HEADER]: joi
                         .string()
                         .required()
                 }).required().unknown(true),
@@ -49,7 +50,7 @@ class CustomerSchema {
                         city: joi.string()
                             .required(),
                         state: joi.string()
-                            .valid(enums.DB.PROPS.STATES)
+                            .valid(DATABASE.PROPS.STATES.ARRAY)
                             .required()
                     }).required(),
                     document: joi.string()
@@ -58,7 +59,7 @@ class CustomerSchema {
             }),
             putCustomer: this.generateSchema({
                 headers: joi.object().keys({
-                    [enums.AUTH.TOKEN_HEADER]: joi
+                    [AUTH.TOKEN_HEADER]: joi
                         .string()
                         .required()
                 }).required().unknown(true),
@@ -76,7 +77,7 @@ class CustomerSchema {
                         zip_code: joi.string(),
                         city: joi.string(),
                         state: joi.string()
-                            .valid(enums.DB.PROPS.STATES)
+                            .valid(DATABASE.PROPS.STATES.ARRAY)
                     }),
                     document: joi.string()
                 }).min(1).required()
