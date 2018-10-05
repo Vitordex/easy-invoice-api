@@ -26,13 +26,13 @@ class ModelCreator {
         });
 
         structure.updated_local = updated_local;
-
+        
         const schemaOptionals = {
             usePushEach: true,
             timestamps: true,
             ...optionals
         };
-
+        
         const schema = new Schema(structure, schemaOptionals);
 
         if(toJson) schema.method(enums.DB.FUNCTIONS.TO_JSON, toJson);

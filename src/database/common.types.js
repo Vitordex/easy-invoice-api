@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const { DB } = require('../enums');
+const { DATABASE } = require('../values');
 
 module.exports = {
     Model: mongoose.Model,
@@ -21,7 +21,7 @@ module.exports = {
                 neighborhood: '',
                 zip_code: '',
                 city: '',
-                state: DB.PROPS.STATES
+                state: DATABASE.PROPS.STATES.ARRAY
             },
             registry: '',
             incomes: {
@@ -52,7 +52,7 @@ module.exports = {
                 neighborhood: '',
                 zip_code: '',
                 city: '',
-                state: DB.PROPS.STATES
+                state: DATABASE.PROPS.STATES.ARRAY
             },
             document: String,
             save: () => Promise.resolve()

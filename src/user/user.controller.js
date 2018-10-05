@@ -6,6 +6,7 @@ const MailService = require('../services/mail.service');
 const JwtToken = require('./jwt.model.js');
 
 const enums = require('../enums');
+const {ACTIVE: activeProp} = require('../values').DATABASE.PROPS;
 
 class UserController {
     /**
@@ -48,14 +49,14 @@ class UserController {
             return next();
         }
 
-        if(user.active === 'inactive' || user.active === 'disabled') {
+        if(user.active === activeProp.INACTIVE || user.active === activeProp.DISABLED) {
             context.throw(401, 'Account not activated');
             return next();
         }
 
         const sentUser = user.toJSON();
 
-        user.active = 'active';
+        user.active = activeProp.ACTIVE;
 
         try {
             await user.save();
@@ -196,7 +197,7 @@ Se não ignore este email`
             return next();
         }
 
-        user.active = 'static';
+        user.active = activeProp.STATIC;
 
         try {
             await user.save();   
