@@ -20,7 +20,7 @@ function toEnum(array) {
     /** @param {String} value */
     const iterable = (value) => {
         const key = value;
-        propertiesObject[key] = removeAccents(value).toUpperCase;
+        propertiesObject[key] = removeAccents(value).toUpperCase();
     };
     array.forEach(iterable);
 
