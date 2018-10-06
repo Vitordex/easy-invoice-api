@@ -1,6 +1,6 @@
 import sys
 import boto3
-print(str(sys.argv))
+
 instanceId = sys.argv[1]
 GITLAB_USER = sys.argv[2]
 GITLAB_PASS = sys.argv[3]
