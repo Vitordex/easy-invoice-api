@@ -178,7 +178,7 @@ Se não ignore este email`
     }
 
     async confirm(context, next) {
-        const token = context.request.headers[enums.AUTH.TOKEN_HEADER];
+        const token = context.request.query.token;
         const emailToken = new JwtToken({}, this.hash, this.tokenOptions);
 
         let payload;

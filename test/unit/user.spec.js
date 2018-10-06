@@ -488,8 +488,8 @@ describe('Users component', () => {
 
             it('should return user with id 1', async () => {
                 const context = new Context({
-                    headers: {
-                        [AUTH.TOKEN_HEADER]: await new JwtToken({}, hashKey, authOptionals).hash()
+                    query: {
+                        token: await new JwtToken({}, hashKey, authOptionals).hash()
                     }
                 });
 
@@ -519,8 +519,8 @@ describe('Users component', () => {
 
             it('should throw a 404 error', async () => {
                 const context = new Context({
-                    headers: {
-                        [AUTH.TOKEN_HEADER]: await new JwtToken({}, hashKey, authOptionals).hash()
+                    query: {
+                        token: await new JwtToken({}, hashKey, authOptionals).hash()
                     }
                 });
 
@@ -546,8 +546,8 @@ describe('Users component', () => {
         describe('invalid token', () => {
             it('should throw a 401 error', async () => {
                 const context = new Context({
-                    headers: {
-                        [AUTH.TOKEN_HEADER]: await new JwtToken({}, invalidHash, authOptionals).hash()
+                    query: {
+                        token: await new JwtToken({}, invalidHash, authOptionals).hash()
                     }
                 });
 
@@ -569,7 +569,7 @@ describe('Users component', () => {
         describe('wrong input', () => {
             it('should throw a 400 error', async () => {
                 const context = new Context({
-                    headers: {}
+                    query: {}
                 });
 
                 await validationMiddleware.validate(

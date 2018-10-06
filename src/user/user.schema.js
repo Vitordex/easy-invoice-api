@@ -80,8 +80,8 @@ class UserSchema {
                 }).required().unknown(true)
             }),
             confirm: this.generateSchema({
-                headers: joi.object().keys({
-                    [AUTH.TOKEN_HEADER]: joi
+                query: joi.object().keys({
+                    token: joi
                         .string()
                         .required()
                 }).required().unknown(true)
