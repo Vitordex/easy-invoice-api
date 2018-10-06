@@ -1,5 +1,10 @@
 const { JS } = require('../enums');
+const LogService = require('../services/log.service'); // eslint-disable-line
 
+/**
+ * Returns a middleware for error handling and logging
+ * @param {LogService} logger 
+ */
 function handleErrors(logger) {
     return async (context, next) => {
         try {
