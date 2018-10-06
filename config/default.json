@@ -2,7 +2,8 @@
     "server": {
         "port": 3000,
         "logger": {
-            "name": "email-validation"
+            "name": "email-validation",
+            "path": "/var/log/easy-invoice-api/api.log"
         }
     },
     "auth":{

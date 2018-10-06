@@ -1,10 +1,13 @@
 const bunyan = require('bunyan');
 
 class LogService {
-    constructor(loggerName, minLogLevel = 'trace') {
+    constructor(loggerName, pathToLogFile, minLogLevel = 'trace') {
         this.logger = bunyan.createLogger({
             level: minLogLevel,
             name: loggerName,
+            streams: [{
+                path: pathToLogFile
+            }]
         });
     }
 
