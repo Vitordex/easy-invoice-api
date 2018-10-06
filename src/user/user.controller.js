@@ -6,7 +6,7 @@ const MailService = require('../services/mail.service');
 const JwtToken = require('./jwt.model.js');
 
 const enums = require('../enums');
-const {ACTIVE: activeProp} = require('../values').DATABASE.PROPS;
+const { ACTIVE: activeProp } = require('../values').DATABASE.PROPS;
 
 class UserController {
     /**
@@ -45,11 +45,11 @@ class UserController {
         const match = this.userService.matchPassword(password, user.password);
 
         if (!match) {
-            context.throw(401, 'Invalid email or password');
+            context.throw(404, 'Invalid email or password');
             return next();
         }
 
-        if(user.active === activeProp.INACTIVE || user.active === activeProp.DISABLED) {
+        if (user.active === activeProp.INACTIVE || user.active === activeProp.DISABLED) {
             context.throw(401, 'Account not activated');
             return next();
         }
@@ -68,7 +68,7 @@ class UserController {
         const token = new JwtToken({ id: user.id }, this.hash, this.tokenOptions);
 
         context.set(enums.AUTH.TOKEN_HEADER, await token.hash());
-        context.body = { user: sentUser };
+        context.body = sentUser;
         context.type = 'json';
         return next();
     }
@@ -167,7 +167,7 @@ Se não ignore este email`
                 user.email,
                 'Verificação de Email',
                 `${context.request.origin}/users/confirm?token=${await token.hash()}`
-            );   
+            );
         } catch (error) {
             context.throw(500, 'Error sending the confirmation email');
             return next();
@@ -177,7 +177,7 @@ Se não ignore este email`
         return next();
     }
 
-    async confirm(context, next){
+    async confirm(context, next) {
         const token = context.request.headers[enums.AUTH.TOKEN_HEADER];
         const emailToken = new JwtToken({}, this.hash, this.tokenOptions);
 
@@ -190,9 +190,9 @@ Se não ignore este email`
             return next();
         }
 
-        const user = await this.userService.findUser({_id: payload.id});
+        const user = await this.userService.findUser({ _id: payload.id });
 
-        if(!user) {
+        if (!user) {
             context.throw(404, 'Invalid User');
             return next();
         }
@@ -200,7 +200,7 @@ Se não ignore este email`
         user.active = activeProp.STATIC;
 
         try {
-            await user.save();   
+            await user.save();
         } catch (error) {
             context.throw(500, 'Error saving the user');
             return next();
