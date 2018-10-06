@@ -214,7 +214,7 @@ describe('Users component', () => {
         });
     });
 
-    describe('verify route', () => {
+    describe('recover route', () => {
         describe('happy path', () => {
             before(() => {
                 sinon.stub(userService, 'findUser').resolves({
@@ -240,10 +240,10 @@ describe('Users component', () => {
                     origin: 'localhost'
                 });
 
-                await validationMiddleware.validate(userSchema.schemas.verify)(
+                await validationMiddleware.validate(userSchema.schemas.recover)(
                     context,
                     async () => {
-                        await userController.verify(context, async () => {
+                        await userController.recover(context, async () => {
                             const jwt = await new JwtToken({
                                 id: 1,
                                 email: testEmail
@@ -276,10 +276,10 @@ describe('Users component', () => {
                     }
                 });
 
-                await validationMiddleware.validate(userSchema.schemas.verify)(
+                await validationMiddleware.validate(userSchema.schemas.recover)(
                     context,
                     async () => {
-                        await userController.verify(context, () => {
+                        await userController.recover(context, () => {
                             const status = context.status;
 
                             assert(status === 404);
@@ -318,10 +318,10 @@ describe('Users component', () => {
                     }
                 });
 
-                await validationMiddleware.validate(userSchema.schemas.verify)(
+                await validationMiddleware.validate(userSchema.schemas.recover)(
                     context,
                     async () => {
-                        await userController.verify(context, () => {
+                        await userController.recover(context, () => {
                             const status = context.status;
 
                             assert(status === 400);
@@ -343,7 +343,7 @@ describe('Users component', () => {
                 });
 
                 await validationMiddleware.validate(
-                    userSchema.schemas.verify
+                    userSchema.schemas.recover
                 )(context);
 
                 assert(context.status === 400);
@@ -352,7 +352,7 @@ describe('Users component', () => {
         });
     });
 
-    describe('recover route', () => {
+    describe('changePassword route', () => {
         describe('happy path', () => {
             before(() => {
                 sinon.stub(userService, 'findUser').resolves({
@@ -376,10 +376,10 @@ describe('Users component', () => {
                     }
                 });
 
-                await validationMiddleware.validate(userSchema.schemas.recover)(
+                await validationMiddleware.validate(userSchema.schemas.changePassword)(
                     context,
                     async () => {
-                        await userController.recover(context, async () => {
+                        await userController.changePassword(context, async () => {
                             assert(context.status === 200);
                         });
                     }
@@ -405,10 +405,10 @@ describe('Users component', () => {
                     }
                 });
 
-                await validationMiddleware.validate(userSchema.schemas.recover)(
+                await validationMiddleware.validate(userSchema.schemas.changePassword)(
                     context,
                     async () => {
-                        await userController.recover(context, () => {
+                        await userController.changePassword(context, () => {
                             const status = context.status;
 
                             assert(status === 401);
@@ -436,10 +436,10 @@ describe('Users component', () => {
                     }
                 });
 
-                await validationMiddleware.validate(userSchema.schemas.recover)(
+                await validationMiddleware.validate(userSchema.schemas.changePassword)(
                     context,
                     async () => {
-                        await userController.recover(context, () => {
+                        await userController.changePassword(context, () => {
                             const status = context.status;
 
                             assert(status === 500);
@@ -460,7 +460,7 @@ describe('Users component', () => {
                 });
 
                 await validationMiddleware.validate(
-                    userSchema.schemas.recover
+                    userSchema.schemas.changePassword
                 )(context);
 
                 assert(context.status === 400);
