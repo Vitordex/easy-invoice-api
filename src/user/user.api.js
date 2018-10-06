@@ -45,19 +45,19 @@ class UserApi {
         );
 
         this.router.post(
-            '/verify',
+            '/recover',
             this.validationMiddleware.validate(this.userSchema.schemas.verify),
             async (context, next) => {
-                await this.userController.verify(context, next);
+                await this.userController.recover(context, next);
             }
         );
 
         this.router.patch(
-            '/recover',
+            '/change/password',
             this.authService.authenticate(),
-            this.validationMiddleware.validate(this.userSchema.schemas.recover),
+            this.validationMiddleware.validate(this.userSchema.schemas.changePassword),
             async (context, next) => {
-                await this.userController.recover(context, next);
+                await this.userController.changePassword(context, next);
             }
         );
 

@@ -66,7 +66,7 @@ class User {
                 vacation: Boolean
             },
             negocioation_margin: Number,
-            bills: [{
+            bills: {
                 inss: Number,
                 fgts: Number,
                 issqn: Number,
@@ -74,7 +74,7 @@ class User {
                 rent: Number,
                 maintenance: Number,
                 supplies: [{ type: Number }],
-            }],
+            },
             deletedAt: Date
         }, {}, function () {
             return {

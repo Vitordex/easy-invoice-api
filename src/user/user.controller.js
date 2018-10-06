@@ -73,7 +73,7 @@ class UserController {
         return next();
     }
 
-    async verify(context, next) {
+    async recover(context, next) {
         const email = context.request.body.email;
 
         const user = await this.userService.findUser({ email });
@@ -107,7 +107,7 @@ Se não ignore este email`
         return next();
     }
 
-    async recover(context, next) {
+    async changePassword(context, next) {
         const token = context.request.headers[enums.AUTH.TOKEN_HEADER];
         const emailToken = new JwtToken({}, this.hash, this.tokenOptions);
 

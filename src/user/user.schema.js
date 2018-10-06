@@ -30,7 +30,7 @@ class UserSchema {
                         .required()
                 }).required(),
             }),
-            verify: this.generateSchema({
+            recover: this.generateSchema({
                 body: joi.object().keys({
                     email: joi
                         .string()
@@ -40,13 +40,18 @@ class UserSchema {
                         .required()
                 }).required()
             }),
-            recover: this.generateSchema({
+            changePassword: this.generateSchema({
                 body: joi.object().keys({
                     password: joi
                         .string()
                         .min(6)
                         .required()
-                }).required()
+                }).required(),
+                headers: joi.object().keys({
+                    [AUTH.TOKEN_HEADER]: joi
+                        .string()
+                        .required()
+                }).required().unknown(true)
             }),
             register: this.generateSchema({
                 body: joi.object().keys({
