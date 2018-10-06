@@ -1,0 +1,11 @@
+Activate Hybrid environment
+https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-managed-instance-activation.html
+
+Install SSM-Agent on EC2
+https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-manual-agent-install.html
+
+Install Cloudwatch Agent on EC2
+https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/QuickStartEC2Instance.html
+
+Install Cloudwatch Agent on launch in EC2
+https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/EC2NewInstanceCWL.html
