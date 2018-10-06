@@ -37,7 +37,15 @@ class UserController {
         const user = await this.userService.findUser({ email });
 
         if (!user) {
-            context.throw(404, 'Invalid email or password');
+            context.throw(404, {
+                message: 'Invalid email or password',
+                reason: {
+                    source: 'user.controller',
+                    method: 'login',
+                    input: requestBody,
+                    output: 'User not found'
+                }
+            });
             return next();
         }
 
@@ -45,12 +53,28 @@ class UserController {
         const match = this.userService.matchPassword(password, user.password);
 
         if (!match) {
-            context.throw(404, 'Invalid email or password');
+            context.throw(404, {
+                message: 'Invalid email or password',
+                reason: {
+                    source: 'user.controller',
+                    method: 'login',
+                    input: requestBody,
+                    output: 'Wrong password'
+                }
+            });
             return next();
         }
 
         if (user.active === activeProp.INACTIVE || user.active === activeProp.DISABLED) {
-            context.throw(401, 'Account not activated');
+            context.throw(401, {
+                message: 'Account not activated',
+                reason: {
+                    source: 'user.controller',
+                    method: 'login',
+                    input: requestBody,
+                    output: 'User not able to login due to inactive'
+                }
+            });
             return next();
         }
 
@@ -61,7 +85,15 @@ class UserController {
         try {
             await user.save();
         } catch (error) {
-            context.throw(500, 'Error saving the user');
+            context.throw(500, {
+                message: 'Error saving the user',
+                reason: {
+                    source: 'user.controller',
+                    method: 'login',
+                    input: requestBody,
+                    output: error
+                }
+            });
             return next();
         }
 
