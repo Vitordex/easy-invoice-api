@@ -7,6 +7,8 @@ class LogService {
             name: loggerName,
             streams: [{
                 path: pathToLogFile
+            }, {
+                stream: process.stdout
             }]
         });
     }

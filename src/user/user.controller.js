@@ -45,9 +45,9 @@ class UserController {
             const error = new ControllerError(
                 404,
                 'Invalid email or password',
-                'user', 
-                'login', 
-                requestBody, 
+                'user',
+                'login',
+                requestBody,
                 'User not found'
             );
             context.throw(404, error);
@@ -63,9 +63,9 @@ class UserController {
             const error = new ControllerError(
                 status,
                 'Invalid email or password',
-                'user', 
-                'login', 
-                requestBody, 
+                'user',
+                'login',
+                requestBody,
                 'Incorrect Password'
             );
             context.throw(status, error);
@@ -78,9 +78,9 @@ class UserController {
             const error = new ControllerError(
                 status,
                 'Account not activated',
-                'user', 
-                'login', 
-                requestBody, 
+                'user',
+                'login',
+                requestBody,
                 'User not able to login due to inactive'
             );
             context.throw(status, error);
@@ -99,9 +99,9 @@ class UserController {
             const saveError = new ControllerError(
                 status,
                 'Error saving the user',
-                'user', 
-                'login', 
-                requestBody, 
+                'user',
+                'login',
+                requestBody,
                 error
             );
             context.throw(status, saveError);
@@ -247,6 +247,72 @@ Se não ignore este email`
             await user.save();
         } catch (error) {
             context.throw(500, 'Error saving the user');
+            return next();
+        }
+
+        context.status = 200;
+        return next();
+    }
+
+    async patchUser(context, next) {
+        const token = context.input.headers[enums.AUTH.TOKEN_HEADER];
+        const tokenValidator = new JwtToken({}, this.hash, this.tokenOptions);
+
+        let payload;
+
+        try {
+            payload = await tokenValidator.verify(token);
+        } catch (error) {
+            const status = 401;
+            const tokenError = new ControllerError(
+                status,
+                'Invalid token',
+                'user',
+                'patchUser',
+                context.input,
+                error
+            );
+            context.throw(status, tokenError);
+
+            return next();
+        }
+
+        const user = await this.userService.findUser({ _id: payload.id });
+
+        if (!user) {
+            const error = new ControllerError(
+                404,
+                'Invalid email or password',
+                'user',
+                'patchUser',
+                context.input,
+                'User not found'
+            );
+            context.throw(404, error);
+
+            return next();
+        }
+
+        const { body } = context.input;
+        const { password } = body;
+
+        if (password) 
+            body.password = await this.userService.hashPassword(password);
+
+        try {
+            await user.updateWithDates(body);
+        } catch (error) {
+            const status = 500;
+            const saveError = new ControllerError(
+                status,
+                'Error saving the user',
+                'user',
+                'login',
+                context.input,
+                error
+            );
+            context.throw(status, saveError);
+
             return next();
         }
 

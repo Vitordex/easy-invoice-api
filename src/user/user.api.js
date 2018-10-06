@@ -76,6 +76,15 @@ class UserApi {
                 await this.userController.confirm(context, next);
             }
         );
+
+        this.router.patch(
+            '/',
+            this.authService.authenticate(),
+            this.validationMiddleware.validate(this.userSchema.schemas.patchUser),
+            async (context, next) => {
+                await this.userController.patchUser(context, next);
+            }
+        );
     }
 }
 

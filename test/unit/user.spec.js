@@ -16,6 +16,8 @@ const UserSchema = require('../../src/user/user.schema');
 const JwtToken = require('../../src/user/jwt.model');
 const Context = require('./context.model');
 
+const ControllerError = require('../../src/log/controller.error.model');
+
 const fs = require('fs');
 const hashKey = fs.readFileSync('./server.hash.key', { encoding: 'utf-8' });
 const invalidHash = 'secret';
@@ -209,7 +211,7 @@ describe('Users component', () => {
                 )(context);
 
                 assert(context.status === 400);
-                assert(context.body instanceof Array);
+                assert(context.body instanceof ControllerError);
             });
         });
     });
@@ -347,7 +349,7 @@ describe('Users component', () => {
                 )(context);
 
                 assert(context.status === 400);
-                assert(context.body instanceof Array);
+                assert(context.body instanceof ControllerError);
             });
         });
     });
@@ -464,7 +466,7 @@ describe('Users component', () => {
                 )(context);
 
                 assert(context.status === 400);
-                assert(context.body instanceof Array);
+                assert(context.body instanceof ControllerError);
             });
         });
     });
@@ -577,7 +579,7 @@ describe('Users component', () => {
                 )(context);
 
                 assert(context.status === 400);
-                assert(context.body instanceof Array);
+                assert(context.body instanceof ControllerError);
             });
         });
     });
@@ -731,9 +733,9 @@ describe('Users component', () => {
                 await validationMiddleware.validate(
                     userSchema.schemas.register
                 )(context);
-
+                
                 assert(context.status === 400);
-                assert(context.body instanceof Array);
+                assert(context.body instanceof ControllerError);
             });
         });
     });

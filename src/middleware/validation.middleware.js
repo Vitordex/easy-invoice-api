@@ -1,5 +1,7 @@
 const joi = require('joi');
 
+const ControllerError = require('../log/controller.error.model'); // eslint-disable-line
+
 const enums = require('../enums');
 
 const baseSchema = joi.object().options({
@@ -11,6 +13,13 @@ function isValidObject(obj) {
 }
 
 class InputValidationService {
+    /**
+     * @param {ControllerError} apiError 
+     */
+    constructor(apiError) {
+        this.ControllerError = apiError;
+    }
+
     validate(schema) {
         return async function validationMiddleware(context, next) {
             const input = {};
@@ -26,19 +35,30 @@ class InputValidationService {
             try {
                 await joi.validate(input, schema);
 
+                context.input = input;
                 await next();
             } catch (error) {
                 if (!error.details) throw error;
 
-                context.body = error.details.map(err => {
+                const status = 400;
+                
+                const mapError = err => {
                     return {
                         key: err.context.key,
                         label: err.context.label,
                         type: err.type
                     };
-                });
+                };
+                const inputError = new ControllerError(
+                    status,
+                    'Input error',
+                    'validation',
+                    'validate',
+                    input,
+                    error.details.map(mapError)
+                );
 
-                context.status = 400;
+                context.throw(status, inputError);
             }
         };
     }
