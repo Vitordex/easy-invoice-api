@@ -4,7 +4,7 @@ const Router = require('koa-router');
 const UserController = require('./user.controller'); 
 const AuthService = require('./auth.service');
 const UserSchema = require('./user.schema');
-const ValidationMiddleware = require('../services/validation.middleware');
+const ValidationMiddleware = require('../middleware/validation.middleware');
 const MailService = require('../services/mail.service');
 /* eslint-enable no-unused-vars */
 

@@ -6,7 +6,7 @@ const DatabaseService = require('./src/database/database.service');
 const AuthService = require('./src/user/auth.service');
 const MailService = require('./src/services/mail.service');
 const HashingService = require('./src/services/hashing.service');
-const ValidationMiddleware = require('./src/services/validation.middleware');
+const ValidationMiddleware = require('./src/middleware/validation.middleware');
 
 const User = require('./src/database/user.model');
 const UserService = require('./src/user/user.service');
@@ -20,10 +20,12 @@ const CustomerController = require('./src/customer/customer.controller');
 const CustomerSchema = require('./src/customer/customer.schema');
 const CustomerRouter = require('./src/customer/customer.api');
 
+const ControllerError = require('./src/log/controller.error.model');
+
 const fs = require('fs');
 const hashKey = fs.readFileSync('./server.hash.key', { encoding: 'utf-8' });
 
-const errorMiddleware = require('./src/services/error.handle.middleware');
+const errorMiddleware = require('./src/middleware/error.handle.middleware');
 
 async function initApp(logger) {
     const app = new Koa();
@@ -56,7 +58,8 @@ async function initApp(logger) {
         userService,
         authHash: hashKey,
         authConfigs,
-        mailService
+        mailService,
+        apiErrorModel: ControllerError
     });
 
     const tokenExpiration = authConfigs.token.expiration;
@@ -87,7 +90,8 @@ async function initApp(logger) {
         userService,
         authHash: hashKey,
         authConfigs,
-        customerService
+        customerService,
+        apiErrorModel: ControllerError
     });
 
     const customerSchema = new CustomerSchema(validationMiddleware.baseSchema);

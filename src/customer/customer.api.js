@@ -4,15 +4,15 @@ const Router = require('koa-router');
 const AuthService = require('../user/auth.service');
 const CustomerController = require('./customer.controller');
 const CustomerSchema = require('./customer.schema');
-const ValidationMiddleware = require('../services/validation.middleware');
+const ValidationMiddleware = require('../middleware/validation.middleware');
 /* eslint-enable no-unused-vars */
 
 class CustomerApi {
     /**
      * @param {Object} params
      * @param {AuthService} params.authService The authentication service for the protexted routes
-     * @param {UserController} params.customerController The controller with all the methods for user routes
-     * @param {UserSchema} params.customerSchema The input validation for user routes
+     * @param {CustomerController} params.customerController The controller with all the methods for user routes
+     * @param {CustomerSchema} params.customerSchema The input validation for user routes
      * @param {ValidationMiddleware} params.validationMiddleware The middleware for validating route input
      */
     constructor({

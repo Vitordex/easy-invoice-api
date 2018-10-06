@@ -1,6 +1,7 @@
 /* eslint-disable no-unused-vars */
 const UserService = require('./user.service');
 const MailService = require('../services/mail.service');
+const ControllerError = require('../log/controller.error.model');
 /* eslint-enable no-unused-vars */
 
 const JwtToken = require('./jwt.model.js');
@@ -16,12 +17,14 @@ class UserController {
      * @param {String} params.authHash
      * @param {Object} params.authConfigs
      * @param {MailService} params.mailService
+     * @param {ControllerError} params.apiErrorModel
      */
     constructor({
         userService,
         authHash,
         authConfigs,
-        mailService
+        mailService,
+        apiErrorModel
     }) {
         this.mailService = mailService;
         this.userService = userService;
@@ -29,6 +32,8 @@ class UserController {
         this.hash = authHash;
         this.tokenExpiration = authConfigs.token.expiration;
         this.tokenOptions = authConfigs.optionals;
+
+        this.ControllerError = apiErrorModel;
     }
 
     async login(context, next) {
@@ -37,15 +42,16 @@ class UserController {
         const user = await this.userService.findUser({ email });
 
         if (!user) {
-            context.throw(404, {
-                message: 'Invalid email or password',
-                reason: {
-                    source: 'user.controller',
-                    method: 'login',
-                    input: requestBody,
-                    output: 'User not found'
-                }
-            });
+            const error = new ControllerError(
+                404,
+                'Invalid email or password',
+                'user', 
+                'login', 
+                requestBody, 
+                'User not found'
+            );
+            context.throw(404, error);
+
             return next();
         }
 
@@ -53,28 +59,32 @@ class UserController {
         const match = this.userService.matchPassword(password, user.password);
 
         if (!match) {
-            context.throw(404, {
-                message: 'Invalid email or password',
-                reason: {
-                    source: 'user.controller',
-                    method: 'login',
-                    input: requestBody,
-                    output: 'Wrong password'
-                }
-            });
+            const status = 404;
+            const error = new ControllerError(
+                status,
+                'Invalid email or password',
+                'user', 
+                'login', 
+                requestBody, 
+                'Incorrect Password'
+            );
+            context.throw(status, error);
+
             return next();
         }
 
         if (user.active === activeProp.INACTIVE || user.active === activeProp.DISABLED) {
-            context.throw(401, {
-                message: 'Account not activated',
-                reason: {
-                    source: 'user.controller',
-                    method: 'login',
-                    input: requestBody,
-                    output: 'User not able to login due to inactive'
-                }
-            });
+            const status = 401;
+            const error = new ControllerError(
+                status,
+                'Account not activated',
+                'user', 
+                'login', 
+                requestBody, 
+                'User not able to login due to inactive'
+            );
+            context.throw(status, error);
+
             return next();
         }
 
@@ -85,15 +95,17 @@ class UserController {
         try {
             await user.save();
         } catch (error) {
-            context.throw(500, {
-                message: 'Error saving the user',
-                reason: {
-                    source: 'user.controller',
-                    method: 'login',
-                    input: requestBody,
-                    output: error
-                }
-            });
+            const status = 500;
+            const saveError = new ControllerError(
+                status,
+                'Error saving the user',
+                'user', 
+                'login', 
+                requestBody, 
+                error
+            );
+            context.throw(status, saveError);
+
             return next();
         }
 

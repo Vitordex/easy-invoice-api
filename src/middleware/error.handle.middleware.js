@@ -1,5 +1,6 @@
 const { JS } = require('../enums');
-const LogService = require('../services/log.service'); // eslint-disable-line
+const LogService = require('../log/log.service'); // eslint-disable-line
+const ControllerError = require('../log/controller.error.model');// eslint-disable-line
 
 /**
  * Returns a middleware for error handling and logging
@@ -10,12 +11,14 @@ function handleErrors(logger) {
         try {
             await next();
         } catch (error) {
+            /**@type {ControllerError} */
             let treatError = error;
 
             if (!error)
                 treatError = { message: 'Error', reason: {} };
 
-            logger.error(treatError.message, treatError.reason);
+            logger.error(treatError.message, treatError.toJson());
+            context.status = treatError.requestStatus;
         }
 
         const { status, body } = context;

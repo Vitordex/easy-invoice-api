@@ -7,7 +7,7 @@ const config = require('../../src/services/config.service');
 const MailService = require('../../src/services/mail.service');
 const HashingService = require('../../src/services/hashing.service');
 
-const ValidationMiddleware = require('../../src/services/validation.middleware');
+const ValidationMiddleware = require('../../src/middleware/validation.middleware');
 
 const UserService = require('../../src/user/user.service');
 const UserController = require('../../src/user/user.controller');
