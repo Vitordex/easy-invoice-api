@@ -72,7 +72,7 @@ async function initApp(logger) {
         authOptionals
     );
 
-    const validationMiddleware = new ValidationMiddleware();
+    const validationMiddleware = new ValidationMiddleware(ControllerError);
     const userSchema = new UserSchema(validationMiddleware.baseSchema);
     const userApi = new UserRouter({
         authService,
