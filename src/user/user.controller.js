@@ -45,7 +45,7 @@ class UserController {
         const match = this.userService.matchPassword(password, user.password);
 
         if (!match) {
-            context.throw(401, 'Invalid email or password');
+            context.throw(404, 'Invalid email or password');
             return next();
         }
 

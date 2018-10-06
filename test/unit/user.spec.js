@@ -115,7 +115,7 @@ describe('Users component', () => {
                 const headers = context.header;
                 const jwt = await new JwtToken({ id: 1 }, hashKey, authOptionals).hash();
 
-                assert(responseBody.user && responseBody.user.id === 1);
+                assert(responseBody && responseBody.id === 1);
                 assert(headers[AUTH.TOKEN_HEADER] === jwt);
             });
 
@@ -171,7 +171,7 @@ describe('Users component', () => {
                 });
             });
 
-            it('should throw a 401 error', async () => {
+            it('should throw a 404 error', async () => {
                 const context = new Context({
                     body: {
                         email: testEmail,
@@ -190,7 +190,7 @@ describe('Users component', () => {
 
                 const status = context.status;
 
-                assert(status === 401);
+                assert(status === 404);
             });
 
             after(() => {
