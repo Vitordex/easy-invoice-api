@@ -23,19 +23,14 @@ const CustomerRouter = require('./src/customer/customer.api');
 const fs = require('fs');
 const hashKey = fs.readFileSync('./server.hash.key', { encoding: 'utf-8' });
 
+const errorMiddleware = require('./src/services/error.handle.middleware');
+
 async function initApp(logger) {
     const app = new Koa();
 
     app.use(bodyParser());
 
-    app.use(async (context, next) => {
-        try {
-            await next();
-        } catch (error) {
-            logger.error(error);
-            context.throw(error);
-        }
-    });
+    app.use(errorMiddleware(logger));
 
     const mailService = new MailService(config.get('mail.options'));
 
@@ -79,8 +74,8 @@ async function initApp(logger) {
     const userApi = new UserRouter({
         authService,
         mailService,
-        userController, 
-        userSchema, 
+        userController,
+        userSchema,
         validationMiddleware
     });
     userApi.buildRoutes();
