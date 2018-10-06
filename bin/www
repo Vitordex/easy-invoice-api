@@ -3,7 +3,8 @@
 const bluebird = require('bluebird');
 const config = require('../src/services/config.service');
 const LogService = require('../src/services/log.service');
-const logger = new LogService(config.get('server.logger.name'));
+const logOptions = config.get('server.logger');
+const logger = new LogService(logOptions.name, logOptions.path);
 
 const http = require('http');
 const initApp = require('../app.js');
