@@ -28,7 +28,7 @@ const authOptionals = authConfigs.optionals;
 
 const hashingOptions = authConfigs.password;
 
-const { AUTH } = require('../../src/enums');
+const { AUTH, API: { STATUS } } = require('../../src/enums');
 
 /**@type {MailService} */
 let mailService;
@@ -150,7 +150,7 @@ describe('Users component', () => {
 
                 const status = context.status;
 
-                assert(status === 404);
+                assert(status === STATUS.NOT_FOUND);
             });
 
             after(() => {
@@ -192,7 +192,7 @@ describe('Users component', () => {
 
                 const status = context.status;
 
-                assert(status === 404);
+                assert(status === STATUS.NOT_FOUND);
             });
 
             after(() => {
@@ -210,7 +210,7 @@ describe('Users component', () => {
                     userSchema.schemas.login
                 )(context);
 
-                assert(context.status === 400);
+                assert(context.status === STATUS.BAD_REQUEST);
                 assert(context.body instanceof ControllerError);
             });
         });
@@ -253,7 +253,7 @@ describe('Users component', () => {
                             const url = `localhost/users/reset/password?token=${jwt}`;
 
                             assert(mailService.sendMail.getCall(0).args[3].includes(url));
-                            assert(context.status === 200);
+                            assert(context.status === STATUS.OK);
                         });
                     }
                 );
@@ -284,7 +284,7 @@ describe('Users component', () => {
                         await userController.recover(context, () => {
                             const status = context.status;
 
-                            assert(status === 404);
+                            assert(status === STATUS.NOT_FOUND);
                         });
                     }
                 );
@@ -326,7 +326,7 @@ describe('Users component', () => {
                         await userController.recover(context, () => {
                             const status = context.status;
 
-                            assert(status === 400);
+                            assert(status === STATUS.BAD_REQUEST);
                         });
                     }
                 );
@@ -348,7 +348,7 @@ describe('Users component', () => {
                     userSchema.schemas.recover
                 )(context);
 
-                assert(context.status === 400);
+                assert(context.status === STATUS.BAD_REQUEST);
                 assert(context.body instanceof ControllerError);
             });
         });
@@ -382,7 +382,7 @@ describe('Users component', () => {
                     context,
                     async () => {
                         await userController.changePassword(context, async () => {
-                            assert(context.status === 200);
+                            assert(context.status === STATUS.OK);
                         });
                     }
                 );
@@ -413,7 +413,7 @@ describe('Users component', () => {
                         await userController.changePassword(context, () => {
                             const status = context.status;
 
-                            assert(status === 401);
+                            assert(status === STATUS.UNAUTHORIZED);
                         });
                     }
                 );
@@ -444,7 +444,7 @@ describe('Users component', () => {
                         await userController.changePassword(context, () => {
                             const status = context.status;
 
-                            assert(status === 500);
+                            assert(status === STATUS.INTERNAL_ERROR);
                         });
                     }
                 );
@@ -465,7 +465,7 @@ describe('Users component', () => {
                     userSchema.schemas.changePassword
                 )(context);
 
-                assert(context.status === 400);
+                assert(context.status === STATUS.BAD_REQUEST);
                 assert(context.body instanceof ControllerError);
             });
         });
@@ -506,7 +506,7 @@ describe('Users component', () => {
 
                 const { status } = context;
 
-                assert(status === 200);
+                assert(status === STATUS.OK);
             });
 
             after(() => {
@@ -537,7 +537,7 @@ describe('Users component', () => {
 
                 const status = context.status;
 
-                assert(status === 404);
+                assert(status === STATUS.NOT_FOUND);
             });
 
             after(() => {
@@ -564,7 +564,7 @@ describe('Users component', () => {
 
                 const status = context.status;
 
-                assert(status === 401);
+                assert(status === STATUS.UNAUTHORIZED);
             });
         });
 
@@ -578,7 +578,7 @@ describe('Users component', () => {
                     userSchema.schemas.confirm
                 )(context);
 
-                assert(context.status === 400);
+                assert(context.status === STATUS.BAD_REQUEST);
                 assert(context.body instanceof ControllerError);
             });
         });
@@ -613,7 +613,7 @@ describe('Users component', () => {
 
                 const { status } = context;
 
-                assert(status === 200);
+                assert(status === STATUS.OK);
             });
 
             after(() => {
@@ -644,7 +644,7 @@ describe('Users component', () => {
 
                 const status = context.status;
 
-                assert(status === 400);
+                assert(status === STATUS.BAD_REQUEST);
             });
 
             after(() => {
@@ -676,7 +676,7 @@ describe('Users component', () => {
 
                 const status = context.status;
 
-                assert(status === 500);
+                assert(status === STATUS.INTERNAL_ERROR);
             });
 
             after(() => {
@@ -714,7 +714,7 @@ describe('Users component', () => {
 
                 const status = context.status;
 
-                assert(status === 500);
+                assert(status === STATUS.INTERNAL_ERROR);
             });
 
             after(() => {
@@ -733,8 +733,8 @@ describe('Users component', () => {
                 await validationMiddleware.validate(
                     userSchema.schemas.register
                 )(context);
-                
-                assert(context.status === 400);
+
+                assert(context.status === STATUS.BAD_REQUEST);
                 assert(context.body instanceof ControllerError);
             });
         });

@@ -6,7 +6,7 @@ const ControllerError = require('../log/controller.error.model');
 
 const JwtToken = require('./jwt.model.js');
 
-const enums = require('../enums');
+const { AUTH, API: { STATUS } } = require('../enums');
 const { ACTIVE: activeProp } = require('../values').DATABASE.PROPS;
 
 class UserController {
@@ -43,14 +43,14 @@ class UserController {
 
         if (!user) {
             const error = new ControllerError(
-                404,
+                STATUS.NOT_FOUND,
                 'Invalid email or password',
                 'user',
                 'login',
                 requestBody,
                 'User not found'
             );
-            context.throw(404, error);
+            context.throw(STATUS.NOT_FOUND, error);
 
             return next();
         }
@@ -59,7 +59,7 @@ class UserController {
         const match = this.userService.matchPassword(password, user.password);
 
         if (!match) {
-            const status = 404;
+            const status = STATUS.NOT_FOUND;
             const error = new ControllerError(
                 status,
                 'Invalid email or password',
@@ -74,7 +74,7 @@ class UserController {
         }
 
         if (user.active === activeProp.INACTIVE || user.active === activeProp.DISABLED) {
-            const status = 401;
+            const status = STATUS.UNAUTHORIZED;
             const error = new ControllerError(
                 status,
                 'Account not activated',
@@ -95,7 +95,7 @@ class UserController {
         try {
             await user.save();
         } catch (error) {
-            const status = 500;
+            const status = STATUS.INTERNAL_ERROR;
             const saveError = new ControllerError(
                 status,
                 'Error saving the user',
@@ -111,7 +111,7 @@ class UserController {
 
         const token = new JwtToken({ id: user.id }, this.hash, this.tokenOptions);
 
-        context.set(enums.AUTH.TOKEN_HEADER, await token.hash());
+        context.set(AUTH.TOKEN_HEADER, await token.hash());
         context.body = sentUser;
         context.type = 'json';
         return next();
@@ -122,7 +122,7 @@ class UserController {
 
         const user = await this.userService.findUser({ email });
         if (!user) {
-            context.throw(404, 'User not found');
+            context.throw(STATUS.NOT_FOUND, 'User not found');
             return next();
         }
 
@@ -143,16 +143,16 @@ favor clique no link ${context.request.origin}/users/reset/password?token=${awai
 Se não ignore este email`
             );
         } catch (error) {
-            context.throw(400, 'Invalid email');
+            context.throw(STATUS.BAD_REQUEST, 'Invalid email');
             return next();
         }
 
-        context.status = 200;
+        context.status = STATUS.OK;
         return next();
     }
 
     async changePassword(context, next) {
-        const token = context.request.headers[enums.AUTH.TOKEN_HEADER];
+        const token = context.request.headers[AUTH.TOKEN_HEADER];
         const emailToken = new JwtToken({}, this.hash, this.tokenOptions);
 
         let payload;
@@ -160,7 +160,7 @@ Se não ignore este email`
         try {
             payload = await emailToken.verify(token);
         } catch (error) {
-            context.throw(401, 'Invalid token');
+            context.throw(STATUS.UNAUTHORIZED, 'Invalid token');
             return next();
         }
 
@@ -173,11 +173,11 @@ Se não ignore este email`
         try {
             await user.save();
         } catch (error) {
-            context.throw(500, 'Error saving new password');
+            context.throw(STATUS.INTERNAL_ERROR, 'Error saving new password');
             return next();
         }
 
-        context.status = 200;
+        context.status = STATUS.OK;
         return next();
     }
 
@@ -186,7 +186,7 @@ Se não ignore este email`
 
         const found = await this.userService.findUser({ email: body.email });
         if (found) {
-            context.throw(400, 'User already exists');
+            context.throw(STATUS.BAD_REQUEST, 'User already exists');
             return next();
         }
 
@@ -195,7 +195,7 @@ Se não ignore este email`
         try {
             await user.save();
         } catch (error) {
-            context.throw(500, 'Error saving the user');
+            context.throw(STATUS.INTERNAL_ERROR, 'Error saving the user');
             return next();
         }
 
@@ -213,11 +213,11 @@ Se não ignore este email`
                 `${context.request.origin}/users/confirm?token=${await token.hash()}`
             );
         } catch (error) {
-            context.throw(500, 'Error sending the confirmation email');
+            context.throw(STATUS.INTERNAL_ERROR, 'Error sending the confirmation email');
             return next();
         }
 
-        context.status = 200;
+        context.status = STATUS.OK;
         return next();
     }
 
@@ -230,14 +230,14 @@ Se não ignore este email`
         try {
             payload = await emailToken.verify(token);
         } catch (error) {
-            context.throw(401, 'Invalid token');
+            context.throw(STATUS.UNAUTHORIZED, 'Invalid token');
             return next();
         }
 
         const user = await this.userService.findUser({ _id: payload.id });
 
         if (!user) {
-            context.throw(404, 'Invalid User');
+            context.throw(STATUS.NOT_FOUND, 'Invalid User');
             return next();
         }
 
@@ -246,16 +246,16 @@ Se não ignore este email`
         try {
             await user.save();
         } catch (error) {
-            context.throw(500, 'Error saving the user');
+            context.throw(STATUS.INTERNAL_ERROR, 'Error saving the user');
             return next();
         }
 
-        context.status = 200;
+        context.status = STATUS.OK;
         return next();
     }
 
     async patchUser(context, next) {
-        const token = context.input.headers[enums.AUTH.TOKEN_HEADER];
+        const token = context.input.headers[AUTH.TOKEN_HEADER];
         const tokenValidator = new JwtToken({}, this.hash, this.tokenOptions);
 
         let payload;
@@ -263,7 +263,7 @@ Se não ignore este email`
         try {
             payload = await tokenValidator.verify(token);
         } catch (error) {
-            const status = 401;
+            const status = STATUS.UNAUTHORIZED;
             const tokenError = new ControllerError(
                 status,
                 'Invalid token',
@@ -281,14 +281,14 @@ Se não ignore este email`
 
         if (!user) {
             const error = new ControllerError(
-                404,
+                STATUS.NOT_FOUND,
                 'Invalid email or password',
                 'user',
                 'patchUser',
                 context.input,
                 'User not found'
             );
-            context.throw(404, error);
+            context.throw(STATUS.NOT_FOUND, error);
 
             return next();
         }
@@ -296,13 +296,13 @@ Se não ignore este email`
         const { body } = context.input;
         const { password } = body;
 
-        if (password) 
+        if (password)
             body.password = await this.userService.hashPassword(password);
 
         try {
             await user.updateWithDates(body);
         } catch (error) {
-            const status = 500;
+            const status = STATUS.INTERNAL_ERROR;
             const saveError = new ControllerError(
                 status,
                 'Error saving the user',
@@ -316,7 +316,7 @@ Se não ignore este email`
             return next();
         }
 
-        context.status = 200;
+        context.status = STATUS.OK;
         return next();
     }
 }

@@ -1,11 +1,13 @@
-const AuthEnums = require('./auth.enum.js');
-const DatabaseEnums = require('./database.enum');
-const HashEnums = require('./hash.enum');
-const JsEnums = require('./javascript.enum');
+const AuthEnum = require('./auth.enum.js');
+const DatabaseEnum = require('./database.enum');
+const HashEnum = require('./hash.enum');
+const JsEnum = require('./javascript.enum');
+const ApiEnum = require('./api.enum.js');
 
 module.exports = {
-    AUTH: AuthEnums,
-    DB: DatabaseEnums,
-    HASH: HashEnums,
-    JS: JsEnums
+    AUTH: AuthEnum,
+    DB: DatabaseEnum,
+    HASH: HashEnum,
+    JS: JsEnum,
+    API: ApiEnum
 };

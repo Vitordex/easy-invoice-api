@@ -40,7 +40,7 @@ class InputValidationService {
             } catch (error) {
                 if (!error.details) throw error;
 
-                const status = 400;
+                const status = enums.API.STATUS.BAD_REQUEST;
                 
                 const mapError = err => {
                     return {

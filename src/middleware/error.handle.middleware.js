@@ -24,11 +24,12 @@ function handleErrors(logger) {
         const { status, body } = context;
         const bodyType = typeof body;
         const errorStatus = status > 399;
+        const errorThrow = !body && errorStatus;
+        const textBody = bodyType === JS.STRING;
+        const validationError = bodyType === JS.OBJECT && errorStatus;
+        const success = status === 200;
 
-        if ((!body && errorStatus) ||
-            bodyType === JS.STRING ||
-            (bodyType === JS.OBJECT && errorStatus)
-        ) {
+        if (errorThrow || textBody || validationError || success) {
             context.status = status;
             context.body = '';
         }
