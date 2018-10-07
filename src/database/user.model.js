@@ -73,7 +73,7 @@ class User {
                 eati: Number,
                 rent: Number,
                 maintenance: Number,
-                supplies: [{ type: Number }],
+                supplies: Number
             },
             deletedAt: Date
         }, {}, function () {
