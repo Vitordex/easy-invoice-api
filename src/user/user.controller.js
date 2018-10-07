@@ -6,7 +6,17 @@ const ControllerError = require('../log/controller.error.model');
 
 const JwtToken = require('./jwt.model.js');
 
-const { AUTH, API: { STATUS } } = require('../enums');
+const {
+    DB: {
+        PROPS: {
+            DATE_HEADER
+        }
+    },
+    AUTH,
+    API: {
+        STATUS
+    }
+} = require('../enums');
 const { ACTIVE: activeProp } = require('../values').DATABASE.PROPS;
 
 class UserController {
@@ -294,13 +304,14 @@ Se não ignore este email`
         }
 
         const { body } = context.input;
+        const { headers } = context.input;
         const { password } = body;
 
         if (password)
             body.password = await this.userService.hashPassword(password);
 
         try {
-            await user.updateWithDates(body);
+            await user.updateWithDates(body, headers[DATE_HEADER]);
         } catch (error) {
             const status = STATUS.INTERNAL_ERROR;
             const saveError = new ControllerError(

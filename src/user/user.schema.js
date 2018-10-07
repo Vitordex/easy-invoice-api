@@ -1,6 +1,14 @@
 const joi = require('joi');
 
-const { AUTH } = require('../enums');
+const {
+    AUTH,
+    DB: {
+        PROPS: {
+            DATE_HEADER,
+            DATE_PROP
+        }
+    }
+} = require('../enums');
 const { STATES } = require('../values').DATABASE.PROPS;
 
 class UserSchema {
@@ -112,11 +120,16 @@ class UserSchema {
                     name: joi
                         .string()
                         .max(255),
+                    [DATE_PROP]: joi.string().forbidden()
                 }).min(1).required().unknown(true),
                 headers: joi.object().keys({
                     [AUTH.TOKEN_HEADER]: joi
                         .string()
-                        .required()
+                        .required(),
+                    [DATE_HEADER]: joi.string()
+                        .min(13)
+                        .regex(/[0-9]+/g)
+                        .optional()
                 }).required().unknown(true)
             })
         };

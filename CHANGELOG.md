@@ -2,6 +2,8 @@ Changelog
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+- [2018-10-07] *feat* [#37](https://gitlab.com/roo.novais/easy-invoice/issues/37)
+  **Adicionar date_local como header**
 - [2018-10-05] *fix* [#26](https://gitlab.com/roo.novais/easy-invoice/issues/26)
   **Enviar somente o objeto do usuário sem a label no login**
 - [2018-10-03] *minor* [#24](https://gitlab.com/roo.novais/easy-invoice/issues/24)

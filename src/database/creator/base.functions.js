@@ -1,17 +1,13 @@
 const timeService = require('../../services/time.service');
 
-const enums = require('../../enums');
-
-async function updateWithDates(newStructure) {
+async function updateWithDates(newStructure, dateLocal = timeService().valueOf()) {
     const document = this;
     const lastUpdated = timeService(document.updated_local[Object.keys(newStructure)[0]]);
-    const updateTime = timeService(newStructure.date_local);
+    const updateTime = timeService(parseInt(dateLocal));
 
     if (lastUpdated > updateTime) return Promise.resolve();
 
-    Object.keys(newStructure).map((key) => {
-        if(key === enums.DB.FUNCTIONS.DATE_PROP) return;
-
+    Object.keys(newStructure).forEach((key) => {
         document[key] = newStructure[key];
         document.updated_local[key] = updateTime.toISOString();
     });
@@ -19,17 +15,15 @@ async function updateWithDates(newStructure) {
     return document.save();
 }
 
-async function updateManyWithDates(query, newStructure) {
+async function updateManyWithDates(query, newStructure, dateLocal = timeService().milliseconds()) {
     const documents = await this.find(query);
 
     const saves = documents.reduce((array, document) => {
         const lastUpdated = timeService(document.updated_local[Object.keys(newStructure)[0]]);
-        const updateTime = timeService(newStructure.date_local);
+        const updateTime = timeService(parseInt(dateLocal));
         if (lastUpdated > updateTime) return array;
 
-        Object.keys(newStructure).map((key) =>{
-            if(key === enums.DB.FUNCTIONS.DATE_PROP) return;
-        
+        Object.keys(newStructure).forEach((key) =>{
             document[key] = newStructure[key];
             document.updated_local[key] = updateTime.toISOString();
         });
