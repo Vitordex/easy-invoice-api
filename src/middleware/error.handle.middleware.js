@@ -27,7 +27,7 @@ function handleErrors(logger) {
         const errorThrow = !body && errorStatus;
         const textBody = bodyType === JS.STRING;
         const validationError = bodyType === JS.OBJECT && errorStatus;
-        const success = status === 200;
+        const success = status === 200 && !body;
 
         if (errorThrow || textBody || validationError || success) {
             context.status = status;
