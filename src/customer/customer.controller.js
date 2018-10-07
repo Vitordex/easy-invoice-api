@@ -5,7 +5,7 @@ const UserService = require('../user/user.service');
 
 const JwtToken = require('../user/jwt.model.js');
 
-const enums = require('../enums');
+const { AUTH, API: { STATUS } } = require('../enums');
 
 class CustomerController {
     /**
@@ -31,13 +31,13 @@ class CustomerController {
     }
 
     async getCustomer(context, next) {
-        const token = context.request.headers[enums.AUTH.TOKEN_HEADER];
+        const token = context.request.headers[AUTH.TOKEN_HEADER];
         const emailToken = new JwtToken({}, this.hash, this.tokenOptions);
 
         try {
             await emailToken.verify(token);
         } catch (error) {
-            context.throw(401, 'Invalid token');
+            context.throw(STATUS.UNAUTHORIZED, 'Invalid token');
             return next();
         }
 
@@ -48,12 +48,12 @@ class CustomerController {
         try {
             customer = await this.customerService.findCustomer({ _id: customerId });
         } catch (error) {
-            context.throw(404, 'Invalid customer id');
+            context.throw(STATUS.NOT_FOUND, 'Invalid customer id');
             return next();
         }
 
         if (!customer) {
-            context.throw(404, 'Invalid customer id');
+            context.throw(STATUS.NOT_FOUND, 'Invalid customer id');
             return next();
         }
 
@@ -63,7 +63,7 @@ class CustomerController {
     }
 
     async postCustomer(context, next) {
-        const token = context.request.headers[enums.AUTH.TOKEN_HEADER];
+        const token = context.request.headers[AUTH.TOKEN_HEADER];
         const emailToken = new JwtToken({}, this.hash, this.tokenOptions);
 
         let payload;
@@ -71,7 +71,7 @@ class CustomerController {
         try {
             payload = await emailToken.verify(token);
         } catch (error) {
-            context.throw(401, 'Invalid token');
+            context.throw(STATUS.UNAUTHORIZED, 'Invalid token');
             return next();
         }
 
@@ -79,7 +79,7 @@ class CustomerController {
 
         const found = await this.customerService.findCustomer({ name: body.name });
         if (found) {
-            context.throw(400, 'Customer already exists');
+            context.throw(STATUS.BAD_REQUEST, 'Customer already exists');
             return next();
         }
 
@@ -90,7 +90,7 @@ class CustomerController {
         try {
             user = await this.userService.findUser({ _id: payload.id });
         } catch (error) {
-            context.throw(401, 'Invalid user');
+            context.throw(STATUS.UNAUTHORIZED, 'Invalid user');
             return next();
         }
 
@@ -102,17 +102,17 @@ class CustomerController {
                 customer.save()
             ]);
         } catch (error) {
-            context.throw(500, 'Error saving the customer');
+            context.throw(STATUS.INTERNAL_ERROR, 'Error saving the customer');
             return next();
         }
 
-        context.status = 200;
+        context.status = STATUS.OK;
         context.body = { customerId: customer._id };
         return next();
     }
 
     async putCustomer(context, next) {
-        const token = context.request.headers[enums.AUTH.TOKEN_HEADER];
+        const token = context.request.headers[AUTH.TOKEN_HEADER];
         const emailToken = new JwtToken({}, this.hash, this.tokenOptions);
 
         let payload;
@@ -120,7 +120,7 @@ class CustomerController {
         try {
             payload = await emailToken.verify(token);
         } catch (error) {
-            context.throw(401, 'Invalid token');
+            context.throw(STATUS.UNAUTHORIZED, 'Invalid token');
             return next();
         }
 
@@ -129,7 +129,7 @@ class CustomerController {
         try {
             user = await this.userService.findUser({ _id: payload.id });
         } catch (error) {
-            context.throw(401, 'Invalid user');
+            context.throw(STATUS.UNAUTHORIZED, 'Invalid user');
             return next();
         }
 
@@ -137,7 +137,7 @@ class CustomerController {
         const { body } = context.request;
 
         if (!user.customers.find((id) => id.toString() === params.customerId)) {
-            context.throw(403, 'User does not have rights');
+            context.throw(STATUS.FORBIDDEN, 'User does not have rights');
             return next();
         }
 
@@ -146,12 +146,12 @@ class CustomerController {
         try {
             customer = await this.customerService.findCustomer({ _id: params.customerId });
         } catch (error) {
-            context.throw(404, 'Invalid customer id');
+            context.throw(STATUS.NOT_FOUND, 'Invalid customer id');
             return next();
         }
 
         if (!customer) {
-            context.throw(404, 'Invalid customer id');
+            context.throw(STATUS.NOT_FOUND, 'Invalid customer id');
             return next();
         }
 
@@ -169,11 +169,11 @@ class CustomerController {
             else
                 await customer.save();
         } catch (error) {
-            context.throw(500, 'Error saving the customer');
+            context.throw(STATUS.INTERNAL_ERROR, 'Error saving the customer');
             return next();
         }
 
-        context.status = 200;
+        context.status = STATUS.OK;
         return next();
     }
 }
