@@ -14,8 +14,21 @@ function handleErrors(logger) {
             /**@type {ControllerError} */
             let treatError = error;
 
-            if (!error)
-                treatError = { message: 'Error', reason: {} };
+            if (!error || typeof error !== ControllerError)
+                treatError = {
+                    message: 'Error',
+                    reason: {
+                        error
+                    },
+                    toJson: () => ({
+                        message:
+                            'Error',
+                        reason: {
+                            error
+                        }
+                    }),
+                    requestStatus: context.status || 500
+                };
 
             logger.error(treatError.message, treatError.toJson());
             context.status = treatError.requestStatus;
