@@ -17,7 +17,8 @@ class Invoice {
 
         const Invoice = creator.create(MODELS.INVOICE, {
             customer: {type: creator.types.ObjectId, ref: MODELS.CUSTOMER},
-            date: Date,
+            date_start: Date,
+            date_end: Date,
             description: String,
             labor: [{
                 name: String,
