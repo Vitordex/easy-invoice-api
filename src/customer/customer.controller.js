@@ -57,7 +57,7 @@ class CustomerController {
             return next();
         }
 
-        context.body = { customer: customer.toJSON() };
+        context.body = customer.toJSON();
         context.type = 'json';
         return next();
     }
