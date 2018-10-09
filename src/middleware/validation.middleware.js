@@ -58,6 +58,7 @@ class InputValidationService {
                     error.details.map(mapError)
                 );
 
+                context.status = status;
                 context.throw(status, inputError);
             }
         };
