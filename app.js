@@ -20,6 +20,12 @@ const CustomerController = require('./src/customer/customer.controller');
 const CustomerSchema = require('./src/customer/customer.schema');
 const CustomerRouter = require('./src/customer/customer.api');
 
+const Invoice = require('./src/database/invoice.model');
+const InvoiceService = require('./src/invoice/invoice.service');
+const InvoiceController = require('./src/invoice/invoice.controller');
+const InvoiceSchema = require('./src/invoice/invoice.schema');
+const InvoiceRouter = require('./src/invoice/invoice.api');
+
 const ControllerError = require('./src/log/controller.error.model');
 
 const fs = require('fs');
@@ -49,6 +55,7 @@ async function initApp(logger) {
     const databaseService = new DatabaseService();
     await databaseService.connect(dbConfigs.auth);
 
+    //Build user api
     const userModel = new User(databaseService);
     const userService = new UserService(
         userModel,
@@ -84,6 +91,7 @@ async function initApp(logger) {
     userApi.buildRoutes();
     app.use(userApi.router.routes());
 
+    //Build customer api
     const customerModel = new Customer(databaseService);
     const customerService = new CustomerService(customerModel);
     const customerController = new CustomerController({
@@ -100,6 +108,27 @@ async function initApp(logger) {
     });
     customerApi.buildRoutes();
     app.use(customerApi.router.routes());
+
+    //Build invoice api
+    const invoiceModel = new Invoice(databaseService);
+    const invoiceService = new InvoiceService(invoiceModel);
+    const invoiceController = new InvoiceController({ 
+        userService, 
+        authHash: hashKey, 
+        authConfigs, 
+        invoiceService, 
+        apiErrorModel: ControllerError 
+    });
+
+    const invoiceSchema = new InvoiceSchema(validationMiddleware.baseSchema);
+    const invoiceApi = new InvoiceRouter({
+        authService, 
+        invoiceController, 
+        invoiceSchema, 
+        validationMiddleware
+    });
+    invoiceApi.buildRoutes();
+    app.use(invoiceApi.router.routes());
 
     return app;
 }

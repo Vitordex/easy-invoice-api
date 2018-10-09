@@ -16,7 +16,7 @@ class ModelCreator {
      * 
      * @returns {Model} A model created with the specified parameters
      */
-    create(name, structure, optionals = {}, toJson) {
+    create(name, structure, optionals = {}, allowedProperties) {
         const updated_local = {};
         Object.keys(structure).forEach((key) => {
             updated_local[key] = {
@@ -35,12 +35,23 @@ class ModelCreator {
         
         const schema = new Schema(structure, schemaOptionals);
 
-        if(toJson) schema.method(enums.DB.FUNCTIONS.TO_JSON, toJson);
+        if(allowedProperties.length) 
+            schema.method(enums.DB.FUNCTIONS.TO_JSON, this.toJson(allowedProperties));
 
         schema.method(enums.DB.FUNCTIONS.UPDATE_ONE_DATE, baseMethods.updateWithDates);
         schema.static(enums.DB.FUNCTIONS.UPDATE_MANY_DATE, baseMethods.updateManyWithDates);
 
         return mongoose.model(name, schema);
+    }
+
+    toJson(allowedProperties){
+        return function () {
+            return allowedProperties.reduce((json, property) => {
+                json[property] = this[property];
+    
+                return json;
+            }, {});
+        };
     }
 
     /**
