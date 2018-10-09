@@ -13,7 +13,7 @@ class User {
         const ModelCreator = service.ModelCreator;
         const creator = new ModelCreator();
 
-        const User = creator.create(dbModels.USER, {
+        const model = {
             active: {
                 type: String,
                 required: true,
@@ -76,25 +76,15 @@ class User {
                 supplies: Number
             },
             deletedAt: Date
-        }, {}, function () {
-            return {
-                active: this.active,
-                name: this.name,
-                email: this.email,
-                phone: this.phone,
-                state: this.state,
-                customers: this.customers,
-                invoice: this.invoice,
-                salary: this.salary,
-                workload: this.workload,
-                document: this.document,
-                address: this.address,
-                registry: this.registry,
-                incomes: this.incomes,
-                bills: this.bills,
-                negocioation_margin: this.negocioation_margin
-            };
-        });
+        };
+
+        const removeProperties = ['password'];
+        const User = creator.create(
+            dbModels.USER, 
+            model, 
+            {}, 
+            Object.keys(model).filter((key) => !removeProperties.includes(key))
+        );
 
         return User;
     }

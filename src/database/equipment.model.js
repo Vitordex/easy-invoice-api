@@ -11,12 +11,19 @@ class Equipment {
         const ModelCreator = service.ModelCreator;
         const creator = new ModelCreator();
 
-        const Equipment = creator.create(DB.MODELS.EQUIPMENT, {
+        const model = {
             name: String,
             description: String,
             price: Number,
             count: Number
-        });
+        };
+
+        const Equipment = creator.create(
+            DB.MODELS.EQUIPMENT, 
+            model,
+            {},
+            Object.keys(model)
+        );
 
         return Equipment;
     }
