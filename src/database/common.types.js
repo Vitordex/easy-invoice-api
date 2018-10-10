@@ -31,7 +31,7 @@ module.exports = {
                 vacation: true
             },
             negocioation_margin: 0,
-            bills: [{
+            bills: {
                 inss: 0,
                 fgts: 0,
                 issqn: 0,
@@ -39,7 +39,7 @@ module.exports = {
                 rent: 0,
                 maintenance: 0,
                 supplies: [0],
-            }],
+            },
             deletedAt: '',
             save: () => Promise.resolve()
         },
@@ -56,6 +56,24 @@ module.exports = {
             },
             document: String,
             save: () => Promise.resolve()
+        },
+        Invoice: {
+            customer: '',
+            date_start: '',
+            date_end: '',
+            description: '',
+            labor: [{
+                name: '',
+                description: '',
+                time: '',
+                price: 0
+            }],
+            equipment: [''],
+            material: [''],
+            addition: '',
+            discount: '',
+            value: 0,
+            type: DATABASE.PROPS.RES_TYPE
         }
     }
 };

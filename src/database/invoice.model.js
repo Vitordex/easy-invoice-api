@@ -4,20 +4,20 @@ const { DATABASE: dbValues } = require('../values');
 const { DB } = require('../enums');
 const { MODELS } = DB;
 
-/**
- * Create Invoice model
- * @param {DatabaseService} service 
- * 
- * @returns {Object} Invoice database model
- */
 class Invoice {
+    /**
+     * Create Invoice model
+     * @param {DatabaseService} service 
+     * 
+     * @returns {Object} Invoice database model
+     */
     constructor(service) {
         const ModelCreator = service.ModelCreator;
         const creator = new ModelCreator();
 
-        const Invoice = creator.create(MODELS.INVOICE, {
-            customer: {type: creator.types.ObjectId, ref: MODELS.CUSTOMER},
-            date_start: Date,
+        const model = {
+            customer: { type: creator.types.ObjectId, ref: MODELS.CUSTOMER },
+            date_start: { type: Date, default: new Date(Date.now()) },
             date_end: Date,
             description: String,
             labor: [{
@@ -31,8 +31,16 @@ class Invoice {
             addition: String,
             discount: String,
             value: Number,
-            type: { type: String, enum: dbValues.PROPS.RES_TYPE.ARRAY }
-        });
+            type: { type: String, enum: dbValues.PROPS.RES_TYPE.ARRAY },
+            deletedAt: Date
+        };
+
+        const Invoice = creator.create(
+            MODELS.INVOICE, 
+            model, 
+            {}, 
+            Object.keys(model)
+        );
 
         return Invoice;
     }

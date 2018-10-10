@@ -11,14 +11,21 @@ class Material {
         const ModelCreator = service.ModelCreator;
         const creator = new ModelCreator();
 
-        const Material = creator.create(DB.MODELS.MATERIAL, {
+        const model = {
             name: String,
             description: String,
             icon: String,
             modifier: [String],
             price: Number,
             count: Number
-        });
+        };
+
+        const Material = creator.create(
+            DB.MODELS.MATERIAL, 
+            model, 
+            {}, 
+            Object.keys(model)
+        );
 
         return Material;
     }

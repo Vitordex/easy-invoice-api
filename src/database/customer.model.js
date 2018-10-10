@@ -13,7 +13,7 @@ class Customer {
         const ModelCreator = service.ModelCreator;
         const creator = new ModelCreator();
 
-        const Customer = creator.create(DB.MODELS.CUSTOMER, {
+        const model = {
             name: { type: String, required: true, max: 255 },
             address: {
                 street: String,
@@ -30,13 +30,14 @@ class Customer {
             },
             document: String,
             deletedAt: Date
-        }, {}, function (){
-            return {
-                name: this.name,
-                address: this.address,
-                document: this.document
-            };
-        });
+        };
+
+        const Customer = creator.create(
+            DB.MODELS.CUSTOMER, 
+            model, 
+            {}, 
+            Object.keys(model)
+        );
 
         return Customer;
     }

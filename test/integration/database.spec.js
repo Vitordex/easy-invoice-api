@@ -10,6 +10,14 @@ const UserModel = require('../../src/database/user.model');
 const dbConfigs = config.get('database');
 const databaseService = new DatabaseService();
 
+const {
+    DATABASE: {
+        PROPS: {
+            STATES
+        } 
+    } 
+} = require('../../src/values');
+
 let createdUser;
 let User;
 
@@ -29,7 +37,10 @@ describe('Database', () => {
                 password: 'asd',
                 id: 1,
                 name: 'Teste ci',
-                phone: '11955555555'
+                phone: '11955555555',
+                address: {
+                    state: STATES.ARRAY[0]
+                }
             });
 
             await createdUser.save();
@@ -51,26 +62,25 @@ describe('Database', () => {
         });
 
         it('should update user when updated date is after last updated', async () => {
-            const newDate = timeService().toISOString();
+            const newDate = timeService();
 
             const update = {
-                email: 'teste@teste.com',
-                date_local: newDate
+                email: 'teste@teste.com'
             };
-            await createdUser.updateWithDates(update);
+            await createdUser.updateWithDates(update, newDate.valueOf());
 
             const user = await User.findById(createdUser._id);
 
-            assert(user.email === 'teste@teste.com' && 
-                user.updated_local.email.toISOString() === newDate);
+            assert(user.email === 'teste@teste.com' &&
+                user.updated_local.email.toISOString() === newDate.toISOString());
         });
 
         it('should not update user when updated date is before last updated', async () => {
             const update = {
-                email: 'test@test.com',
-                date_local: new Date(Date.now() - 1000 * 60 * 60).toISOString()
+                email: 'test@test.com'
             };
-            await createdUser.updateWithDates(update);
+
+            await createdUser.updateWithDates(update, new Date(Date.now() - 1000 * 60 * 60).getTime());
 
             const user = await User.findById(createdUser._id);
 
