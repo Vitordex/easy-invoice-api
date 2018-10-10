@@ -10,6 +10,14 @@ const UserModel = require('../../src/database/user.model');
 const dbConfigs = config.get('database');
 const databaseService = new DatabaseService();
 
+const {
+    DATABASE: {
+        PROPS: {
+            STATES 
+        } 
+    } 
+} = require('../../src/values');
+
 let createdUser;
 let User;
 
@@ -29,7 +37,10 @@ describe('Database', () => {
                 password: 'asd',
                 id: 1,
                 name: 'Teste ci',
-                phone: '11955555555'
+                phone: '11955555555',
+                address: {
+                    state: STATES['ACRE']
+                }
             });
 
             await createdUser.save();
@@ -61,7 +72,7 @@ describe('Database', () => {
 
             const user = await User.findById(createdUser._id);
 
-            assert(user.email === 'teste@teste.com' && 
+            assert(user.email === 'teste@teste.com' &&
                 user.updated_local.email.toISOString() === newDate);
         });
 
