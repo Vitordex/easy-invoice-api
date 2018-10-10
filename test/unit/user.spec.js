@@ -60,9 +60,7 @@ describe('Users component', () => {
         password: '@Testinho1',
         phone: '(11) 95555-5555',
         name: 'Teste teste',
-        address: { 
-            state: 'Acre' 
-        }
+        state: 'Acre'
     };
 
     const defaultNext = () => { };
@@ -595,6 +593,7 @@ describe('Users component', () => {
                     email: testEmail,
                     password: hashedTestPassword,
                     id: 1,
+                    address:{},
                     save: () => Promise.resolve(true)
                 });
                 sinon.stub(mailService, 'sendMail').resolves(true);
@@ -661,6 +660,7 @@ describe('Users component', () => {
                     email: testEmail,
                     password: hashedTestPassword,
                     id: 1,
+                    address:{},
                     save: () => Promise.reject(false)
                 });
             });
@@ -695,6 +695,7 @@ describe('Users component', () => {
                     email: testEmail,
                     password: hashedTestPassword,
                     id: 1,
+                    address:{},
                     save: () => Promise.resolve(true)
                 });
                 sinon.stub(mailService, 'sendMail').rejects(false);

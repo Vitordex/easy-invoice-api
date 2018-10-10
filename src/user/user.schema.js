@@ -87,11 +87,9 @@ class UserSchema {
                         .string()
                         .max(255)
                         .required(),
-                    address: joi.object().keys({
-                        state: joi.string()
-                            .valid(...STATES.ARRAY)
-                            .required()
-                    }).required()
+                    state: joi.string()
+                        .valid(...STATES.ARRAY)
+                        .required()
                 }).required().unknown(true)
             }),
             confirm: this.generateSchema({
