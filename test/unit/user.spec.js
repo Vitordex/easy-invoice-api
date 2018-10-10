@@ -60,7 +60,9 @@ describe('Users component', () => {
         password: '@Testinho1',
         phone: '(11) 95555-5555',
         name: 'Teste teste',
-        state: 'Acre'
+        address: { 
+            state: 'Acre' 
+        }
     };
 
     const defaultNext = () => { };
