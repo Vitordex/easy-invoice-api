@@ -593,6 +593,7 @@ describe('Users component', () => {
                     email: testEmail,
                     password: hashedTestPassword,
                     id: 1,
+                    address:{},
                     save: () => Promise.resolve(true)
                 });
                 sinon.stub(mailService, 'sendMail').resolves(true);
@@ -659,6 +660,7 @@ describe('Users component', () => {
                     email: testEmail,
                     password: hashedTestPassword,
                     id: 1,
+                    address:{},
                     save: () => Promise.reject(false)
                 });
             });
@@ -693,6 +695,7 @@ describe('Users component', () => {
                     email: testEmail,
                     password: hashedTestPassword,
                     id: 1,
+                    address:{},
                     save: () => Promise.resolve(true)
                 });
                 sinon.stub(mailService, 'sendMail').rejects(false);

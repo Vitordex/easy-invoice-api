@@ -10,6 +10,12 @@ function handleErrors(logger) {
     return async (context, next) => {
         try {
             await next();
+
+            logger.info('route-logger', {
+                input: context.input,
+                output: context.body,
+                method: context.request.url
+            });
         } catch (error) {
             /**@type {ControllerError} */
             let treatError = error;

@@ -55,7 +55,8 @@ class User {
                 city: String,
                 state: {
                     type: String,
-                    enum: dbValues.PROPS.STATES.ARRAY
+                    enum: dbValues.PROPS.STATES.ARRAY,
+                    required: true
                 }
             },
             registry: String,

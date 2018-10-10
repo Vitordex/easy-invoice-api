@@ -201,6 +201,7 @@ Se não ignore este email`
         }
 
         const user = await this.userService.create(body);
+        user.address.state = body.state;
 
         try {
             await user.save();
