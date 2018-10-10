@@ -116,7 +116,7 @@ class UserSchema {
                         .regex(/(^|(\d{2})|\(\d{2}\))\s(9?\d{4})(\s|-)?(\d{4})($|\n)/)
                         .max(20),
                     active: joi.string()
-                        .valid(...ACTIVE),
+                        .valid(...ACTIVE.ARRAY),
                     name: joi
                         .string()
                         .max(255),
