@@ -9,7 +9,7 @@ const {
         }
     }
 } = require('../enums');
-const { STATES } = require('../values').DATABASE.PROPS;
+const { STATES, ACTIVE } = require('../values').DATABASE.PROPS;
 
 class UserSchema {
     constructor(baseSchema) {
@@ -115,8 +115,8 @@ class UserSchema {
                         .string()
                         .regex(/(^|(\d{2})|\(\d{2}\))\s(9?\d{4})(\s|-)?(\d{4})($|\n)/)
                         .max(20),
-                    active: joi
-                        .boolean(),
+                    active: joi.string()
+                        .valid(...ACTIVE),
                     name: joi
                         .string()
                         .max(255),
