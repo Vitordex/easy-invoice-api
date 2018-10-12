@@ -5,6 +5,8 @@ const baseMethods = require('./base.functions');
 
 const enums = require('../../enums');
 
+const ObjectId = require('../object.id');
+
 const DB_MODELS = enums.DB.MODELS; // eslint-disable-line
 
 class ModelCreator {
@@ -13,6 +15,7 @@ class ModelCreator {
      * @param {String} name The name of the model
      * @param {Object} structure The property structure of the model
      * @param {Object} optionals Optional settings for Schema
+     * @param {Array<String>} allowedProperties Properties to return in a toJSON function
      * 
      * @returns {Model} A model created with the specified parameters
      */
@@ -26,16 +29,21 @@ class ModelCreator {
         });
 
         structure.updated_local = updated_local;
-        
+        structure._id = {
+            type: String,
+            default: new ObjectId().toHex()
+        };
+        allowedProperties.splice(0, 0, '_id');
+
         const schemaOptionals = {
             usePushEach: true,
             timestamps: true,
             ...optionals
         };
-        
+
         const schema = new Schema(structure, schemaOptionals);
 
-        if(allowedProperties.length) 
+        if (allowedProperties.length)
             schema.method(enums.DB.FUNCTIONS.TO_JSON, this.toJson(allowedProperties));
 
         schema.method(enums.DB.FUNCTIONS.UPDATE_ONE_DATE, baseMethods.updateWithDates);
@@ -44,11 +52,11 @@ class ModelCreator {
         return mongoose.model(name, schema);
     }
 
-    toJson(allowedProperties){
+    toJson(allowedProperties) {
         return function () {
             return allowedProperties.reduce((json, property) => {
                 json[property] = this[property];
-    
+
                 return json;
             }, {});
         };

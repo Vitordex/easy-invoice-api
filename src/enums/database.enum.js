@@ -1,21 +1,11 @@
+const props = require('./db.props.enum.js');
+const functions = require('./db.functions.enum.js');
+const models = require('./db.models.enum.js');
+const auth = require('./db.auth.enum.js');
+
 module.exports = {
-    PROPS: {
-        DATE_PROP: 'date_local',
-        DATE_HEADER: 'x-update-local'
-    },
-    FUNCTIONS: {
-        UPDATE_ONE_DATE: 'updateWithDates',
-        UPDATE_MANY_DATE: 'updateManyWithDates',
-        TO_JSON: 'toJSON'
-    },
-    MODELS: {
-        USER: 'User',
-        CUSTOMER: 'Customer',
-        INVOICE: 'Invoice',
-        MATERIAL: 'Material',
-        EQUIPMENT: 'Equipment'
-    },
-    AUTH: {
-        DB_NAME: 'admin'
-    }
+    PROPS: props,
+    FUNCTIONS: functions,
+    MODELS: models,
+    AUTH: auth
 };

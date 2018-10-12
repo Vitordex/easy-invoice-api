@@ -43,8 +43,8 @@ class User {
                 required: true,
                 max: 20
             },
-            customers: [{ type: creator.types.ObjectId, ref: dbModels.CUSTOMER }],
-            invoices: [{ type: creator.types.ObjectId, ref: dbModels.INVOICE }],
+            customers: [String],
+            invoices: [String],
             document: String,
             address: {
                 street: String,

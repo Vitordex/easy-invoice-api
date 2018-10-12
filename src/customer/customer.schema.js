@@ -33,6 +33,9 @@ class CustomerSchema {
                         .required()
                 }).required().unknown(true),
                 body: joi.object().keys({
+                    _id: joi.string()
+                        .length(13)
+                        .optional(),
                     name: joi.string()
                         .required(),
                     address: joi.object().keys({
@@ -67,6 +70,9 @@ class CustomerSchema {
                     customerId: joi.string().required()
                 }),
                 body: joi.object().keys({
+                    _id: joi.string()
+                        .length(13)
+                        .optional(),
                     name: joi.string(),
                     address: joi.object().keys({
                         street: joi.string(),

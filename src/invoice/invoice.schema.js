@@ -33,8 +33,11 @@ class InvoiceSchema {
                         .required()
                 }).required().unknown(true),
                 body: joi.object().keys({
+                    _id: joi.string()
+                        .length(13)
+                        .optional(),
                     customer: joi.string()
-                        .length(24)
+                        .length(13)
                         .required(),
                     description: joi.string()
                         .required(),
@@ -61,6 +64,9 @@ class InvoiceSchema {
                         .required()
                 }),
                 body: joi.object().keys({
+                    _id: joi.string()
+                        .length(13)
+                        .optional(),
                     customer: joi.string()
                         .forbidden(),
                     description: joi.string()
