@@ -16,7 +16,7 @@ class Invoice {
         const creator = new ModelCreator();
 
         const model = {
-            customer: { type: creator.types.ObjectId, ref: MODELS.CUSTOMER },
+            customer: String,
             date_start: { type: Date, default: new Date(Date.now()) },
             date_end: Date,
             description: String,
@@ -26,8 +26,8 @@ class Invoice {
                 time: String,
                 price: Number
             }],
-            equipment: [{ type: creator.types.ObjectId, ref: MODELS.EQUIPMENT }],
-            material: [{ type: creator.types.ObjectId, ref: MODELS.MATERIAL }],
+            equipment: [{ type: String }],
+            material: [{ type: String }],
             addition: String,
             discount: String,
             value: Number,
