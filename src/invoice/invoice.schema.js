@@ -21,8 +21,8 @@ class InvoiceSchema {
                         .required()
                 }).required().unknown(true),
                 params: joi.object().keys({
-                    invoiceId: joi
-                        .string()
+                    invoiceId: joi.string()
+                        .min(13)
                         .required()
                 }).required()
             }),
@@ -56,7 +56,9 @@ class InvoiceSchema {
                         .required()
                 }).required().unknown(true),
                 params: joi.object().keys({
-                    invoiceId: joi.string().required()
+                    invoiceId: joi.string()
+                        .min(13)
+                        .required()
                 }),
                 body: joi.object().keys({
                     customer: joi.string()
@@ -73,6 +75,18 @@ class InvoiceSchema {
                         .valid(DATABASE.PROPS.RES_TYPE.ARRAY)
                         .optional()
                 }).min(1).required()
+            }),
+            deleteInvoice: this.generateSchema({
+                headers: joi.object().keys({
+                    [AUTH.TOKEN_HEADER]: joi
+                        .string()
+                        .required()
+                }).required().unknown(true),
+                params: joi.object().keys({
+                    invoiceId: joi.string()
+                        .min(13)
+                        .required()
+                })
             })
         };
     }
