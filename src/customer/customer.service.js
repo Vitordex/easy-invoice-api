@@ -5,6 +5,8 @@ const { Model } = CommonTypes;
 const HashService = require('../services/hashing.service');
 /* eslint-enable no-unused-vars */
 
+const ObjectId = require('../database/object.id');
+
 class CustomerService {
     /**
      * @param {Model} customerModel 
@@ -35,6 +37,9 @@ class CustomerService {
      * @returns {User}
      */
     async create(body) {
+        const newId = new ObjectId().toHex();
+        body._id = body._id || newId;
+
         return new this.Customer(body);
     }
 }
