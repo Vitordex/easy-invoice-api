@@ -65,8 +65,7 @@ class InvoiceSchema {
                 }),
                 body: joi.object().keys({
                     _id: joi.string()
-                        .length(13)
-                        .optional(),
+                        .forbidden(),
                     customer: joi.string()
                         .forbidden(),
                     description: joi.string()
