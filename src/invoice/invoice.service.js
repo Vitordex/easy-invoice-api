@@ -18,7 +18,7 @@ class InvoiceService {
     }
 
     /**
-     * Find a set of users
+     * Find an invoice
      * @param {Object} query 
      * 
      * @returns {Invoice}
@@ -33,8 +33,8 @@ class InvoiceService {
     }
 
     /**
-     * Function to create a single user
-     * @param {Object} body The user document body
+     * Function to create a single invoice
+     * @param {Object} body The invoice document body
      * 
      * @returns {Invoice}
      */
@@ -43,6 +43,21 @@ class InvoiceService {
         body._id = body._id || newId;
         
         return new this.Invoice(body);
+    }
+
+    /**
+     * Find a set of invoices
+     * @param {Object} query 
+     * 
+     * @returns {[Invoice]}
+     */
+    findInvoices(query) {
+        return this.Invoice.find({
+            ...query,
+            deletedAt: {
+                $exists: false
+            }
+        });
     }
 }
 

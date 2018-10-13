@@ -63,6 +63,14 @@ class InvoiceApi {
                 await this.invoiceController.deleteInvoice(context, next);
             }
         );
+
+        this.router.get(
+            '/',
+            this.validationMiddleware.validate(this.invoiceSchema.schemas.listInvoices),
+            async (context, next) => {
+                await this.invoiceController.listInvoices(context, next);
+            }
+        );
     }
 }
 

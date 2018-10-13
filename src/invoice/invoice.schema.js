@@ -92,6 +92,13 @@ class InvoiceSchema {
                         .min(13)
                         .required()
                 })
+            }),
+            listInvoices: this.generateSchema({
+                headers: joi.object().keys({
+                    [AUTH.TOKEN_HEADER]: joi
+                        .string()
+                        .required()
+                }).required().unknown(true)
             })
         };
     }

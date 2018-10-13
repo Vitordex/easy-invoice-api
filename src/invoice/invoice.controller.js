@@ -399,7 +399,7 @@ class InvoiceController {
 
         try {
             await Promise.all([
-                user.save(), 
+                user.save(),
                 invoice.save()
             ]);
         } catch (error) {
@@ -417,6 +417,84 @@ class InvoiceController {
         }
 
         context.status = STATUS.OK;
+        return next();
+    }
+
+    async listInvoices(context, next) {
+        const functionName = 'listInvoices';
+        const {
+            input: {
+                headers
+            }
+        } = context;
+
+        const token = headers[AUTH.TOKEN_HEADER];
+        const emailToken = new JwtToken({}, this.hash, this.tokenOptions);
+
+        let payload;
+
+        try {
+            payload = await emailToken.verify(token);
+        } catch (error) {
+            const jwtError = new ControllerError(
+                STATUS.UNAUTHORIZED,
+                'Invalid token',
+                controllerName,
+                functionName,
+                context.input,
+                'Invalid token'
+            );
+            context.throw(STATUS.UNAUTHORIZED, jwtError);
+
+            return next();
+        }
+
+        let user;
+
+        try {
+            user = await this.userService.findUser({ _id: payload.id });
+        } catch (error) {
+            const findError = new ControllerError(
+                STATUS.UNAUTHORIZED,
+                'Invalid user',
+                controllerName,
+                functionName,
+                context.input,
+                error
+            );
+            context.throw(STATUS.UNAUTHORIZED, findError);
+
+            return next();
+        }
+
+        let invoices = [];
+
+        try {
+            if (user.invoices.length > 0){
+                const query = {
+                    '_id': {
+                        $in: user.invoices
+                    }
+                };
+                invoices = await this.invoiceService.findInvoices(query);
+            }
+        } catch (error) {
+            const findError = new ControllerError(
+                STATUS.INTERNAL_ERROR,
+                'Invalid user',
+                controllerName,
+                functionName,
+                context.input,
+                error
+            );
+            context.throw(STATUS.INTERNAL_ERROR, findError);
+
+            return next();
+        }
+
+        context.body = invoices.map((invoice) => invoice.toJSON());
+        context.status = 200;
+
         return next();
     }
 }
