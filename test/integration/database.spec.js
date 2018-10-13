@@ -41,7 +41,7 @@ describe('Database', () => {
                 name: 'Teste ci',
                 phone: '11955555555',
                 address: {
-                    state: STATES.ARRAY[0]
+                    state: STATES.ACRE
                 }
             });
 
