@@ -5,8 +5,6 @@ const baseMethods = require('./base.functions');
 
 const enums = require('../../enums');
 
-const ObjectId = require('../object.id');
-
 const DB_MODELS = enums.DB.MODELS; // eslint-disable-line
 
 class ModelCreator {
@@ -30,8 +28,7 @@ class ModelCreator {
 
         structure.updated_local = updated_local;
         structure._id = {
-            type: String,
-            default: new ObjectId().toHex()
+            type: String
         };
         allowedProperties.splice(0, 0, '_id');
 

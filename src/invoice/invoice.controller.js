@@ -5,6 +5,7 @@ const ControllerError = require('../log/controller.error.model');
 /* eslint-enable no-unused-vars */
 
 const controllerName = 'invoice';
+const timeService = require('../services/time.service');
 
 const JwtToken = require('../user/jwt.model.js');
 
@@ -296,7 +297,127 @@ class InvoiceController {
     }
 
     async deleteInvoice(context, next) {
+        const functionName = 'deleteInvoice';
+        const {
+            input: {
+                headers,
+                params
+            }
+        } = context;
 
+        const token = headers[AUTH.TOKEN_HEADER];
+        const emailToken = new JwtToken({}, this.hash, this.tokenOptions);
+
+        let payload;
+
+        try {
+            payload = await emailToken.verify(token);
+        } catch (error) {
+            const jwtError = new ControllerError(
+                STATUS.UNAUTHORIZED,
+                'Invalid token',
+                controllerName,
+                functionName,
+                context.input,
+                'Invalid token'
+            );
+            context.throw(STATUS.UNAUTHORIZED, jwtError);
+
+            return next();
+        }
+
+        let user;
+
+        try {
+            user = await this.userService.findUser({ _id: payload.id });
+        } catch (error) {
+            const findError = new ControllerError(
+                STATUS.UNAUTHORIZED,
+                'Invalid user',
+                controllerName,
+                functionName,
+                context.input,
+                error
+            );
+            context.throw(STATUS.UNAUTHORIZED, findError);
+
+            return next();
+        }
+
+        if (!user.invoices.find((id) => id.toString() === params.invoiceId)) {
+            const error = new ControllerError(
+                STATUS.FORBIDDEN,
+                'User does not have rights',
+                controllerName,
+                functionName,
+                context.input,
+                'User does not have rights'
+            );
+            context.throw(STATUS.FORBIDDEN, error);
+
+            return next();
+        }
+
+        let invoice;
+
+        try {
+            invoice = await this.invoiceService.findInvoice({ _id: params.invoiceId });
+        } catch (error) {
+            const findError = new ControllerError(
+                STATUS.NOT_FOUND,
+                'Invalid invoice id',
+                controllerName,
+                functionName,
+                context.input,
+                error
+            );
+            context.throw(STATUS.NOT_FOUND, findError);
+
+            return next();
+        }
+
+        if (!invoice) {
+            const error = new ControllerError(
+                STATUS.NOT_FOUND,
+                'Invalid invoice id',
+                controllerName,
+                functionName,
+                context.input,
+                'Invalid invoice id'
+            );
+            context.throw(STATUS.NOT_FOUND, error);
+
+            return next();
+        }
+
+        invoice.deletedAt = timeService().toISOString();
+        user.invoices = user.invoices.reduce((invoices, item) => {
+            if (item.toString() === invoice.id.toString()) return invoices;
+
+            return invoices.concat([item]);
+        }, []);
+
+        try {
+            await Promise.all([
+                user.save(), 
+                invoice.save()
+            ]);
+        } catch (error) {
+            const saveError = new ControllerError(
+                STATUS.INTERNAL_ERROR,
+                'Error saving the invoice',
+                controllerName,
+                functionName,
+                context.input,
+                error
+            );
+            context.throw(STATUS.INTERNAL_ERROR, saveError);
+
+            return next();
+        }
+
+        context.status = STATUS.OK;
+        return next();
     }
 }
 

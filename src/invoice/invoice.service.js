@@ -7,6 +7,8 @@ const {
 const HashService = require('../services/hashing.service');
 /* eslint-enable no-unused-vars */
 
+const ObjectId = require('../database/object.id');
+
 class InvoiceService {
     /**
      * @param {Model} invoiceModel 
@@ -37,6 +39,9 @@ class InvoiceService {
      * @returns {Invoice}
      */
     async create(body) {
+        const newId = new ObjectId().toHex();
+        body._id = body._id || newId;
+        
         return new this.Invoice(body);
     }
 }

@@ -100,8 +100,7 @@ class UserSchema {
             patchUser: this.generateSchema({
                 body: joi.object().keys({
                     _id: joi.string()
-                        .length(13)
-                        .optional(),
+                        .forbidden(),
                     email: joi.string()
                         .regex(/[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/)
                         .min(5)

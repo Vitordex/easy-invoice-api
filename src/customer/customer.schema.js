@@ -71,8 +71,7 @@ class CustomerSchema {
                 }),
                 body: joi.object().keys({
                     _id: joi.string()
-                        .length(13)
-                        .optional(),
+                        .forbidden(),
                     name: joi.string(),
                     address: joi.object().keys({
                         street: joi.string(),

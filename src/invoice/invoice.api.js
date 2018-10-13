@@ -58,7 +58,7 @@ class InvoiceApi {
 
         this.router.delete(
             '/:invoiceId',
-            this.validationMiddleware.validate(this.invoiceSchema.schemas.patchInvoice),
+            this.validationMiddleware.validate(this.invoiceSchema.schemas.deleteInvoice),
             async (context, next) => {
                 await this.invoiceController.deleteInvoice(context, next);
             }

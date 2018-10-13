@@ -9,6 +9,7 @@ const UserModel = require('../../src/database/user.model');
 
 const dbConfigs = config.get('database');
 const databaseService = new DatabaseService();
+const ObjectId = require('../../src/database/object.id');
 
 const {
     DATABASE: {
@@ -33,6 +34,7 @@ describe('Database', () => {
     describe('user collection', () => {
         it('should create a user', async () => {
             createdUser = new User({
+                _id: new ObjectId().toHex(),
                 email: 'test@test.com',
                 password: 'asd',
                 id: 1,
