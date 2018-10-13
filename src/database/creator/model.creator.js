@@ -13,7 +13,7 @@ class ModelCreator {
      * @param {String} name The name of the model
      * @param {Object} structure The property structure of the model
      * @param {Object} optionals Optional settings for Schema
-     * @param {Array<String>} allowedProperties Properties to return in a toJSON function
+     * @param {[String]} allowedProperties Properties to return in a toJSON function
      * 
      * @returns {Model} A model created with the specified parameters
      */

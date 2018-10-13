@@ -26,9 +26,9 @@ class EnumGenerator {
     }
 
     /**
-     * @param {Array<String>} array An array to return the enum values
+     * @param {[String]} array An array to return the enum values
      * 
-     * @returns {{ARRAY: Array<*>}}}
+     * @returns {{ARRAY: [*]}}}
      */
     static toEnum(array) {
         const propertiesObject = {};
