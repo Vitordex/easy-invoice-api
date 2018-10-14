@@ -67,6 +67,7 @@ class InvoiceApi {
         this.router.get(
             '/',
             this.validationMiddleware.validate(this.invoiceSchema.schemas.listInvoices),
+            this.authService.authenticate(),
             async (context, next) => {
                 await this.invoiceController.listInvoices(context, next);
             }

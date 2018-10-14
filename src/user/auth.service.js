@@ -1,39 +1,90 @@
-const passport = require('koa-passport');
+const UserService = require('../user/user.service'); // eslint-disable-line
+const JwtService = require('../user/jwt.service'); // eslint-disable-line
+const ServiceError = require('../log/service.error.model'); // eslint-disable-line
 
-const JwtStrategy = require('passport-jwt').Strategy;
-const ExtractJwt = require('passport-jwt').ExtractJwt;
-const User = require('../database/common.types').Model; // eslint-disable-line
-
-const { AUTH } = require('../enums');
+const { AUTH, API: { STATUS } } = require('../enums');
 
 class AuthService {
     /**
      * Auth Service constructor
      * @param {String} hash The hash for signing the jwt
      * @param {String} tokenExpiration The max expiration of the generated token
-     * @param {Object} optionals The optionals settings for the auth middleware
-     * @param {User} userModel The model of the user table
+     * @param {JwtService} jwtService The optionals settings for the auth middleware
+     * @param {UserService} userService The service of the user
+     * @param {ServiceError} serviceErrorModel
      */
-    constructor(hash, tokenExpiration, userModel, optionals = {}) {
-        passport.use(new JwtStrategy({
-            secretOrKey: hash,
-            ...optionals,
-            ignoreExpiration: !tokenExpiration,
-            maxAge: tokenExpiration,
-            jwtFromRequest: ExtractJwt.fromExtractors([
-                ExtractJwt.fromHeader(AUTH.TOKEN_HEADER)
-            ])
-        }, async (jwt_payload, done) => {
-            done(null, true);
-        }));
-    }
+    constructor(jwtService, userService, serviceErrorModel) {
+        this.jwtService = jwtService;
+        this.userService = userService;
+        this.ServiceError = serviceErrorModel;
 
-    initialize() {
-        return passport.initialize();
+        this.serviceName = 'auth';
     }
 
     authenticate() {
-        return passport.authenticate(AUTH.JWT_AUTH_METHOD, { session: false });
+        const functionName = 'authenticate';
+        const middleware = async (context, next) => {
+            const userToken = context.input.headers[AUTH.TOKEN_HEADER];
+
+            const verifyOptions = {
+                subject: AUTH.TOKEN_SUBJECT
+            };
+
+            let payload;
+            try {
+                payload = await this.jwtService.verify(userToken, verifyOptions);   
+            } catch (error) {
+                const jwtError = new this.ServiceError(
+                    'Token validation failed',
+                    this.serviceName,
+                    functionName,
+                    context.input,
+                    error
+                );
+                context.status = STATUS.UNAUTHORIZED;
+                context.throw(STATUS.UNAUTHORIZED, jwtError);
+            }
+
+            const userId = payload.id;
+
+            const query = {
+                _id: userId
+            };
+            try {
+                const user = await this.userService.findUser(query);
+
+                if (!user) {
+                    const findError = new this.ServiceError(
+                        'Invalid user',
+                        this.serviceName,
+                        functionName,
+                        context.input,
+                        'User not found'
+                    );
+                    context.status = STATUS.UNAUTHORIZED;
+                    context.throw(STATUS.UNAUTHORIZED, findError);
+
+                    return;
+                }
+
+                context.state.user = user;
+            } catch (error) {
+                const findError = new this.ServiceError(
+                    'Error finding the user',
+                    this.serviceName,
+                    functionName,
+                    context.input,
+                    error
+                );
+                context.status = STATUS.UNAUTHORIZED;
+                context.throw(STATUS.UNAUTHORIZED, findError);
+
+                return;
+            }
+
+            return next();
+        };
+        return middleware;
     }
 }
 
