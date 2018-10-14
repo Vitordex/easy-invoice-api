@@ -24,9 +24,7 @@ function handleErrors(logger) {
             if (!error || !handledError)
                 treatError = {
                     message: 'Error',
-                    reason: {
-                        error
-                    },
+                    reason: error,
                     toJson: () => ({
                         message:
                             'Error',
