@@ -35,6 +35,8 @@ const hashKey = fs.readFileSync('./server.hash.key', { encoding: 'utf-8' });
 
 const errorMiddleware = require('./src/middleware/error.handle.middleware');
 
+const { AUTH } = require('./src/enums');
+
 async function initApp(logger) {
     const app = new Koa();
 
@@ -46,12 +48,29 @@ async function initApp(logger) {
 
     const authConfigs = config.get('auth');
 
-    const tokenExpiration = authConfigs.token.expiration;
-    const jwtOptions = {
+    const authTokenExpiration = authConfigs.token.expiration;
+    const authJwtOptions = {
         hash: hashKey,
-        tokenExpiration
+        tokenExpiration: authTokenExpiration,
+        subject: AUTH.TOKEN_SUBJECT
     };
-    const jwtService = new JwtService(jwtOptions);
+    const authJwtService = new JwtService(authJwtOptions);
+
+    const recoverTokenExpiration = authConfigs.token.expiration;
+    const recoverJwtOptions = {
+        hash: hashKey,
+        tokenExpiration: recoverTokenExpiration,
+        subject: AUTH.TOKEN_SUBJECT
+    };
+    const resetJwtService = new JwtService(recoverJwtOptions);
+
+    const confirmTokenExpiration = authConfigs.token.expiration;
+    const confirmJwtOptions = {
+        hash: hashKey,
+        tokenExpiration: confirmTokenExpiration,
+        subject: AUTH.TOKEN_SUBJECT
+    };
+    const confirmJwtService = new JwtService(confirmJwtOptions);
 
     const hashingOptions = authConfigs.password;
     const hashingService = new HashingService(
@@ -70,14 +89,17 @@ async function initApp(logger) {
     const userModel = new User(databaseService);
 
     const userService = new UserService(userModel, hashingService);
-    const authService = new AuthService(jwtService, userService, ServiceError);
+    const authService = new AuthService(authJwtService, userService, ServiceError);
 
     const userControllerParameters = {
         userService,
         authHash: hashKey,
         authConfigs,
         mailService,
-        apiErrorModel: ControllerError
+        apiErrorModel: ControllerError,
+        authJwtService,
+        confirmJwtService,
+        resetJwtService
     };
     const userController = new UserController(userControllerParameters);
 

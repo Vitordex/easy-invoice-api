@@ -2,6 +2,7 @@
 const UserService = require('./user.service');
 const MailService = require('../services/mail.service');
 const ControllerError = require('../log/controller.error.model');
+const JwtService = require('./jwt.service');
 /* eslint-enable no-unused-vars */
 
 const JwtToken = require('./jwt.model.js');
@@ -14,7 +15,8 @@ const {
     },
     AUTH,
     API: {
-        STATUS
+        STATUS,
+        RESPONSE_TYPES
     }
 } = require('../enums');
 const { ACTIVE: activeProp } = require('../values').DATABASE.PROPS;
@@ -28,13 +30,19 @@ class UserController {
      * @param {Object} params.authConfigs
      * @param {MailService} params.mailService
      * @param {ControllerError} params.apiErrorModel
+     * @param {JwtService} params.authJwtService
+     * @param {JwtService} params.confirmJwtService
+     * @param {JwtService} params.resetJwtService
      */
     constructor({
         userService,
         authHash,
         authConfigs,
         mailService,
-        apiErrorModel
+        apiErrorModel,
+        authJwtService,
+        confirmJwtService,
+        resetJwtService
     }) {
         this.mailService = mailService;
         this.userService = userService;
@@ -42,6 +50,9 @@ class UserController {
         this.hash = authHash;
         this.tokenExpiration = authConfigs.token.expiration;
         this.tokenOptions = authConfigs.optionals;
+        this.authJwtService = authJwtService;
+        this.confirmJwtService = confirmJwtService;
+        this.resetJwtService = resetJwtService;
 
         this.ControllerError = apiErrorModel;
     }
@@ -100,30 +111,35 @@ class UserController {
 
         const sentUser = user.toJSON();
 
-        user.active = activeProp.ACTIVE;
+        if (user.active === 'STATIC') {
+            user.active = activeProp.ACTIVE;
 
-        try {
-            await user.save();
-        } catch (error) {
-            const status = STATUS.INTERNAL_ERROR;
-            const saveError = new ControllerError(
-                status,
-                'Error saving the user',
-                'user',
-                'login',
-                requestBody,
-                error
-            );
-            context.throw(status, saveError);
+            try {
+                await user.save();
+            } catch (error) {
+                const status = STATUS.INTERNAL_ERROR;
+                const saveError = new ControllerError(
+                    status,
+                    'Error saving the user',
+                    'user',
+                    'login',
+                    requestBody,
+                    error
+                );
+                context.throw(status, saveError);
 
-            return next();
+                return next();
+            }
         }
 
-        const token = new JwtToken({ id: user.id }, this.hash, this.tokenOptions);
+        const tokenPayload = {
+            id: user._id
+        };
+        const token = await this.authJwtService.generate(tokenPayload);
 
-        context.set(AUTH.TOKEN_HEADER, await token.hash());
+        context.set(AUTH.TOKEN_HEADER, token);
         context.body = sentUser;
-        context.type = 'json';
+        context.type = RESPONSE_TYPES.JSON;
         return next();
     }
 

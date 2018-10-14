@@ -45,12 +45,11 @@ class AuthService {
                 context.throw(STATUS.UNAUTHORIZED, jwtError);
             }
 
-            const userId = payload.id;
-
-            const query = {
-                _id: userId
-            };
             try {
+                const userId = payload.id;
+                const query = {
+                    _id: userId
+                };
                 const user = await this.userService.findUser(query);
 
                 if (!user) {
