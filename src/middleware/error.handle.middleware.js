@@ -1,6 +1,7 @@
 const { JS } = require('../enums');
 const LogService = require('../log/log.service'); // eslint-disable-line
 const ControllerError = require('../log/controller.error.model');// eslint-disable-line
+const ServiceError = require('../log/service.error.model');// eslint-disable-line
 
 /**
  * Returns a middleware for error handling and logging
@@ -8,19 +9,19 @@ const ControllerError = require('../log/controller.error.model');// eslint-disab
  */
 function handleErrors(logger) {
     return async (context, next) => {
+        let output;
         try {
             await next();
 
-            logger.info('route-logger', {
-                input: context.input,
-                output: context.body,
-                method: context.request.url
-            });
+            output = context.body;
         } catch (error) {
-            /**@type {ControllerError} */
+            /**@type {ControllerError|ServiceError} */
             let treatError = error;
 
-            if (!error || typeof error !== ControllerError)
+            const instanceOfController = error instanceof ControllerError;
+            const instanceOfService = error instanceof ServiceError;
+            const handledError = instanceOfController || instanceOfService;
+            if (!error || !handledError)
                 treatError = {
                     message: 'Error',
                     reason: {
@@ -29,15 +30,14 @@ function handleErrors(logger) {
                     toJson: () => ({
                         message:
                             'Error',
-                        reason: {
-                            error
-                        }
-                    }),
-                    requestStatus: context.status || 500
+                        reason: error
+                    })
                 };
 
             logger.error(treatError.message, treatError.toJson());
-            context.status = treatError.requestStatus;
+            context.status = treatError.requestStatus || context.status;
+
+            output = treatError.output;
         }
 
         const { status, body } = context;
@@ -47,6 +47,12 @@ function handleErrors(logger) {
         const textBody = bodyType === JS.STRING;
         const validationError = bodyType === JS.OBJECT && errorStatus;
         const success = status === 200 && !body;
+
+        logger.info('route-logger', {
+            input: context.input,
+            output,
+            method: context.request.url
+        });
 
         if (errorThrow || textBody || validationError || success) {
             context.status = status;
