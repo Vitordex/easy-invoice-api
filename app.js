@@ -3,6 +3,7 @@ const config = require('./src/services/config.service');
 
 const Koa = require('koa');
 const DatabaseService = require('./src/database/database.service');
+const JwtService = require('./src/user/jwt.service');
 const AuthService = require('./src/user/auth.service');
 const MailService = require('./src/services/mail.service');
 const HashingService = require('./src/services/hashing.service');
@@ -27,6 +28,7 @@ const InvoiceSchema = require('./src/invoice/invoice.schema');
 const InvoiceRouter = require('./src/invoice/invoice.api');
 
 const ControllerError = require('./src/log/controller.error.model');
+const ServiceError = require('./src/log/service.error.model');
 
 const fs = require('fs');
 const hashKey = fs.readFileSync('./server.hash.key', { encoding: 'utf-8' });
@@ -44,6 +46,13 @@ async function initApp(logger) {
 
     const authConfigs = config.get('auth');
 
+    const tokenExpiration = authConfigs.token.expiration;
+    const jwtOptions = {
+        hash: hashKey,
+        tokenExpiration
+    };
+    const jwtService = new JwtService(jwtOptions);
+
     const hashingOptions = authConfigs.password;
     const hashingService = new HashingService(
         hashingOptions.key,
@@ -55,79 +64,86 @@ async function initApp(logger) {
     const databaseService = new DatabaseService();
     await databaseService.connect(dbConfigs.auth);
 
+    const validationMiddleware = new ValidationMiddleware(ControllerError);
+
     //Build user api
     const userModel = new User(databaseService);
-    const userService = new UserService(
-        userModel,
-        hashingService
-    );
-    const userController = new UserController({
+
+    const userService = new UserService(userModel, hashingService);
+    const authService = new AuthService(jwtService, userService, ServiceError);
+
+    const userControllerParameters = {
         userService,
         authHash: hashKey,
         authConfigs,
         mailService,
         apiErrorModel: ControllerError
-    });
+    };
+    const userController = new UserController(userControllerParameters);
 
-    const tokenExpiration = authConfigs.token.expiration;
-    const authOptionals = authConfigs.optionals;
-
-    const authService = new AuthService(
-        hashKey,
-        tokenExpiration,
-        userModel,
-        authOptionals
-    );
-
-    const validationMiddleware = new ValidationMiddleware(ControllerError);
     const userSchema = new UserSchema(validationMiddleware.baseSchema);
-    const userApi = new UserRouter({
+    const userApiParameters = {
         authService,
         mailService,
         userController,
         userSchema,
         validationMiddleware
-    });
+    };
+    const userApi = new UserRouter(userApiParameters);
     userApi.buildRoutes();
+
     app.use(userApi.router.routes());
 
     //Build customer api
     const customerModel = new Customer(databaseService);
     const customerService = new CustomerService(customerModel);
-    const customerController = new CustomerController({
+
+    const customerControllerOptions = {
         userService,
         authHash: hashKey,
         authConfigs,
         customerService,
         apiErrorModel: ControllerError
-    });
+    };
+    const customerController = new CustomerController(customerControllerOptions);
 
     const customerSchema = new CustomerSchema(validationMiddleware.baseSchema);
-    const customerApi = new CustomerRouter({
-        authService, customerController, customerSchema, validationMiddleware
-    });
+
+    const customerApiParameters = {
+        authService,
+        customerController,
+        customerSchema,
+        validationMiddleware
+    };
+    const customerApi = new CustomerRouter(customerApiParameters);
     customerApi.buildRoutes();
+
     app.use(customerApi.router.routes());
 
     //Build invoice api
     const invoiceModel = new Invoice(databaseService);
     const invoiceService = new InvoiceService(invoiceModel);
-    const invoiceController = new InvoiceController({ 
-        userService, 
-        authHash: hashKey, 
-        authConfigs, 
-        invoiceService, 
-        apiErrorModel: ControllerError 
-    });
+
+    const invoiceControllerParameters = {
+        userService,
+        authHash: hashKey,
+        authConfigs,
+        invoiceService,
+        apiErrorModel: ControllerError
+    };
+    const invoiceController = new InvoiceController(invoiceControllerParameters);
 
     const invoiceSchema = new InvoiceSchema(validationMiddleware.baseSchema);
-    const invoiceApi = new InvoiceRouter({
-        authService, 
-        invoiceController, 
-        invoiceSchema, 
+
+    const invoiceApiParameters = {
+        authService,
+        invoiceController,
+        invoiceSchema,
         validationMiddleware
-    });
+    };
+    const invoiceApi = new InvoiceRouter(invoiceApiParameters);
     invoiceApi.buildRoutes();
+
     app.use(invoiceApi.router.routes());
 
     return app;
