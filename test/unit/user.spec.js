@@ -14,6 +14,7 @@ const UserController = require('../../src/user/user.controller');
 const UserSchema = require('../../src/user/user.schema');
 
 const JwtToken = require('../../src/user/jwt.model');
+const JwtService = require('../../src/user/jwt.service');
 const Context = require('./context.model');
 
 const ControllerError = require('../../src/log/controller.error.model');
@@ -72,11 +73,38 @@ describe('Users component', () => {
 
     userService = new UserService(userModel, hashingService);
 
+    const authTokenExpiration = authConfigs.token.expiration;
+    const authJwtOptions = {
+        hash: hashKey,
+        tokenExpiration: authTokenExpiration,
+        subject: AUTH.TOKEN_SUBJECT
+    };
+    const authJwtService = new JwtService(authJwtOptions);
+
+    const recoverTokenExpiration = authConfigs.token.expiration;
+    const recoverJwtOptions = {
+        hash: hashKey,
+        tokenExpiration: recoverTokenExpiration,
+        subject: AUTH.TOKEN_SUBJECT
+    };
+    const resetJwtService = new JwtService(recoverJwtOptions);
+
+    const confirmTokenExpiration = authConfigs.token.expiration;
+    const confirmJwtOptions = {
+        hash: hashKey,
+        tokenExpiration: confirmTokenExpiration,
+        subject: AUTH.TOKEN_SUBJECT
+    };
+    const confirmJwtService = new JwtService(confirmJwtOptions);
+
     userController = new UserController({
         authConfigs,
         authHash: hashKey,
         userService,
-        mailService
+        mailService,
+        authJwtService,
+        confirmJwtService,
+        resetJwtService
     });
 
     describe('login route', () => {
@@ -86,11 +114,11 @@ describe('Users component', () => {
                     active: 'static',
                     email: testEmail,
                     password: hashedTestPassword,
-                    id: 1,
+                    _id: 1,
                     toJSON: () => ({
                         email: testEmail,
                         password: hashedTestPassword,
-                        id: 1
+                        _id: 1
                     }),
                     save: () => Promise.resolve(true)
                 });
@@ -115,9 +143,9 @@ describe('Users component', () => {
 
                 const responseBody = context.body;
                 const headers = context.header;
-                const jwt = await new JwtToken({ id: 1 }, hashKey, authOptionals).hash();
+                const jwt = await authJwtService.generate({ id: 1 });
 
-                assert(responseBody && responseBody.id === 1);
+                assert(responseBody && responseBody._id === 1);
                 assert(headers[AUTH.TOKEN_HEADER] === jwt);
             });
 
@@ -593,7 +621,7 @@ describe('Users component', () => {
                     email: testEmail,
                     password: hashedTestPassword,
                     id: 1,
-                    address:{},
+                    address: {},
                     save: () => Promise.resolve(true)
                 });
                 sinon.stub(mailService, 'sendMail').resolves(true);
@@ -660,7 +688,7 @@ describe('Users component', () => {
                     email: testEmail,
                     password: hashedTestPassword,
                     id: 1,
-                    address:{},
+                    address: {},
                     save: () => Promise.reject(false)
                 });
             });
@@ -695,7 +723,7 @@ describe('Users component', () => {
                     email: testEmail,
                     password: hashedTestPassword,
                     id: 1,
-                    address:{},
+                    address: {},
                     save: () => Promise.resolve(true)
                 });
                 sinon.stub(mailService, 'sendMail').rejects(false);
