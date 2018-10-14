@@ -1,19 +1,30 @@
 const jwt = require('jsonwebtoken');
 
 class JwtService {
+    /**
+     * @param {String} param.hash 
+     * @param {String} param.tokenExpiration 
+     * @param {String} param.subject 
+     */
     constructor({
         hash,
-        tokenExpiration
+        tokenExpiration,
+        subject
     }) {
         this.hash = hash;
         this.expiration = tokenExpiration;
 
         this.ignoreExpiration = !tokenExpiration;
+
+        this.subject = subject;
     }
 
-    verify(token, { subject }) {
+    /**
+     * @param {String} token 
+     */
+    verify(token) {
         const verifyOptions = {
-            subject,
+            subject: this.subject,
             ignoreExpiration: this.ignoreExpiration
         };
 
@@ -30,10 +41,16 @@ class JwtService {
         return new Promise(promiseAction);
     }
 
-    generate({ payload, subject }) {
+    /**
+     * 
+     * @param {Object} param.payload The payload of the token
+     * 
+     * @returns {Promise<String>}
+     */
+    generate(payload) {
         const promiseAction = (resolve, reject) => {
             const signOptions = {
-                subject,
+                subject: this.subject,
                 expiresIn: this.expiration
             };
 
@@ -43,7 +60,7 @@ class JwtService {
                 resolve(hash);
             };
             
-            jwt.sign(payload, this.secret, signOptions, signAction);
+            jwt.sign(payload, this.hash, signOptions, signAction);
         };
 
         return new Promise(promiseAction);
