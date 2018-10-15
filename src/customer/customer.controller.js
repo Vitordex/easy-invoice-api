@@ -42,13 +42,7 @@ class CustomerController {
 
     async postCustomer(context, next) {
         const { body } = context.input;
-
-        const found = await this.customerService.findCustomer({ name: body.name });
-        if (found) {
-            context.throw(STATUS.BAD_REQUEST, 'Customer already exists');
-            return next();
-        }
-
+        
         const customer = await this.customerService.create(body);
 
         const { user } = context.state;
