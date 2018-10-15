@@ -35,6 +35,7 @@ class InvoiceApi {
         this.router.get(
             '/:invoiceId',
             this.validationMiddleware.validate(this.invoiceSchema.schemas.getInvoice),
+            this.authService.authenticate(),
             async (context, next) => {
                 await this.invoiceController.getInvoice(context, next);
             }
@@ -43,6 +44,7 @@ class InvoiceApi {
         this.router.post(
             '/',
             this.validationMiddleware.validate(this.invoiceSchema.schemas.postInvoice),
+            this.authService.authenticate(),
             async (context, next) => {
                 await this.invoiceController.postInvoice(context, next);
             }
@@ -51,6 +53,7 @@ class InvoiceApi {
         this.router.patch(
             '/:invoiceId',
             this.validationMiddleware.validate(this.invoiceSchema.schemas.patchInvoice),
+            this.authService.authenticate(),
             async (context, next) => {
                 await this.invoiceController.patchInvoice(context, next);
             }
@@ -59,6 +62,7 @@ class InvoiceApi {
         this.router.delete(
             '/:invoiceId',
             this.validationMiddleware.validate(this.invoiceSchema.schemas.deleteInvoice),
+            this.authService.authenticate(),
             async (context, next) => {
                 await this.invoiceController.deleteInvoice(context, next);
             }
@@ -67,6 +71,7 @@ class InvoiceApi {
         this.router.get(
             '/',
             this.validationMiddleware.validate(this.invoiceSchema.schemas.listInvoices),
+            this.authService.authenticate(),
             async (context, next) => {
                 await this.invoiceController.listInvoices(context, next);
             }

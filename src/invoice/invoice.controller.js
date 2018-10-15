@@ -7,10 +7,7 @@ const ControllerError = require('../log/controller.error.model');
 const controllerName = 'invoice';
 const timeService = require('../services/time.service');
 
-const JwtToken = require('../user/jwt.model.js');
-
 const {
-    AUTH,
     API: {
         STATUS
     },
@@ -23,53 +20,25 @@ const {
 
 class InvoiceController {
     /**
-     * 
-     * @param {Object} params 
      * @param {UserService} params.userService
-     * @param {String} params.authHash
-     * @param {Object} params.authConfigs
      * @param {InvoiceService} params.invoiceService
      * @param {ControllerError} params.apiErrorModel
      */
     constructor({
         userService,
-        authHash,
-        authConfigs,
         invoiceService,
         apiErrorModel
     }) {
         this.userService = userService;
         this.invoiceService = invoiceService;
 
-        this.hash = authHash;
-        this.tokenExpiration = authConfigs.token.expiration;
-        this.tokenOptions = authConfigs.optionals;
-
         this.ControllerError = apiErrorModel;
     }
 
     async getInvoice(context, next) {
         const functionName = 'getInvoice';
-        const token = context.request.headers[AUTH.TOKEN_HEADER];
-        const tokenValidator = new JwtToken({}, this.hash, this.tokenOptions);
 
-        try {
-            await tokenValidator.verify(token);
-        } catch (error) {
-            const jwtError = new ControllerError(
-                STATUS.UNAUTHORIZED,
-                'Invalid token',
-                controllerName,
-                functionName,
-                context.input,
-                'User not found'
-            );
-            context.throw(STATUS.UNAUTHORIZED, jwtError);
-
-            return next();
-        }
-
-        const { invoiceId } = context.params;
+        const { invoiceId } = context.input.params;
 
         let invoice;
 
@@ -110,48 +79,11 @@ class InvoiceController {
 
     async postInvoice(context, next) {
         const functionName = 'postInvoice';
-        const token = context.request.headers[AUTH.TOKEN_HEADER];
-        const tokenValidator = new JwtToken({}, this.hash, this.tokenOptions);
-
-        let payload;
-
-        try {
-            payload = await tokenValidator.verify(token);
-        } catch (error) {
-            const jwtError = new ControllerError(
-                STATUS.UNAUTHORIZED,
-                'Invalid token',
-                controllerName,
-                functionName,
-                context.input,
-                'Invalid token'
-            );
-            context.throw(STATUS.UNAUTHORIZED, jwtError);
-
-            return next();
-        }
-
-        const { body } = context.request;
+        const { body } = context.input;
 
         const invoice = await this.invoiceService.create(body);
 
-        let user;
-
-        try {
-            user = await this.userService.findUser({ _id: payload.id });
-        } catch (error) {
-            const findError = new ControllerError(
-                STATUS.UNAUTHORIZED,
-                'Invalid user',
-                controllerName,
-                functionName,
-                context.input,
-                error
-            );
-            context.throw(STATUS.UNAUTHORIZED, findError);
-
-            return next();
-        }
+        const { user } = context.state;
 
         user.invoices.push(invoice._id);
 
@@ -189,44 +121,7 @@ class InvoiceController {
             }
         } = context;
 
-        const token = headers[AUTH.TOKEN_HEADER];
-        const emailToken = new JwtToken({}, this.hash, this.tokenOptions);
-
-        let payload;
-
-        try {
-            payload = await emailToken.verify(token);
-        } catch (error) {
-            const jwtError = new ControllerError(
-                STATUS.UNAUTHORIZED,
-                'Invalid token',
-                controllerName,
-                functionName,
-                context.input,
-                'Invalid token'
-            );
-            context.throw(STATUS.UNAUTHORIZED, jwtError);
-
-            return next();
-        }
-
-        let user;
-
-        try {
-            user = await this.userService.findUser({ _id: payload.id });
-        } catch (error) {
-            const findError = new ControllerError(
-                STATUS.UNAUTHORIZED,
-                'Invalid user',
-                controllerName,
-                functionName,
-                context.input,
-                error
-            );
-            context.throw(STATUS.UNAUTHORIZED, findError);
-
-            return next();
-        }
+        const { user } = context.state;
 
         if (!user.invoices.find((id) => id.toString() === params.invoiceId)) {
             const error = new ControllerError(
@@ -300,49 +195,11 @@ class InvoiceController {
         const functionName = 'deleteInvoice';
         const {
             input: {
-                headers,
                 params
             }
         } = context;
 
-        const token = headers[AUTH.TOKEN_HEADER];
-        const emailToken = new JwtToken({}, this.hash, this.tokenOptions);
-
-        let payload;
-
-        try {
-            payload = await emailToken.verify(token);
-        } catch (error) {
-            const jwtError = new ControllerError(
-                STATUS.UNAUTHORIZED,
-                'Invalid token',
-                controllerName,
-                functionName,
-                context.input,
-                'Invalid token'
-            );
-            context.throw(STATUS.UNAUTHORIZED, jwtError);
-
-            return next();
-        }
-
-        let user;
-
-        try {
-            user = await this.userService.findUser({ _id: payload.id });
-        } catch (error) {
-            const findError = new ControllerError(
-                STATUS.UNAUTHORIZED,
-                'Invalid user',
-                controllerName,
-                functionName,
-                context.input,
-                error
-            );
-            context.throw(STATUS.UNAUTHORIZED, findError);
-
-            return next();
-        }
+        const { user } = context.state;
 
         if (!user.invoices.find((id) => id.toString() === params.invoiceId)) {
             const error = new ControllerError(
@@ -422,55 +279,12 @@ class InvoiceController {
 
     async listInvoices(context, next) {
         const functionName = 'listInvoices';
-        const {
-            input: {
-                headers
-            }
-        } = context;
 
-        const token = headers[AUTH.TOKEN_HEADER];
-        const emailToken = new JwtToken({}, this.hash, this.tokenOptions);
-
-        let payload;
+        const { user } = context.state;
+        let invoices = user.invoices;
 
         try {
-            payload = await emailToken.verify(token);
-        } catch (error) {
-            const jwtError = new ControllerError(
-                STATUS.UNAUTHORIZED,
-                'Invalid token',
-                controllerName,
-                functionName,
-                context.input,
-                'Invalid token'
-            );
-            context.throw(STATUS.UNAUTHORIZED, jwtError);
-
-            return next();
-        }
-
-        let user;
-
-        try {
-            user = await this.userService.findUser({ _id: payload.id });
-        } catch (error) {
-            const findError = new ControllerError(
-                STATUS.UNAUTHORIZED,
-                'Invalid user',
-                controllerName,
-                functionName,
-                context.input,
-                error
-            );
-            context.throw(STATUS.UNAUTHORIZED, findError);
-
-            return next();
-        }
-
-        let invoices = [];
-
-        try {
-            if (user.invoices.length > 0){
+            if (invoices.length > 0) {
                 const query = {
                     '_id': {
                         $in: user.invoices

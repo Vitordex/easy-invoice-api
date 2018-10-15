@@ -2,9 +2,8 @@
 const UserService = require('./user.service');
 const MailService = require('../services/mail.service');
 const ControllerError = require('../log/controller.error.model');
+const JwtService = require('./jwt.service');
 /* eslint-enable no-unused-vars */
-
-const JwtToken = require('./jwt.model.js');
 
 const {
     DB: {
@@ -14,7 +13,8 @@ const {
     },
     AUTH,
     API: {
-        STATUS
+        STATUS,
+        RESPONSE_TYPES
     }
 } = require('../enums');
 const { ACTIVE: activeProp } = require('../values').DATABASE.PROPS;
@@ -28,13 +28,19 @@ class UserController {
      * @param {Object} params.authConfigs
      * @param {MailService} params.mailService
      * @param {ControllerError} params.apiErrorModel
+     * @param {JwtService} params.authJwtService
+     * @param {JwtService} params.confirmJwtService
+     * @param {JwtService} params.resetJwtService
      */
     constructor({
         userService,
         authHash,
         authConfigs,
         mailService,
-        apiErrorModel
+        apiErrorModel,
+        authJwtService,
+        confirmJwtService,
+        resetJwtService
     }) {
         this.mailService = mailService;
         this.userService = userService;
@@ -42,12 +48,15 @@ class UserController {
         this.hash = authHash;
         this.tokenExpiration = authConfigs.token.expiration;
         this.tokenOptions = authConfigs.optionals;
+        this.authJwtService = authJwtService;
+        this.confirmJwtService = confirmJwtService;
+        this.resetJwtService = resetJwtService;
 
         this.ControllerError = apiErrorModel;
     }
 
     async login(context, next) {
-        const requestBody = context.request.body;
+        const requestBody = context.input.body;
         const email = requestBody.email;
         const user = await this.userService.findUser({ email });
 
@@ -100,35 +109,40 @@ class UserController {
 
         const sentUser = user.toJSON();
 
-        user.active = activeProp.ACTIVE;
+        if (user.active === 'STATIC') {
+            user.active = activeProp.ACTIVE;
 
-        try {
-            await user.save();
-        } catch (error) {
-            const status = STATUS.INTERNAL_ERROR;
-            const saveError = new ControllerError(
-                status,
-                'Error saving the user',
-                'user',
-                'login',
-                requestBody,
-                error
-            );
-            context.throw(status, saveError);
+            try {
+                await user.save();
+            } catch (error) {
+                const status = STATUS.INTERNAL_ERROR;
+                const saveError = new ControllerError(
+                    status,
+                    'Error saving the user',
+                    'user',
+                    'login',
+                    requestBody,
+                    error
+                );
+                context.throw(status, saveError);
 
-            return next();
+                return next();
+            }
         }
 
-        const token = new JwtToken({ id: user.id }, this.hash, this.tokenOptions);
+        const tokenPayload = {
+            id: user._id
+        };
+        const token = await this.authJwtService.generate(tokenPayload);
 
-        context.set(AUTH.TOKEN_HEADER, await token.hash());
+        context.set(AUTH.TOKEN_HEADER, token);
         context.body = sentUser;
-        context.type = 'json';
+        context.type = RESPONSE_TYPES.JSON;
         return next();
     }
 
     async recover(context, next) {
-        const email = context.request.body.email;
+        const { email } = context.input.body;
 
         const user = await this.userService.findUser({ email });
         if (!user) {
@@ -136,11 +150,11 @@ class UserController {
             return next();
         }
 
-        const token = new JwtToken(
-            { id: user.id, email: user.email, shouldFind: false },
-            this.hash,
-            this.tokenOptions
-        );
+        const generateOptions = {
+            id: user._id,
+            email: user.email
+        };
+        const token = await this.resetJwtService.generate(generateOptions);
 
         try {
             await this.mailService.sendMail(
@@ -149,7 +163,7 @@ class UserController {
                 'Troca de senha - Empresa',
                 `Houve uma solicitação de troca de senha 
 para este email. Se você deseja realizar a troca 
-favor clique no link ${context.request.origin}/users/reset/password?token=${await token.hash()}
+favor clique no link ${context.request.origin}/users/reset/password?token=${token}
 Se não ignore este email`
             );
         } catch (error) {
@@ -162,19 +176,18 @@ Se não ignore este email`
     }
 
     async changePassword(context, next) {
-        const token = context.request.headers[AUTH.TOKEN_HEADER];
-        const emailToken = new JwtToken({}, this.hash, this.tokenOptions);
+        const token = context.input.headers[AUTH.TOKEN_HEADER];
 
         let payload;
 
         try {
-            payload = await emailToken.verify(token);
+            payload = await this.resetJwtService.verify(token);
         } catch (error) {
             context.throw(STATUS.UNAUTHORIZED, 'Invalid token');
             return next();
         }
 
-        const newPassword = context.request.body.password;
+        const newPassword = context.input.body.password;
         const hashedPass = this.userService.hashPassword(newPassword);
 
         const user = await this.userService.findUser({ email: payload.email });
@@ -192,7 +205,7 @@ Se não ignore este email`
     }
 
     async register(context, next) {
-        const { body } = context.request;
+        const { body } = context.input;
 
         const found = await this.userService.findUser({ email: body.email });
         if (found) {
@@ -210,18 +223,17 @@ Se não ignore este email`
             return next();
         }
 
-        const token = new JwtToken(
-            { id: user.id },
-            this.hash,
-            this.tokenOptions
-        );
+        const tokenPayload = {
+            id: user._id
+        };
+        const token = await this.confirmJwtService.generate(tokenPayload);
 
         try {
             await this.mailService.sendMail(
                 'Suporte <suporte@orcamentofacil.com>',
                 user.email,
                 'Verificação de Email',
-                `${context.request.origin}/users/confirm?token=${await token.hash()}`
+                `${context.request.origin}/users/confirm?token=${token}`
             );
         } catch (error) {
             context.throw(STATUS.INTERNAL_ERROR, 'Error sending the confirmation email');
@@ -233,13 +245,12 @@ Se não ignore este email`
     }
 
     async confirm(context, next) {
-        const token = context.request.query.token;
-        const emailToken = new JwtToken({}, this.hash, this.tokenOptions);
+        const { token } = context.input.query;
 
         let payload;
 
         try {
-            payload = await emailToken.verify(token);
+            payload = await this.confirmJwtService.verify(token);
         } catch (error) {
             context.throw(STATUS.UNAUTHORIZED, 'Invalid token');
             return next();
@@ -266,44 +277,6 @@ Se não ignore este email`
     }
 
     async patchUser(context, next) {
-        const token = context.input.headers[AUTH.TOKEN_HEADER];
-        const tokenValidator = new JwtToken({}, this.hash, this.tokenOptions);
-
-        let payload;
-
-        try {
-            payload = await tokenValidator.verify(token);
-        } catch (error) {
-            const status = STATUS.UNAUTHORIZED;
-            const tokenError = new ControllerError(
-                status,
-                'Invalid token',
-                'user',
-                'patchUser',
-                context.input,
-                error
-            );
-            context.throw(status, tokenError);
-
-            return next();
-        }
-
-        const user = await this.userService.findUser({ _id: payload.id });
-
-        if (!user) {
-            const error = new ControllerError(
-                STATUS.NOT_FOUND,
-                'Invalid email or password',
-                'user',
-                'patchUser',
-                context.input,
-                'User not found'
-            );
-            context.throw(STATUS.NOT_FOUND, error);
-
-            return next();
-        }
-
         const { body } = context.input;
         const { headers } = context.input;
         const { password } = body;
@@ -311,6 +284,7 @@ Se não ignore este email`
         if (password)
             body.password = await this.userService.hashPassword(password);
 
+        const { user } = context.state;
         try {
             await user.updateWithDates(body, headers[DATE_HEADER]);
         } catch (error) {
