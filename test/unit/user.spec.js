@@ -77,7 +77,7 @@ describe('Users component', () => {
     const authJwtOptions = {
         hash: hashKey,
         tokenExpiration: authTokenExpiration,
-        subject: AUTH.TOKEN_SUBJECT
+        subject: AUTH.AUTH_SUBJECT
     };
     const authJwtService = new JwtService(authJwtOptions);
 
@@ -85,7 +85,7 @@ describe('Users component', () => {
     const recoverJwtOptions = {
         hash: hashKey,
         tokenExpiration: recoverTokenExpiration,
-        subject: AUTH.TOKEN_SUBJECT
+        subject: AUTH.RESET_SUBJECT
     };
     const resetJwtService = new JwtService(recoverJwtOptions);
 
@@ -93,7 +93,7 @@ describe('Users component', () => {
     const confirmJwtOptions = {
         hash: hashKey,
         tokenExpiration: confirmTokenExpiration,
-        subject: AUTH.TOKEN_SUBJECT
+        subject: AUTH.CONFIRM_SUBJECT
     };
     const confirmJwtService = new JwtService(confirmJwtOptions);
 

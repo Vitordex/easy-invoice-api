@@ -52,7 +52,7 @@ async function initApp(logger) {
     const authJwtOptions = {
         hash: hashKey,
         tokenExpiration: authTokenExpiration,
-        subject: AUTH.TOKEN_SUBJECT
+        subject: AUTH.AUTH_SUBJECT
     };
     const authJwtService = new JwtService(authJwtOptions);
 
