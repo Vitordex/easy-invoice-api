@@ -93,9 +93,6 @@ async function initApp(logger) {
 
     const userControllerParameters = {
         userService,
-        authHash: hashKey,
-        authConfigs,
-        mailService,
         apiErrorModel: ControllerError,
         authJwtService,
         confirmJwtService,
@@ -122,8 +119,6 @@ async function initApp(logger) {
 
     const customerControllerOptions = {
         userService,
-        authHash: hashKey,
-        authConfigs,
         customerService,
         apiErrorModel: ControllerError
     };
@@ -148,8 +143,6 @@ async function initApp(logger) {
 
     const invoiceControllerParameters = {
         userService,
-        authHash: hashKey,
-        authConfigs,
         invoiceService,
         apiErrorModel: ControllerError
     };

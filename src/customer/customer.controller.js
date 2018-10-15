@@ -3,45 +3,23 @@ const CustomerService = require('./customer.service');
 const UserService = require('../user/user.service');
 /* eslint-enable no-unused-vars */
 
-const JwtToken = require('../user/jwt.model.js');
-
-const { AUTH, API: { STATUS } } = require('../enums');
+const { API: { STATUS } } = require('../enums');
 
 class CustomerController {
     /**
-     * 
-     * @param {Object} params 
      * @param {UserService} params.userService
-     * @param {String} params.authHash
-     * @param {Object} params.authConfigs
      * @param {CustomerService} params.customerService
      */
     constructor({
         userService,
-        authHash,
-        authConfigs,
         customerService
     }) {
         this.userService = userService;
-
-        this.hash = authHash;
-        this.tokenExpiration = authConfigs.token.expiration;
-        this.tokenOptions = authConfigs.optionals;
         this.customerService = customerService;
     }
 
     async getCustomer(context, next) {
-        const token = context.request.headers[AUTH.TOKEN_HEADER];
-        const emailToken = new JwtToken({}, this.hash, this.tokenOptions);
-
-        try {
-            await emailToken.verify(token);
-        } catch (error) {
-            context.throw(STATUS.UNAUTHORIZED, 'Invalid token');
-            return next();
-        }
-
-        const { customerId } = context.params;
+        const { customerId } = context.input.params;
 
         let customer;
 
@@ -63,19 +41,7 @@ class CustomerController {
     }
 
     async postCustomer(context, next) {
-        const token = context.request.headers[AUTH.TOKEN_HEADER];
-        const emailToken = new JwtToken({}, this.hash, this.tokenOptions);
-
-        let payload;
-
-        try {
-            payload = await emailToken.verify(token);
-        } catch (error) {
-            context.throw(STATUS.UNAUTHORIZED, 'Invalid token');
-            return next();
-        }
-
-        const { body } = context.request;
+        const { body } = context.input;
 
         const found = await this.customerService.findCustomer({ name: body.name });
         if (found) {
@@ -85,14 +51,7 @@ class CustomerController {
 
         const customer = await this.customerService.create(body);
 
-        let user;
-
-        try {
-            user = await this.userService.findUser({ _id: payload.id });
-        } catch (error) {
-            context.throw(STATUS.UNAUTHORIZED, 'Invalid user');
-            return next();
-        }
+        const { user } = context.state;
 
         user.customers.push(customer._id);
 
@@ -112,30 +71,12 @@ class CustomerController {
     }
 
     async putCustomer(context, next) {
-        const token = context.request.headers[AUTH.TOKEN_HEADER];
-        const emailToken = new JwtToken({}, this.hash, this.tokenOptions);
+        const { 
+            params, 
+            body 
+        } = context.input;
 
-        let payload;
-
-        try {
-            payload = await emailToken.verify(token);
-        } catch (error) {
-            context.throw(STATUS.UNAUTHORIZED, 'Invalid token');
-            return next();
-        }
-
-        let user;
-
-        try {
-            user = await this.userService.findUser({ _id: payload.id });
-        } catch (error) {
-            context.throw(STATUS.UNAUTHORIZED, 'Invalid user');
-            return next();
-        }
-
-        const { params } = context;
-        const { body } = context.request;
-
+        const { user } = context.state;
         if (!user.customers.find((id) => id.toString() === params.customerId)) {
             context.throw(STATUS.FORBIDDEN, 'User does not have rights');
             return next();

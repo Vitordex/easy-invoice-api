@@ -506,11 +506,11 @@ describe('Users component', () => {
                     active: true,
                     email: testEmail,
                     password: hashedTestPassword,
-                    id: 1,
+                    _id: 1,
                     toJSON: () => ({
                         email: testEmail,
                         password: hashedTestPassword,
-                        id: 1
+                        _id: 1
                     }),
                     save: () => Promise.resolve(true)
                 });
@@ -519,7 +519,7 @@ describe('Users component', () => {
             it('should return user with id 1', async () => {
                 const context = new Context({
                     query: {
-                        token: await new JwtToken({}, hashKey, authOptionals).hash()
+                        token: await confirmJwtService.generate()
                     }
                 });
 
@@ -550,7 +550,7 @@ describe('Users component', () => {
             it('should throw a 404 error', async () => {
                 const context = new Context({
                     query: {
-                        token: await new JwtToken({}, hashKey, authOptionals).hash()
+                        token: await confirmJwtService.generate()
                     }
                 });
 

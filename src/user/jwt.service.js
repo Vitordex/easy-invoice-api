@@ -47,7 +47,7 @@ class JwtService {
      * 
      * @returns {Promise<String>}
      */
-    generate(payload) {
+    generate(payload = {}) {
         const promiseAction = (resolve, reject) => {
             const signOptions = {
                 subject: this.subject,
