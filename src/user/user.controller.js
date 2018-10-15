@@ -34,8 +34,6 @@ class UserController {
      */
     constructor({
         userService,
-        authHash,
-        authConfigs,
         mailService,
         apiErrorModel,
         authJwtService,
@@ -45,9 +43,6 @@ class UserController {
         this.mailService = mailService;
         this.userService = userService;
 
-        this.hash = authHash;
-        this.tokenExpiration = authConfigs.token.expiration;
-        this.tokenOptions = authConfigs.optionals;
         this.authJwtService = authJwtService;
         this.confirmJwtService = confirmJwtService;
         this.resetJwtService = resetJwtService;

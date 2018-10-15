@@ -34,8 +34,8 @@ class CustomerApi {
     buildRoutes() {
         this.router.get(
             '/:customerId',
-            this.authService.authenticate(),
             this.validationMiddleware.validate(this.customerSchema.schemas.getCustomer),
+            this.authService.authenticate(),
             async (context, next) => {
                 await this.customerController.getCustomer(context, next);
             }
@@ -43,8 +43,8 @@ class CustomerApi {
 
         this.router.post(
             '/',
-            this.authService.authenticate(),
             this.validationMiddleware.validate(this.customerSchema.schemas.postCustomer),
+            this.authService.authenticate(),
             async (context, next) => {
                 await this.customerController.postCustomer(context, next);
             }
@@ -52,8 +52,8 @@ class CustomerApi {
 
         this.router.put(
             '/:customerId',
-            this.authService.authenticate(),
             this.validationMiddleware.validate(this.customerSchema.schemas.putCustomer),
+            this.authService.authenticate(),
             async (context, next) => {
                 await this.customerController.putCustomer(context, next);
             }
