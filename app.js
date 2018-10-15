@@ -60,7 +60,7 @@ async function initApp(logger) {
     const recoverJwtOptions = {
         hash: hashKey,
         tokenExpiration: recoverTokenExpiration,
-        subject: AUTH.TOKEN_SUBJECT
+        subject: AUTH.RESET_SUBJECT
     };
     const resetJwtService = new JwtService(recoverJwtOptions);
 
@@ -68,7 +68,7 @@ async function initApp(logger) {
     const confirmJwtOptions = {
         hash: hashKey,
         tokenExpiration: confirmTokenExpiration,
-        subject: AUTH.TOKEN_SUBJECT
+        subject: AUTH.CONFIRM_SUBJECT
     };
     const confirmJwtService = new JwtService(confirmJwtOptions);
 
