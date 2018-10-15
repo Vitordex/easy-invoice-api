@@ -86,6 +86,25 @@ class CustomerSchema {
                     }),
                     document: joi.string()
                 }).min(1).required()
+            }),
+            deleteCustomer: this.generateSchema({
+                headers: joi.object().keys({
+                    [AUTH.TOKEN_HEADER]: joi
+                        .string()
+                        .required()
+                }).required().unknown(true),
+                params: joi.object().keys({
+                    customerId: joi.string()
+                        .min(13)
+                        .required()
+                })
+            }),
+            listCustomers: this.generateSchema({
+                headers: joi.object().keys({
+                    [AUTH.TOKEN_HEADER]: joi
+                        .string()
+                        .required()
+                }).required().unknown(true)
             })
         };
     }

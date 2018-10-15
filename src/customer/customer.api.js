@@ -58,6 +58,24 @@ class CustomerApi {
                 await this.customerController.putCustomer(context, next);
             }
         );
+
+        this.router.delete(
+            '/:customerId',
+            this.validationMiddleware.validate(this.customerSchema.schemas.deleteCustomer),
+            this.authService.authenticate(),
+            async (context, next) => {
+                await this.customerController.deleteCustomer(context, next);
+            }
+        );
+
+        this.router.get(
+            '/',
+            this.validationMiddleware.validate(this.customerSchema.schemas.listCustomers),
+            this.authService.authenticate(),
+            async (context, next) => {
+                await this.customerController.listCustomers(context, next);
+            }
+        );
     }
 }
 

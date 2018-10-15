@@ -42,6 +42,21 @@ class CustomerService {
 
         return new this.Customer(body);
     }
+
+    /**
+     * Find a set of invoices
+     * @param {Object} query 
+     * 
+     * @returns {[Customer]}
+     */
+    findCustomers(query) {
+        return this.Customer.find({
+            ...query,
+            deletedAt: {
+                $exists: false
+            }
+        });
+    }
 }
 
 module.exports = CustomerService;
