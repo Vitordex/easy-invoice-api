@@ -7,7 +7,7 @@
     "test": "mocha $(find -name *.spec.js)",
     "start": "bash ./scripts/start.sh",
     "test-unit": "mocha test/unit/",
-    "test-integration": "mocha test/integration/ --timeout 5000"
+    "test-integration": "mocha test/integration/ --timeout 10000"
   },
   "author": "Vitor Ribeiro Pais Del Pezzo",
   "license": "ISC",
