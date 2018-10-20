@@ -1,6 +1,6 @@
 const DatabaseService = require('./database.service'); // eslint-disable-line
 
-const {DATABASE: dbValues} = require('../values');
+const { DATABASE: dbValues } = require('../values');
 const { DB } = require('../enums');
 const dbModels = DB.MODELS;
 
@@ -46,6 +46,19 @@ class User {
             customers: [String],
             invoices: [String],
             document: String,
+            registry: String,
+            salary_intended: Number,
+            workload_intended: Number,
+            thirteenth_salary: Boolean,
+            vacation: Boolean,
+            negocioation_margin: Number,
+            inss: Number,
+            fgts: Number,
+            issqn: Number,
+            eati: Number,
+            rent: Number,
+            maintenance: Number,
+            supplies: Number,
             address: {
                 street: String,
                 number: Number,
@@ -59,31 +72,14 @@ class User {
                     required: true
                 }
             },
-            registry: String,
-            incomes: {
-                salary_intended: Number,
-                workload_intended: Number,
-                thirteenth_salary: Boolean,
-                vacation: Boolean
-            },
-            negocioation_margin: Number,
-            bills: {
-                inss: Number,
-                fgts: Number,
-                issqn: Number,
-                eati: Number,
-                rent: Number,
-                maintenance: Number,
-                supplies: Number
-            },
             deletedAt: Date
         };
 
         const removeProperties = ['password'];
         const User = creator.create(
-            dbModels.USER, 
-            model, 
-            {}, 
+            dbModels.USER,
+            model,
+            {},
             Object.keys(model).filter((key) => !removeProperties.includes(key))
         );
 

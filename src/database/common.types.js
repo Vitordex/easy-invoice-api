@@ -24,22 +24,18 @@ module.exports = {
                 state: DATABASE.PROPS.STATES.ARRAY
             },
             registry: '',
-            incomes: {
-                salary_intended: 0,
-                workload_intended: 0,
-                thirteenth_salary: true,
-                vacation: true
-            },
+            salary_intended: 0,
+            workload_intended: 0,
+            thirteenth_salary: true,
+            vacation: true,
             negocioation_margin: 0,
-            bills: {
-                inss: 0,
-                fgts: 0,
-                issqn: 0,
-                eati: 0,
-                rent: 0,
-                maintenance: 0,
-                supplies: [0],
-            },
+            inss: 0,
+            fgts: 0,
+            issqn: 0,
+            eati: 0,
+            rent: 0,
+            maintenance: 0,
+            supplies: [0],
             deletedAt: '',
             save: () => Promise.resolve()
         },
