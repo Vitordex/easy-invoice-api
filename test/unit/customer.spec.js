@@ -2,7 +2,7 @@
 const sinon = require('sinon');
 const assert = require('assert');
 
-const config = require('config');
+const config = require('../../src/services/config.service');
 const fs = require('fs');
 
 const CustomerService = require('../../src/customer/customer.service');
