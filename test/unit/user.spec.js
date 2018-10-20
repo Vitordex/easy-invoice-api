@@ -13,7 +13,6 @@ const UserService = require('../../src/user/user.service');
 const UserController = require('../../src/user/user.controller');
 const UserSchema = require('../../src/user/user.schema');
 
-const JwtToken = require('../../src/user/jwt.model');
 const JwtService = require('../../src/user/jwt.service');
 const Context = require('./context.model');
 
@@ -21,11 +20,8 @@ const ControllerError = require('../../src/log/controller.error.model');
 
 const fs = require('fs');
 const hashKey = fs.readFileSync('./server.hash.key', { encoding: 'utf-8' });
-const invalidHash = 'secret';
 
 const authConfigs = config.get('auth');
-
-const authOptionals = authConfigs.optionals;
 
 const hashingOptions = authConfigs.password;
 
@@ -248,6 +244,7 @@ describe('Users component', () => {
         describe('happy path', () => {
             before(() => {
                 sinon.stub(userService, 'findUser').resolves({
+                    _id: 1,
                     email: testEmail,
                     password: hashedTestPassword,
                     id: 1,
@@ -264,27 +261,30 @@ describe('Users component', () => {
             it('should return status 200', async () => {
                 const context = new Context({
                     body: {
-                        email: testEmail,
-                        password: testPassword
+                        email: testEmail
                     },
                     origin: 'localhost'
                 });
 
+                const next = async () => {
+                    await userController.recover(context, defaultNext);
+                };
+
                 await validationMiddleware.validate(userSchema.schemas.recover)(
                     context,
-                    async () => {
-                        await userController.recover(context, async () => {
-                            const jwt = await new JwtToken({
-                                id: 1,
-                                email: testEmail
-                            }, hashKey, authOptionals).hash();
-                            const url = `localhost/users/reset/password?token=${jwt}`;
-
-                            assert(mailService.sendMail.getCall(0).args[3].includes(url));
-                            assert(context.status === STATUS.OK);
-                        });
-                    }
+                    next
                 );
+
+                const payload = {
+                    id: 1,
+                    email: testEmail
+                };
+                const jwt = await resetJwtService.generate(payload);
+
+                const url = `localhost/users/reset/password?token=${jwt}`;
+
+                assert(mailService.sendMail.getCall(0).args[3].includes(url));
+                assert(context.status === STATUS.OK);
             });
 
             after(() => {
@@ -394,26 +394,31 @@ describe('Users component', () => {
             });
 
             it('should return status 200', async () => {
+                const payload = {
+                    id: 1,
+                    email: testEmail
+                };
                 const context = new Context({
                     body: {
                         password: testPassword
                     },
-                    query: {
-                        token: await new JwtToken({
-                            id: 1,
-                            email: testEmail
-                        }, hashKey, authOptionals).hash()
+                    headers: {
+                        [AUTH.TOKEN_HEADER]: await resetJwtService.generate(payload)
                     }
                 });
 
+                const next = async () => {
+                    await userController.changePassword(context, defaultNext);
+                };
+
                 await validationMiddleware.validate(userSchema.schemas.changePassword)(
                     context,
-                    async () => {
-                        await userController.changePassword(context, async () => {
-                            assert(context.status === STATUS.OK);
-                        });
-                    }
+                    next
                 );
+
+                const status = context.status;
+
+                assert(status === STATUS.OK);
             });
 
             after(() => {
@@ -423,28 +428,31 @@ describe('Users component', () => {
 
         describe('invalid token', () => {
             it('should throw a 401 error', async () => {
+                const payload = {
+                    id: 1,
+                    email: testEmail
+                };
                 const context = new Context({
                     body: {
                         password: testPassword
                     },
-                    query: {
-                        token: await new JwtToken({
-                            id: 1,
-                            email: testEmail
-                        }, 'test', authOptionals).hash()
+                    headers: {
+                        [AUTH.TOKEN_HEADER]: await confirmJwtService.generate(payload)
                     }
                 });
 
+                const next = async () => {
+                    await userController.changePassword(context, defaultNext);
+                };
+
                 await validationMiddleware.validate(userSchema.schemas.changePassword)(
                     context,
-                    async () => {
-                        await userController.changePassword(context, () => {
-                            const status = context.status;
-
-                            assert(status === STATUS.UNAUTHORIZED);
-                        });
-                    }
+                    next
                 );
+
+                const status = context.status;
+
+                assert(status === STATUS.UNAUTHORIZED);
             });
         });
 
@@ -577,7 +585,7 @@ describe('Users component', () => {
             it('should throw a 401 error', async () => {
                 const context = new Context({
                     query: {
-                        token: await new JwtToken({}, invalidHash, authOptionals).hash()
+                        token: await authJwtService.generate()
                     }
                 });
 
