@@ -96,7 +96,8 @@ async function initApp(logger) {
         apiErrorModel: ControllerError,
         authJwtService,
         confirmJwtService,
-        resetJwtService
+        resetJwtService,
+        mailService
     };
     const userController = new UserController(userControllerParameters);
 
