@@ -32,6 +32,7 @@ class Invoice {
             discount: String,
             value: Number,
             type: { type: String, enum: dbValues.PROPS.RES_TYPE.ARRAY },
+            userId: String,
             deletedAt: Date
         };
 

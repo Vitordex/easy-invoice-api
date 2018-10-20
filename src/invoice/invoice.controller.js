@@ -45,7 +45,7 @@ class InvoiceController {
         try {
             invoice = await this.invoiceService.findInvoice({ _id: invoiceId });
         } catch (error) {
-            const findError = new ControllerError(
+            const controllerError = new ControllerError(
                 STATUS.NOT_FOUND,
                 'Invalid invoice id',
                 controllerName,
@@ -53,13 +53,13 @@ class InvoiceController {
                 context.input,
                 error
             );
-            context.throw(STATUS.NOT_FOUND, findError);
+            context.throw(STATUS.NOT_FOUND,  controllerError);
 
             return next();
         }
 
         if (!invoice) {
-            const error = new ControllerError(
+            const controllerError = new ControllerError(
                 STATUS.NOT_FOUND,
                 'Invalid invoice id',
                 controllerName,
@@ -67,7 +67,7 @@ class InvoiceController {
                 context.input,
                 'Invalid invoice id'
             );
-            context.throw(STATUS.NOT_FOUND, error);
+            context.throw(STATUS.NOT_FOUND,  controllerError);
 
             return next();
         }
@@ -80,6 +80,7 @@ class InvoiceController {
     async postInvoice(context, next) {
         const functionName = 'postInvoice';
         const { body } = context.input;
+        body.userId = context.state.user._id;
 
         const invoice = await this.invoiceService.create(body);
 
@@ -93,7 +94,7 @@ class InvoiceController {
                 invoice.save()
             ]);
         } catch (error) {
-            const saveError = new ControllerError(
+            const controllerError = new ControllerError(
                 STATUS.INTERNAL_ERROR,
                 'Error saving the invoice',
                 controllerName,
@@ -101,7 +102,7 @@ class InvoiceController {
                 context.input,
                 error
             );
-            context.throw(STATUS.INTERNAL_ERROR, saveError);
+            context.throw(STATUS.INTERNAL_ERROR,  controllerError);
 
             return next();
         }
@@ -124,7 +125,7 @@ class InvoiceController {
         const { user } = context.state;
 
         if (!user.invoices.find((id) => id.toString() === params.invoiceId)) {
-            const error = new ControllerError(
+            const controllerError = new ControllerError(
                 STATUS.FORBIDDEN,
                 'User does not have rights',
                 controllerName,
@@ -132,7 +133,7 @@ class InvoiceController {
                 context.input,
                 'User does not have rights'
             );
-            context.throw(STATUS.FORBIDDEN, error);
+            context.throw(STATUS.FORBIDDEN, controllerError);
 
             return next();
         }
@@ -142,7 +143,7 @@ class InvoiceController {
         try {
             invoice = await this.invoiceService.findInvoice({ _id: params.invoiceId });
         } catch (error) {
-            const findError = new ControllerError(
+            const controllerError = new ControllerError(
                 STATUS.NOT_FOUND,
                 'Invalid invoice id',
                 controllerName,
@@ -150,13 +151,13 @@ class InvoiceController {
                 context.input,
                 error
             );
-            context.throw(STATUS.NOT_FOUND, findError);
+            context.throw(STATUS.NOT_FOUND,  controllerError);
 
             return next();
         }
 
         if (!invoice) {
-            const error = new ControllerError(
+            const controllerError = new ControllerError(
                 STATUS.NOT_FOUND,
                 'Invalid invoice id',
                 controllerName,
@@ -164,7 +165,7 @@ class InvoiceController {
                 context.input,
                 'Invalid invoice id'
             );
-            context.throw(STATUS.NOT_FOUND, error);
+            context.throw(STATUS.NOT_FOUND, controllerError);
 
             return next();
         }
@@ -174,7 +175,7 @@ class InvoiceController {
         try {
             await invoice.updateWithDates(body, updateLocal);
         } catch (error) {
-            const saveError = new ControllerError(
+            const controllerError = new ControllerError(
                 STATUS.INTERNAL_ERROR,
                 'Error saving the invoice',
                 controllerName,
@@ -182,7 +183,7 @@ class InvoiceController {
                 context.input,
                 error
             );
-            context.throw(STATUS.INTERNAL_ERROR, saveError);
+            context.throw(STATUS.INTERNAL_ERROR,  controllerError);
 
             return next();
         }
@@ -202,7 +203,7 @@ class InvoiceController {
         const { user } = context.state;
 
         if (!user.invoices.find((id) => id.toString() === params.invoiceId)) {
-            const error = new ControllerError(
+            const controllerError = new ControllerError(
                 STATUS.FORBIDDEN,
                 'User does not have rights',
                 controllerName,
@@ -210,7 +211,7 @@ class InvoiceController {
                 context.input,
                 'User does not have rights'
             );
-            context.throw(STATUS.FORBIDDEN, error);
+            context.throw(STATUS.FORBIDDEN, controllerError);
 
             return next();
         }
@@ -220,7 +221,7 @@ class InvoiceController {
         try {
             invoice = await this.invoiceService.findInvoice({ _id: params.invoiceId });
         } catch (error) {
-            const findError = new ControllerError(
+            const controllerError = new ControllerError(
                 STATUS.NOT_FOUND,
                 'Invalid invoice id',
                 controllerName,
@@ -228,13 +229,13 @@ class InvoiceController {
                 context.input,
                 error
             );
-            context.throw(STATUS.NOT_FOUND, findError);
+            context.throw(STATUS.NOT_FOUND,  controllerError);
 
             return next();
         }
 
         if (!invoice) {
-            const error = new ControllerError(
+            const controllerError = new ControllerError(
                 STATUS.NOT_FOUND,
                 'Invalid invoice id',
                 controllerName,
@@ -242,7 +243,7 @@ class InvoiceController {
                 context.input,
                 'Invalid invoice id'
             );
-            context.throw(STATUS.NOT_FOUND, error);
+            context.throw(STATUS.NOT_FOUND, controllerError);
 
             return next();
         }
@@ -260,7 +261,7 @@ class InvoiceController {
                 invoice.save()
             ]);
         } catch (error) {
-            const saveError = new ControllerError(
+            const controllerError = new ControllerError(
                 STATUS.INTERNAL_ERROR,
                 'Error saving the invoice',
                 controllerName,
@@ -268,7 +269,7 @@ class InvoiceController {
                 context.input,
                 error
             );
-            context.throw(STATUS.INTERNAL_ERROR, saveError);
+            context.throw(STATUS.INTERNAL_ERROR,  controllerError);
 
             return next();
         }
@@ -293,7 +294,7 @@ class InvoiceController {
                 invoices = await this.invoiceService.findInvoices(query);
             }
         } catch (error) {
-            const findError = new ControllerError(
+            const controllerError = new ControllerError(
                 STATUS.INTERNAL_ERROR,
                 'Invalid user',
                 controllerName,
@@ -301,7 +302,7 @@ class InvoiceController {
                 context.input,
                 error
             );
-            context.throw(STATUS.INTERNAL_ERROR, findError);
+            context.throw(STATUS.INTERNAL_ERROR,  controllerError);
 
             return next();
         }

@@ -1,6 +1,7 @@
 /* eslint-disable no-unused-vars */
 const CustomerService = require('./customer.service');
 const UserService = require('../user/user.service');
+const ControllerError = require('../log/controller.error.model');
 /* eslint-enable no-unused-vars */
 
 const controllerName = 'customer';
@@ -12,16 +13,21 @@ class CustomerController {
     /**
      * @param {UserService} params.userService
      * @param {CustomerService} params.customerService
+     * @param {ControllerError} params.apiErrorModel
      */
     constructor({
         userService,
-        customerService
+        customerService,
+        apiErrorModel
     }) {
         this.userService = userService;
         this.customerService = customerService;
+
+        this.ControllerError = apiErrorModel;
     }
 
     async getCustomer(context, next) {
+        const functionName = 'getCustomer';
         const { customerId } = context.input.params;
 
         let customer;
@@ -29,12 +35,30 @@ class CustomerController {
         try {
             customer = await this.customerService.findCustomer({ _id: customerId });
         } catch (error) {
-            context.throw(STATUS.NOT_FOUND, 'Invalid customer id');
+            const controllerError = new ControllerError(
+                STATUS.NOT_FOUND,
+                'Invalid customer id',
+                controllerName,
+                functionName,
+                context.input,
+                error
+            );
+            context.throw(STATUS.NOT_FOUND, controllerError);
+
             return next();
         }
 
         if (!customer) {
-            context.throw(STATUS.NOT_FOUND, 'Invalid customer id');
+            const controllerError = new ControllerError(
+                STATUS.NOT_FOUND,
+                'Invalid customer id',
+                controllerName,
+                functionName,
+                context.input,
+                'Customer not found'
+            );
+            context.throw(STATUS.NOT_FOUND, controllerError);
+
             return next();
         }
 
@@ -44,7 +68,9 @@ class CustomerController {
     }
 
     async postCustomer(context, next) {
+        const functionName = 'postCustomer';
         const { body } = context.input;
+        body.userId = context.state.user._id;
         
         const customer = await this.customerService.create(body);
 
@@ -58,7 +84,16 @@ class CustomerController {
                 customer.save()
             ]);
         } catch (error) {
-            context.throw(STATUS.INTERNAL_ERROR, 'Error saving the customer');
+            const controllerError = new ControllerError(
+                STATUS.INTERNAL_ERROR,
+                'Error saving the customer',
+                controllerName,
+                functionName,
+                context.input,
+                error
+            );
+            context.throw(STATUS.INTERNAL_ERROR, controllerError);
+
             return next();
         }
 
@@ -68,6 +103,7 @@ class CustomerController {
     }
 
     async putCustomer(context, next) {
+        const functionName = 'putCustomer';
         const { 
             params, 
             body 
@@ -75,7 +111,16 @@ class CustomerController {
 
         const { user } = context.state;
         if (!user.customers.find((id) => id.toString() === params.customerId)) {
-            context.throw(STATUS.FORBIDDEN, 'User does not have rights');
+            const controllerError = new ControllerError(
+                STATUS.FORBIDDEN,
+                'User does not have rights',
+                controllerName,
+                functionName,
+                context.input,
+                'User does not have rights'
+            );
+            context.throw(STATUS.FORBIDDEN, controllerError);
+
             return next();
         }
 
@@ -84,12 +129,30 @@ class CustomerController {
         try {
             customer = await this.customerService.findCustomer({ _id: params.customerId });
         } catch (error) {
-            context.throw(STATUS.NOT_FOUND, 'Invalid customer id');
+            const controllerError = new ControllerError(
+                STATUS.NOT_FOUND,
+                'Invalid customer id',
+                controllerName,
+                functionName,
+                context.input,
+                error
+            );
+            context.throw(STATUS.NOT_FOUND, controllerError);
+
             return next();
         }
 
         if (!customer) {
-            context.throw(STATUS.NOT_FOUND, 'Invalid customer id');
+            const controllerError = new ControllerError(
+                STATUS.NOT_FOUND,
+                'Invalid customer id',
+                controllerName,
+                functionName,
+                context.input,
+                'Customer not found'
+            );
+            context.throw(STATUS.NOT_FOUND, controllerError);
+
             return next();
         }
 
@@ -107,7 +170,16 @@ class CustomerController {
             else
                 await customer.save();
         } catch (error) {
-            context.throw(STATUS.INTERNAL_ERROR, 'Error saving the customer');
+            const controllerError = new ControllerError(
+                STATUS.INTERNAL_ERROR,
+                'Error saving the customer',
+                controllerName,
+                functionName,
+                context.input,
+                error
+            );
+            context.throw(STATUS.INTERNAL_ERROR, controllerError);
+
             return next();
         }
 

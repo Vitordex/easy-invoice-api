@@ -29,6 +29,7 @@ class Customer {
                 }
             },
             document: String,
+            userId: String,
             deletedAt: Date
         };
 

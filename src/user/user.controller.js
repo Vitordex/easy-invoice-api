@@ -19,6 +19,8 @@ const {
 } = require('../enums');
 const { ACTIVE: activeProp } = require('../values').DATABASE.PROPS;
 
+const controllerName = 'user';
+
 class UserController {
     /**
      * 
@@ -51,20 +53,21 @@ class UserController {
     }
 
     async login(context, next) {
+        const functionName = 'login';
         const requestBody = context.input.body;
         const email = requestBody.email;
         const user = await this.userService.findUser({ email });
 
         if (!user) {
-            const error = new ControllerError(
+            const controllerError = new ControllerError(
                 STATUS.NOT_FOUND,
                 'Invalid email or password',
-                'user',
-                'login',
+                controllerName,
+                functionName,
                 requestBody,
                 'User not found'
             );
-            context.throw(STATUS.NOT_FOUND, error);
+            context.throw(STATUS.NOT_FOUND, controllerError);
 
             return next();
         }
@@ -73,31 +76,30 @@ class UserController {
         const match = this.userService.matchPassword(password, user.password);
 
         if (!match) {
-            const status = STATUS.NOT_FOUND;
-            const error = new ControllerError(
-                status,
+            const controllerError = new ControllerError(
+                STATUS.NOT_FOUND,
                 'Invalid email or password',
-                'user',
-                'login',
+                controllerName,
+                functionName,
                 requestBody,
-                'Incorrect Password'
+                'User not found'
             );
-            context.throw(status, error);
+            context.throw(STATUS.NOT_FOUND, controllerError);
 
             return next();
         }
 
         if (user.active === activeProp.INACTIVE || user.active === activeProp.DISABLED) {
             const status = STATUS.UNAUTHORIZED;
-            const error = new ControllerError(
+            const controllerError = new ControllerError(
                 status,
                 'Account not activated',
-                'user',
-                'login',
+                controllerName,
+                functionName,
                 requestBody,
                 'User not able to login due to inactive'
             );
-            context.throw(status, error);
+            context.throw(status, controllerError);
 
             return next();
         }
@@ -110,17 +112,16 @@ class UserController {
             try {
                 await user.save();
             } catch (error) {
-                const status = STATUS.INTERNAL_ERROR;
-                const saveError = new ControllerError(
-                    status,
+                const controllerError = new ControllerError(
+                    STATUS.INTERNAL_ERROR,
                     'Error saving the user',
-                    'user',
-                    'login',
-                    requestBody,
+                    controllerName,
+                    functionName,
+                    context.input,
                     error
                 );
-                context.throw(status, saveError);
-
+                context.throw(STATUS.INTERNAL_ERROR, controllerError);
+    
                 return next();
             }
         }
@@ -137,11 +138,21 @@ class UserController {
     }
 
     async recover(context, next) {
+        const functionName = 'recover';
         const { email } = context.input.body;
 
         const user = await this.userService.findUser({ email });
         if (!user) {
-            context.throw(STATUS.NOT_FOUND, 'User not found');
+            const controllerError = new ControllerError(
+                STATUS.NOT_FOUND,
+                'Invalid email or password',
+                controllerName,
+                functionName,
+                context.input,
+                'User not found'
+            );
+            context.throw(STATUS.NOT_FOUND, controllerError);
+
             return next();
         }
 
@@ -162,7 +173,16 @@ favor clique no link ${context.request.origin}/users/reset/password?token=${toke
 Se não ignore este email`
             );
         } catch (error) {
-            context.throw(STATUS.BAD_REQUEST, 'Invalid email');
+            const controllerError = new ControllerError(
+                STATUS.BAD_REQUEST,
+                'Invalid email',
+                controllerName,
+                functionName,
+                context.input,
+                error
+            );
+            context.throw(STATUS.BAD_REQUEST, controllerError);
+
             return next();
         }
 
@@ -171,6 +191,7 @@ Se não ignore este email`
     }
 
     async changePassword(context, next) {
+        const functionName = 'changePassword';
         const token = context.input.headers[AUTH.TOKEN_HEADER];
 
         let payload;
@@ -178,7 +199,16 @@ Se não ignore este email`
         try {
             payload = await this.resetJwtService.verify(token);
         } catch (error) {
-            context.throw(STATUS.UNAUTHORIZED, 'Invalid token');
+            const controllerError = new ControllerError(
+                STATUS.UNAUTHORIZED,
+                'Invalid token',
+                controllerName,
+                functionName,
+                context.input,
+                error
+            );
+            context.throw(STATUS.UNAUTHORIZED, controllerError);
+
             return next();
         }
 
@@ -191,7 +221,16 @@ Se não ignore este email`
         try {
             await user.save();
         } catch (error) {
-            context.throw(STATUS.INTERNAL_ERROR, 'Error saving new password');
+            const controllerError = new ControllerError(
+                STATUS.INTERNAL_ERROR,
+                'Error saving the user',
+                controllerName,
+                functionName,
+                context.input,
+                error
+            );
+            context.throw(STATUS.INTERNAL_ERROR, controllerError);
+
             return next();
         }
 
@@ -200,11 +239,21 @@ Se não ignore este email`
     }
 
     async register(context, next) {
+        const functionName = 'register';
         const { body } = context.input;
 
         const found = await this.userService.findUser({ email: body.email });
         if (found) {
-            context.throw(STATUS.BAD_REQUEST, 'User already exists');
+            const controllerError = new ControllerError(
+                STATUS.BAD_REQUEST,
+                'User already exists',
+                controllerName,
+                functionName,
+                context.input,
+                'User already exists'
+            );
+            context.throw(STATUS.BAD_REQUEST, controllerError);
+
             return next();
         }
 
@@ -214,7 +263,16 @@ Se não ignore este email`
         try {
             await user.save();
         } catch (error) {
-            context.throw(STATUS.INTERNAL_ERROR, 'Error saving the user');
+            const controllerError = new ControllerError(
+                STATUS.INTERNAL_ERROR,
+                'Error saving the user',
+                controllerName,
+                functionName,
+                context.input,
+                error
+            );
+            context.throw(STATUS.INTERNAL_ERROR, controllerError);
+
             return next();
         }
 
@@ -231,7 +289,16 @@ Se não ignore este email`
                 `${context.request.origin}/users/confirm?token=${token}`
             );
         } catch (error) {
-            context.throw(STATUS.INTERNAL_ERROR, 'Error sending the confirmation email');
+            const controllerError = new ControllerError(
+                STATUS.INTERNAL_ERROR,
+                'Invalid email',
+                controllerName,
+                functionName,
+                context.input,
+                error
+            );
+            context.throw(STATUS.INTERNAL_ERROR, controllerError);
+
             return next();
         }
 
@@ -240,6 +307,7 @@ Se não ignore este email`
     }
 
     async confirm(context, next) {
+        const functionName = 'confirm';
         const { token } = context.input.query;
 
         let payload;
@@ -247,14 +315,32 @@ Se não ignore este email`
         try {
             payload = await this.confirmJwtService.verify(token);
         } catch (error) {
-            context.throw(STATUS.UNAUTHORIZED, 'Invalid token');
+            const controllerError = new ControllerError(
+                STATUS.UNAUTHORIZED,
+                'Invalid token',
+                controllerName,
+                functionName,
+                context.input,
+                error
+            );
+            context.throw(STATUS.UNAUTHORIZED, controllerError);
+
             return next();
         }
 
         const user = await this.userService.findUser({ _id: payload.id });
 
         if (!user) {
-            context.throw(STATUS.NOT_FOUND, 'Invalid User');
+            const controllerError = new ControllerError(
+                STATUS.NOT_FOUND,
+                'Invalid User',
+                controllerName,
+                functionName,
+                context.input,
+                'User not found'
+            );
+            context.throw(STATUS.NOT_FOUND, controllerError);
+
             return next();
         }
 
@@ -263,7 +349,16 @@ Se não ignore este email`
         try {
             await user.save();
         } catch (error) {
-            context.throw(STATUS.INTERNAL_ERROR, 'Error saving the user');
+            const controllerError = new ControllerError(
+                STATUS.INTERNAL_ERROR,
+                'Error saving the user',
+                controllerName,
+                functionName,
+                context.input,
+                error
+            );
+            context.throw(STATUS.INTERNAL_ERROR, controllerError);
+
             return next();
         }
 
@@ -272,6 +367,7 @@ Se não ignore este email`
     }
 
     async patchUser(context, next) {
+        const functionName = 'patchUser';
         const { body } = context.input;
         const { headers } = context.input;
         const { password } = body;
@@ -283,16 +379,15 @@ Se não ignore este email`
         try {
             await user.updateWithDates(body, headers[DATE_HEADER]);
         } catch (error) {
-            const status = STATUS.INTERNAL_ERROR;
-            const saveError = new ControllerError(
-                status,
+            const controllerError = new ControllerError(
+                STATUS.INTERNAL_ERROR,
                 'Error saving the user',
-                'user',
-                'login',
+                controllerName,
+                functionName,
                 context.input,
                 error
             );
-            context.throw(status, saveError);
+            context.throw(STATUS.INTERNAL_ERROR, controllerError);
 
             return next();
         }
