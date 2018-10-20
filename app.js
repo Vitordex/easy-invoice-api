@@ -27,6 +27,12 @@ const InvoiceController = require('./src/invoice/invoice.controller');
 const InvoiceSchema = require('./src/invoice/invoice.schema');
 const InvoiceRouter = require('./src/invoice/invoice.api');
 
+const Material = require('./src/database/material.model');
+const MaterialService = require('./src/material/material.service');
+const MaterialController = require('./src/material/material.controller');
+const MaterialSchema = require('./src/material/material.schema');
+const MaterialRouter = require('./src/material/material.api');
+
 const ControllerError = require('./src/log/controller.error.model');
 const ServiceError = require('./src/log/service.error.model');
 
@@ -142,7 +148,6 @@ async function initApp(logger) {
     const invoiceService = new InvoiceService(invoiceModel);
 
     const invoiceControllerParameters = {
-        userService,
         invoiceService,
         apiErrorModel: ControllerError
     };
@@ -160,6 +165,29 @@ async function initApp(logger) {
     invoiceApi.buildRoutes();
 
     app.use(invoiceApi.router.routes());
+
+    //Build material api
+    const materialModel = new Material(databaseService);
+    const materialService = new MaterialService(materialModel);
+
+    const materialControllerParameters = {
+        materialService,
+        apiErrorModel: ControllerError
+    };
+    const materialController = new MaterialController(materialControllerParameters);
+
+    const materialSchema = new MaterialSchema(validationMiddleware.baseSchema);
+
+    const materialApiParameters = {
+        authService,
+        materialController,
+        materialSchema,
+        validationMiddleware
+    };
+    const materialApi = new MaterialRouter(materialApiParameters);
+    materialApi.buildRoutes();
+
+    app.use(materialApi.router.routes());
 
     return app;
 }

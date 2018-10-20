@@ -1,9 +1,9 @@
 /* eslint-disable no-unused-vars */
-const InvoiceService = require('./invoice.service');
+const MaterialService = require('./material.service');
 const ControllerError = require('../log/controller.error.model');
 /* eslint-enable no-unused-vars */
 
-const controllerName = 'invoice';
+const controllerName = 'material';
 const timeService = require('../services/time.service');
 
 const {
@@ -17,33 +17,33 @@ const {
     }
 } = require('../enums');
 
-class InvoiceController {
+class MaterialController {
     /**
-     * @param {InvoiceService} params.invoiceService
+     * @param {MaterialService} params.materialService
      * @param {ControllerError} params.apiErrorModel
      */
     constructor({
-        invoiceService,
+        materialService,
         apiErrorModel
     }) {
-        this.invoiceService = invoiceService;
+        this.materialService = materialService;
 
         this.ControllerError = apiErrorModel;
     }
 
-    async getInvoice(context, next) {
-        const functionName = 'getInvoice';
+    async getMaterial(context, next) {
+        const functionName = 'getMaterial';
 
-        const { invoiceId } = context.input.params;
+        const { materialId } = context.input.params;
 
-        let invoice;
+        let material;
 
         try {
-            invoice = await this.invoiceService.findInvoice({ _id: invoiceId });
+            material = await this.materialService.findMaterial({ _id: materialId });
         } catch (error) {
             const controllerError = new ControllerError(
                 STATUS.NOT_FOUND,
-                'Invalid invoice id',
+                'Invalid material id',
                 controllerName,
                 functionName,
                 context.input,
@@ -54,45 +54,45 @@ class InvoiceController {
             return next();
         }
 
-        if (!invoice) {
+        if (!material) {
             const controllerError = new ControllerError(
                 STATUS.NOT_FOUND,
-                'Invalid invoice id',
+                'Invalid material id',
                 controllerName,
                 functionName,
                 context.input,
-                'Invalid invoice id'
+                'Invalid material id'
             );
             context.throw(STATUS.NOT_FOUND,  controllerError);
 
             return next();
         }
 
-        context.body = invoice.toJSON();
+        context.body = material.toJSON();
         context.type = 'json';
         return next();
     }
 
-    async postInvoice(context, next) {
-        const functionName = 'postInvoice';
+    async postMaterial(context, next) {
+        const functionName = 'postMaterial';
         const { body } = context.input;
         body.userId = context.state.user._id;
 
-        const invoice = await this.invoiceService.create(body);
+        const material = await this.materialService.create(body);
 
         const { user } = context.state;
 
-        user.invoices.push(invoice._id);
+        user.materials.push(material._id);
 
         try {
             await Promise.all([
                 user.save(),
-                invoice.save()
+                material.save()
             ]);
         } catch (error) {
             const controllerError = new ControllerError(
                 STATUS.INTERNAL_ERROR,
-                'Error saving the invoice',
+                'Error saving the material',
                 controllerName,
                 functionName,
                 context.input,
@@ -104,12 +104,12 @@ class InvoiceController {
         }
 
         context.status = STATUS.OK;
-        context.body = { invoiceId: invoice._id };
+        context.body = { materialId: material._id };
         return next();
     }
 
-    async patchInvoice(context, next) {
-        const functionName = 'patchInvoice';
+    async patchMaterial(context, next) {
+        const functionName = 'patchMaterial';
         const {
             input: {
                 body,
@@ -120,7 +120,7 @@ class InvoiceController {
 
         const { user } = context.state;
 
-        if (!user.invoices.find((id) => id.toString() === params.invoiceId)) {
+        if (!user.materials.find((id) => id.toString() === params.materialId)) {
             const controllerError = new ControllerError(
                 STATUS.FORBIDDEN,
                 'User does not have rights',
@@ -134,14 +134,14 @@ class InvoiceController {
             return next();
         }
 
-        let invoice;
+        let material;
 
         try {
-            invoice = await this.invoiceService.findInvoice({ _id: params.invoiceId });
+            material = await this.materialService.findMaterial({ _id: params.materialId });
         } catch (error) {
             const controllerError = new ControllerError(
                 STATUS.NOT_FOUND,
-                'Invalid invoice id',
+                'Invalid material id',
                 controllerName,
                 functionName,
                 context.input,
@@ -152,14 +152,14 @@ class InvoiceController {
             return next();
         }
 
-        if (!invoice) {
+        if (!material) {
             const controllerError = new ControllerError(
                 STATUS.NOT_FOUND,
-                'Invalid invoice id',
+                'Invalid material id',
                 controllerName,
                 functionName,
                 context.input,
-                'Invalid invoice id'
+                'Invalid material id'
             );
             context.throw(STATUS.NOT_FOUND, controllerError);
 
@@ -169,11 +169,11 @@ class InvoiceController {
         const updateLocal = headers[DATE_HEADER];
 
         try {
-            await invoice.updateWithDates(body, updateLocal);
+            await material.updateWithDates(body, updateLocal);
         } catch (error) {
             const controllerError = new ControllerError(
                 STATUS.INTERNAL_ERROR,
-                'Error saving the invoice',
+                'Error saving the material',
                 controllerName,
                 functionName,
                 context.input,
@@ -188,8 +188,8 @@ class InvoiceController {
         return next();
     }
 
-    async deleteInvoice(context, next) {
-        const functionName = 'deleteInvoice';
+    async deleteMaterial(context, next) {
+        const functionName = 'deleteMaterial';
         const {
             input: {
                 params
@@ -198,7 +198,7 @@ class InvoiceController {
 
         const { user } = context.state;
 
-        if (!user.invoices.find((id) => id.toString() === params.invoiceId)) {
+        if (!user.materials.find((id) => id.toString() === params.materialId)) {
             const controllerError = new ControllerError(
                 STATUS.FORBIDDEN,
                 'User does not have rights',
@@ -212,14 +212,14 @@ class InvoiceController {
             return next();
         }
 
-        let invoice;
+        let material;
 
         try {
-            invoice = await this.invoiceService.findInvoice({ _id: params.invoiceId });
+            material = await this.materialService.findMaterial({ _id: params.materialId });
         } catch (error) {
             const controllerError = new ControllerError(
                 STATUS.NOT_FOUND,
-                'Invalid invoice id',
+                'Invalid material id',
                 controllerName,
                 functionName,
                 context.input,
@@ -230,36 +230,36 @@ class InvoiceController {
             return next();
         }
 
-        if (!invoice) {
+        if (!material) {
             const controllerError = new ControllerError(
                 STATUS.NOT_FOUND,
-                'Invalid invoice id',
+                'Invalid material id',
                 controllerName,
                 functionName,
                 context.input,
-                'Invalid invoice id'
+                'Invalid material id'
             );
             context.throw(STATUS.NOT_FOUND, controllerError);
 
             return next();
         }
 
-        invoice.deletedAt = timeService().toISOString();
-        user.invoices = user.invoices.reduce((invoices, item) => {
-            if (item.toString() === invoice.id.toString()) return invoices;
+        material.deletedAt = timeService().toISOString();
+        user.materials = user.materials.reduce((materials, item) => {
+            if (item.toString() === material.id.toString()) return materials;
 
-            return invoices.concat([item]);
+            return materials.concat([item]);
         }, []);
 
         try {
             await Promise.all([
                 user.save(),
-                invoice.save()
+                material.save()
             ]);
         } catch (error) {
             const controllerError = new ControllerError(
                 STATUS.INTERNAL_ERROR,
-                'Error saving the invoice',
+                'Error saving the material',
                 controllerName,
                 functionName,
                 context.input,
@@ -274,20 +274,20 @@ class InvoiceController {
         return next();
     }
 
-    async listInvoices(context, next) {
-        const functionName = 'listInvoices';
+    async listMaterials(context, next) {
+        const functionName = 'listMaterials';
 
         const { user } = context.state;
-        let invoices = user.invoices;
+        let materials = user.materials;
 
         try {
-            if (invoices.length > 0) {
+            if (materials.length > 0) {
                 const query = {
                     '_id': {
-                        $in: user.invoices
+                        $in: user.materials
                     }
                 };
-                invoices = await this.invoiceService.findInvoices(query);
+                materials = await this.materialService.findMaterials(query);
             }
         } catch (error) {
             const controllerError = new ControllerError(
@@ -303,11 +303,11 @@ class InvoiceController {
             return next();
         }
 
-        context.body = invoices.map((invoice) => invoice.toJSON());
+        context.body = materials.map((material) => material.toJSON());
         context.status = 200;
 
         return next();
     }
 }
 
-module.exports = InvoiceController;
+module.exports = MaterialController;
