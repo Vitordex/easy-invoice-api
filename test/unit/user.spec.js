@@ -43,6 +43,8 @@ let userController;
 let userSchema;
 
 describe('Users component', () => {
+    const source = 'user.controller';
+
     hashingService = new HashingService(
         hashingOptions.key,
         hashingOptions.algorithm,
@@ -104,9 +106,19 @@ describe('Users component', () => {
     });
 
     describe('login route', () => {
+        const functionName = 'login';
+
         describe('happy path', () => {
-            before(() => {
-                sinon.stub(userService, 'findUser').resolves({
+            const returnedStatus = STATUS.OK;
+            const context = new Context({
+                body: {
+                    email: testEmail,
+                    password: testPassword
+                }
+            });
+
+            before(async () => {
+                const successUser = {
                     active: 'static',
                     email: testEmail,
                     password: hashedTestPassword,
@@ -117,16 +129,8 @@ describe('Users component', () => {
                         _id: 1
                     }),
                     save: () => Promise.resolve(true)
-                });
-            });
-
-            it('should return user with id 1', async () => {
-                const context = new Context({
-                    body: {
-                        email: testEmail,
-                        password: testPassword
-                    }
-                });
+                };
+                sinon.stub(userService, 'findUser').resolves(successUser);
 
                 const next = async () => {
                     await userController.login(context, defaultNext);
@@ -136,13 +140,25 @@ describe('Users component', () => {
                     context,
                     next
                 );
+            });
 
-                const responseBody = context.body;
+            it('should return user with id 1', async () => {
+                const { body } = context;
+
+                assert(body && body._id === 1);
+            });
+
+            it('should have a valid token', async () => {
                 const headers = context.header;
                 const jwt = await authJwtService.generate({ id: 1 });
 
-                assert(responseBody && responseBody._id === 1);
                 assert(headers[AUTH.TOKEN_HEADER] === jwt);
+            });
+
+            it(`should return status ${returnedStatus}`, () => {
+                const { status } = context;
+
+                assert(status === returnedStatus);
             });
 
             after(() => {
@@ -151,17 +167,16 @@ describe('Users component', () => {
         });
 
         describe('invalid customer', () => {
-            before(() => {
-                sinon.stub(userService, 'findUser').resolves(null);
+            const returnedStatus = STATUS.NOT_FOUND;
+            const context = new Context({
+                body: {
+                    email: testEmail,
+                    password: testPassword
+                }
             });
 
-            it('should throw a 404 error', async () => {
-                const context = new Context({
-                    body: {
-                        email: testEmail,
-                        password: testPassword
-                    }
-                });
+            before(async () => {
+                sinon.stub(userService, 'findUser').resolves(null);
 
                 const next = async () => {
                     await userController.login(context, defaultNext);
@@ -171,10 +186,50 @@ describe('Users component', () => {
                     context,
                     next
                 );
+            });
 
-                const status = context.status;
+            it(`should throw a ${returnedStatus} error`, async () => {
+                const { status } = context;
 
-                assert(status === STATUS.NOT_FOUND);
+                assert(status === returnedStatus);
+            });
+
+            describe('context body', () => {
+                it('should have property method', () => {
+                    const { method } = context.body;
+
+                    assert(!!method);
+                });
+
+                it(`method should equal ${functionName}`, () => {
+                    const { method } = context.body;
+
+                    assert(method === functionName);
+                });
+
+                it('should have property controller', () => {
+                    const { controller } = context.body;
+
+                    assert(!!controller);
+                });
+
+                it(`controller should equal ${source}`, () => {
+                    const { controller } = context.body;
+
+                    assert(controller === source);
+                });
+
+                it('should have property output', () => {
+                    const { output } = context.body;
+
+                    assert(!!output);
+                });
+
+                it('controller should equal not found', () => {
+                    const { output } = context.body;
+
+                    assert(output === 'User not found');
+                });
             });
 
             after(() => {
@@ -183,7 +238,15 @@ describe('Users component', () => {
         });
 
         describe('wrong password', () => {
-            before(() => {
+            const returnedStatus = STATUS.NOT_FOUND;
+            const context = new Context({
+                body: {
+                    email: testEmail,
+                    password: 'teste45'
+                }
+            });
+
+            before(async () => {
                 sinon.stub(userService, 'findUser').resolves({
                     email: testEmail,
                     password: hashedTestPassword,
@@ -195,15 +258,6 @@ describe('Users component', () => {
                             id: 1
                         })
                 });
-            });
-
-            it('should throw a 404 error', async () => {
-                const context = new Context({
-                    body: {
-                        email: testEmail,
-                        password: 'teste45'
-                    }
-                });
 
                 const next = async () => {
                     await userController.login(context, defaultNext);
@@ -213,10 +267,50 @@ describe('Users component', () => {
                     context,
                     next
                 );
+            });
 
-                const status = context.status;
+            it(`should throw a ${returnedStatus} error`, async () => {
+                const { status } = context;
 
-                assert(status === STATUS.NOT_FOUND);
+                assert(status === returnedStatus);
+            });
+
+            describe('context body', () => {
+                it('should have property method', () => {
+                    const { method } = context.body;
+
+                    assert(!!method);
+                });
+
+                it(`method should equal ${functionName}`, () => {
+                    const { method } = context.body;
+
+                    assert(method === functionName);
+                });
+
+                it('should have property controller', () => {
+                    const { controller } = context.body;
+
+                    assert(!!controller);
+                });
+
+                it(`controller should equal ${source}`, () => {
+                    const { controller } = context.body;
+
+                    assert(controller === source);
+                });
+
+                it('should have property output', () => {
+                    const { output } = context.body;
+
+                    assert(!!output);
+                });
+
+                it('controller should equal not found', () => {
+                    const { output } = context.body;
+
+                    assert(output === 'User not found');
+                });
             });
 
             after(() => {
@@ -225,24 +319,40 @@ describe('Users component', () => {
         });
 
         describe('wrong input', () => {
-            it('should throw a 400 error', async () => {
-                const context = new Context({
-                    body: {}
-                });
+            const returnedStatus = STATUS.BAD_REQUEST;
+            const context = new Context({
+                body: {}
+            });
 
+            before(async () => {
                 await validationMiddleware.validate(
                     userSchema.schemas.login
                 )(context);
+            });
 
-                assert(context.status === STATUS.BAD_REQUEST);
+            it(`should throw a ${returnedStatus} error`, async () => {
+                assert(context.status === returnedStatus);
+            });
+
+            it('should throw a Controller Error', () => {
                 assert(context.body instanceof ControllerError);
             });
         });
     });
 
     describe('recover route', () => {
+        const functionName = 'recover';
+
         describe('happy path', () => {
-            before(() => {
+            const returnedStatus = STATUS.OK;
+            const context = new Context({
+                body: {
+                    email: testEmail
+                },
+                origin: 'localhost'
+            });
+
+            before(async () => {
                 sinon.stub(userService, 'findUser').resolves({
                     _id: 1,
                     email: testEmail,
@@ -256,16 +366,6 @@ describe('Users component', () => {
                 });
 
                 sinon.stub(mailService, 'sendMail').resolves(true);
-            });
-
-            it('should return status 200', async () => {
-                const context = new Context({
-                    body: {
-                        email: testEmail
-                    },
-                    origin: 'localhost'
-                });
-
                 const next = async () => {
                     await userController.recover(context, defaultNext);
                 };
@@ -274,7 +374,13 @@ describe('Users component', () => {
                     context,
                     next
                 );
+            });
 
+            it('should return status 200', async () => {
+                assert(context.status === returnedStatus);
+            });
+
+            it('should contain a valid token on email call', async () => {
                 const payload = {
                     id: 1,
                     email: testEmail
@@ -284,7 +390,6 @@ describe('Users component', () => {
                 const url = `localhost/users/reset/password?token=${jwt}`;
 
                 assert(mailService.sendMail.getCall(0).args[3].includes(url));
-                assert(context.status === STATUS.OK);
             });
 
             after(() => {
@@ -294,28 +399,68 @@ describe('Users component', () => {
         });
 
         describe('invalid customer', () => {
-            before(() => {
-                sinon.stub(userService, 'findUser').resolves(null);
+            const returnedStatus = STATUS.NOT_FOUND;
+            const context = new Context({
+                body: {
+                    email: testEmail
+                }
             });
 
-            it('should throw a 404 error', async () => {
-                const context = new Context({
-                    body: {
-                        email: testEmail,
-                        password: testPassword
-                    }
-                });
+            before(async () => {
+                sinon.stub(userService, 'findUser').resolves(null);
+
+                const next = async () => {
+                    await userController.recover(context, defaultNext);
+                };
 
                 await validationMiddleware.validate(userSchema.schemas.recover)(
                     context,
-                    async () => {
-                        await userController.recover(context, () => {
-                            const status = context.status;
-
-                            assert(status === STATUS.NOT_FOUND);
-                        });
-                    }
+                    next
                 );
+            });
+
+            it(`should throw a ${returnedStatus} error`, async () => {
+                const status = context.status;
+
+                assert(status === returnedStatus);
+            });
+
+            describe('context body', () => {
+                it('should have property method', () => {
+                    const { method } = context.body;
+
+                    assert(!!method);
+                });
+
+                it(`method should equal ${functionName}`, () => {
+                    const { method } = context.body;
+
+                    assert(method === functionName);
+                });
+
+                it('should have property controller', () => {
+                    const { controller } = context.body;
+
+                    assert(!!controller);
+                });
+
+                it(`controller should equal ${source}`, () => {
+                    const { controller } = context.body;
+
+                    assert(controller === source);
+                });
+
+                it('should have property output', () => {
+                    const { output } = context.body;
+
+                    assert(!!output);
+                });
+
+                it('controller should equal not found', () => {
+                    const { output } = context.body;
+
+                    assert(output === 'User not found');
+                });
             });
 
             after(() => {
@@ -324,7 +469,14 @@ describe('Users component', () => {
         });
 
         describe('invalid email', () => {
-            before(() => {
+            const returnedStatus = STATUS.BAD_REQUEST;
+            const context = new Context({
+                body: {
+                    email: testEmail
+                }
+            });
+
+            before(async () => {
                 sinon.stub(userService, 'findUser').resolves({
                     email: testEmail,
                     password: hashedTestPassword,
@@ -338,26 +490,53 @@ describe('Users component', () => {
                 });
 
                 sinon.stub(mailService, 'sendMail').throws('error');
-            });
 
-            it('should throw a 400 error', async () => {
-                const context = new Context({
-                    body: {
-                        email: testEmail,
-                        password: testPassword
-                    }
-                });
+                const next = async () => {
+                    await userController.recover(context, defaultNext);
+                };
 
                 await validationMiddleware.validate(userSchema.schemas.recover)(
                     context,
-                    async () => {
-                        await userController.recover(context, () => {
-                            const status = context.status;
-
-                            assert(status === STATUS.BAD_REQUEST);
-                        });
-                    }
+                    next
                 );
+            });
+
+            it(`should throw a ${returnedStatus} error`, async () => {
+                const status = context.status;
+
+                assert(status === returnedStatus);
+            });
+
+            describe('context body', () => {
+                it('should have property method', () => {
+                    const { method } = context.body;
+
+                    assert(!!method);
+                });
+
+                it(`method should equal ${functionName}`, () => {
+                    const { method } = context.body;
+
+                    assert(method === functionName);
+                });
+
+                it('should have property controller', () => {
+                    const { controller } = context.body;
+
+                    assert(!!controller);
+                });
+
+                it(`controller should equal ${source}`, () => {
+                    const { controller } = context.body;
+
+                    assert(controller === source);
+                });
+
+                it('should have property output', () => {
+                    const { output } = context.body;
+
+                    assert(!!output);
+                });
             });
 
             after(() => {
@@ -367,45 +546,54 @@ describe('Users component', () => {
         });
 
         describe('wrong input', () => {
-            it('should throw a 400 error', async () => {
-                const context = new Context({
-                    body: {}
-                });
+            const returnedStatus = STATUS.BAD_REQUEST;
+            const context = new Context({
+                body: {}
+            });
 
+            before(async () => {
                 await validationMiddleware.validate(
                     userSchema.schemas.recover
                 )(context);
+            });
 
-                assert(context.status === STATUS.BAD_REQUEST);
+            it(`should throw a ${returnedStatus} error`, async () => {
+                assert(context.status === returnedStatus);
+            });
+
+            it('should throw a Controller Error', () => {
                 assert(context.body instanceof ControllerError);
             });
         });
     });
 
     describe('changePassword route', () => {
+        const functionName = 'changePassword';
+
         describe('happy path', () => {
-            before(() => {
+            const returnedStatus = STATUS.OK;
+            const context = new Context({
+                body: {
+                    password: testPassword
+                }
+            });
+
+            before(async () => {
                 sinon.stub(userService, 'findUser').resolves({
                     email: testEmail,
                     password: hashedTestPassword,
                     id: 1,
                     save: () => Promise.resolve(true)
                 });
-            });
 
-            it('should return status 200', async () => {
                 const payload = {
                     id: 1,
                     email: testEmail
                 };
-                const context = new Context({
-                    body: {
-                        password: testPassword
-                    },
-                    headers: {
-                        [AUTH.TOKEN_HEADER]: await resetJwtService.generate(payload)
-                    }
-                });
+
+                context.request.headers = {
+                    [AUTH.TOKEN_HEADER]: await resetJwtService.generate(payload)
+                };
 
                 const next = async () => {
                     await userController.changePassword(context, defaultNext);
@@ -415,10 +603,12 @@ describe('Users component', () => {
                     context,
                     next
                 );
+            });
 
-                const status = context.status;
+            it('should return status 200', async () => {
+                const { status } = context;
 
-                assert(status === STATUS.OK);
+                assert(status === returnedStatus);
             });
 
             after(() => {
@@ -427,19 +617,22 @@ describe('Users component', () => {
         });
 
         describe('invalid token', () => {
-            it('should throw a 401 error', async () => {
+            const returnedStatus = STATUS.UNAUTHORIZED;
+            const context = new Context({
+                body: {
+                    password: testPassword
+                }
+            });
+
+            before(async () => {
                 const payload = {
                     id: 1,
                     email: testEmail
                 };
-                const context = new Context({
-                    body: {
-                        password: testPassword
-                    },
-                    headers: {
-                        [AUTH.TOKEN_HEADER]: await confirmJwtService.generate(payload)
-                    }
-                });
+
+                context.request.headers = {
+                    [AUTH.TOKEN_HEADER]: await confirmJwtService.generate(payload)
+                };
 
                 const next = async () => {
                     await userController.changePassword(context, defaultNext);
@@ -449,41 +642,118 @@ describe('Users component', () => {
                     context,
                     next
                 );
+            });
 
+            it(`should throw a ${returnedStatus} error`, async () => {
                 const status = context.status;
 
-                assert(status === STATUS.UNAUTHORIZED);
+                assert(status === returnedStatus);
+            });
+
+            describe('context body', () => {
+                it('should have property method', () => {
+                    const { method } = context.body;
+
+                    assert(!!method);
+                });
+
+                it(`method should equal ${functionName}`, () => {
+                    const { method } = context.body;
+
+                    assert(method === functionName);
+                });
+
+                it('should have property controller', () => {
+                    const { controller } = context.body;
+
+                    assert(!!controller);
+                });
+
+                it(`controller should equal ${source}`, () => {
+                    const { controller } = context.body;
+
+                    assert(controller === source);
+                });
+
+                it('should have property output', () => {
+                    const { output } = context.body;
+
+                    assert(!!output);
+                });
             });
         });
 
         describe('save error', () => {
-            before(() => {
+            const returnedStatus = STATUS.INTERNAL_ERROR;
+            const context = new Context({
+                body: {
+                    password: testPassword
+                }
+            });
+
+            before(async () => {
                 sinon.stub(userService, 'findUser').resolves({
                     email: testEmail,
                     password: hashedTestPassword,
                     id: 1,
                     save: () => Promise.reject(true)
                 });
-            });
 
-            it('should throw a 500 status', async () => {
-                const context = new Context({
-                    body: {
-                        email: testEmail,
-                        password: testPassword
-                    }
-                });
+                const payload = {
+                    id: 1,
+                    email: testEmail
+                };
+
+                context.request.headers = {
+                    [AUTH.TOKEN_HEADER]: await resetJwtService.generate(payload)
+                };
+
+                const next = async () => {
+                    await userController.changePassword(context, defaultNext);
+                };
 
                 await validationMiddleware.validate(userSchema.schemas.changePassword)(
                     context,
-                    async () => {
-                        await userController.changePassword(context, () => {
-                            const status = context.status;
-
-                            assert(status === STATUS.INTERNAL_ERROR);
-                        });
-                    }
+                    next
                 );
+            });
+
+            it(`should throw a ${returnedStatus} status`, async () => {
+                const { status } = context;
+
+                assert(status === returnedStatus);
+            });
+
+            describe('context body', () => {
+                it('should have property method', () => {
+                    const { method } = context.body;
+
+                    assert(!!method);
+                });
+
+                it(`method should equal ${functionName}`, () => {
+                    const { method } = context.body;
+
+                    assert(method === functionName);
+                });
+
+                it('should have property controller', () => {
+                    const { controller } = context.body;
+
+                    assert(!!controller);
+                });
+
+                it(`controller should equal ${source}`, () => {
+                    const { controller } = context.body;
+
+                    assert(controller === source);
+                });
+
+                it('should have property output', () => {
+                    const { output } = context.body;
+
+                    assert(!!output);
+                });
             });
 
             after(() => {
@@ -492,24 +762,35 @@ describe('Users component', () => {
         });
 
         describe('wrong input', () => {
-            it('should throw a 400 error', async () => {
-                const context = new Context({
-                    body: {}
-                });
+            const returnedStatus = STATUS.BAD_REQUEST;
+            const context = new Context({
+                body: {}
+            });
 
+            before(async () => {
                 await validationMiddleware.validate(
                     userSchema.schemas.changePassword
                 )(context);
+            });
 
-                assert(context.status === STATUS.BAD_REQUEST);
+            it(`should throw a ${returnedStatus} error`, async () => {
+                assert(context.status === returnedStatus);
+            });
+
+            it('should throw a Controller Error', () => {
                 assert(context.body instanceof ControllerError);
             });
         });
     });
 
     describe('confirm route', () => {
+        const functionName = 'confirm';
+        const returnedStatus = STATUS.OK;
+
         describe('happy path', () => {
-            before(() => {
+            const context = new Context({});
+
+            before(async () => {
                 sinon.stub(userService, 'findUser').resolves({
                     active: true,
                     email: testEmail,
@@ -522,14 +803,10 @@ describe('Users component', () => {
                     }),
                     save: () => Promise.resolve(true)
                 });
-            });
 
-            it('should return user with id 1', async () => {
-                const context = new Context({
-                    query: {
-                        token: await confirmJwtService.generate()
-                    }
-                });
+                context.request.query = {
+                    token: await confirmJwtService.generate()
+                };
 
                 const next = async () => {
                     await userController.confirm(context, defaultNext);
@@ -539,10 +816,12 @@ describe('Users component', () => {
                     context,
                     next
                 );
+            });
 
+            it(`should return a status of ${returnedStatus}`, async () => {
                 const { status } = context;
 
-                assert(status === STATUS.OK);
+                assert(status === returnedStatus);
             });
 
             after(() => {
@@ -551,16 +830,15 @@ describe('Users component', () => {
         });
 
         describe('invalid customer', () => {
-            before(() => {
-                sinon.stub(userService, 'findUser').resolves(null);
-            });
+            const returnedStatus = STATUS.NOT_FOUND;
+            const context = new Context({});
 
-            it('should throw a 404 error', async () => {
-                const context = new Context({
-                    query: {
-                        token: await confirmJwtService.generate()
-                    }
-                });
+            before(async () => {
+                sinon.stub(userService, 'findUser').resolves(null);
+
+                context.request.query = {
+                    token: await confirmJwtService.generate()
+                };
 
                 const next = async () => {
                     await userController.confirm(context, defaultNext);
@@ -570,10 +848,44 @@ describe('Users component', () => {
                     context,
                     next
                 );
+            });
 
+            it(`should throw a ${returnedStatus} error`, async () => {
                 const status = context.status;
 
-                assert(status === STATUS.NOT_FOUND);
+                assert(status === returnedStatus);
+            });
+
+            describe('context body', () => {
+                it('should have property method', () => {
+                    const { method } = context.body;
+
+                    assert(!!method);
+                });
+
+                it(`method should equal ${functionName}`, () => {
+                    const { method } = context.body;
+
+                    assert(method === functionName);
+                });
+
+                it('should have property controller', () => {
+                    const { controller } = context.body;
+
+                    assert(!!controller);
+                });
+
+                it(`controller should equal ${source}`, () => {
+                    const { controller } = context.body;
+
+                    assert(controller === source);
+                });
+
+                it('should have property output', () => {
+                    const { output } = context.body;
+
+                    assert(!!output);
+                });
             });
 
             after(() => {
@@ -582,12 +894,13 @@ describe('Users component', () => {
         });
 
         describe('invalid token', () => {
-            it('should throw a 401 error', async () => {
-                const context = new Context({
-                    query: {
-                        token: await authJwtService.generate()
-                    }
-                });
+            const returnedStatus = STATUS.UNAUTHORIZED;
+            const context = new Context({});
+
+            before(async () => {
+                context.request.query = {
+                    token: await authJwtService.generate()
+                };
 
                 const next = async () => {
                     await userController.confirm(context, defaultNext);
@@ -597,32 +910,79 @@ describe('Users component', () => {
                     context,
                     next
                 );
+            });
 
+            it(`should throw a ${returnedStatus} error`, async () => {
                 const status = context.status;
 
-                assert(status === STATUS.UNAUTHORIZED);
+                assert(status === returnedStatus);
+            });
+
+            describe('context body', () => {
+                it('should have property method', () => {
+                    const { method } = context.body;
+
+                    assert(!!method);
+                });
+
+                it(`method should equal ${functionName}`, () => {
+                    const { method } = context.body;
+
+                    assert(method === functionName);
+                });
+
+                it('should have property controller', () => {
+                    const { controller } = context.body;
+
+                    assert(!!controller);
+                });
+
+                it(`controller should equal ${source}`, () => {
+                    const { controller } = context.body;
+
+                    assert(controller === source);
+                });
+
+                it('should have property output', () => {
+                    const { output } = context.body;
+
+                    assert(!!output);
+                });
             });
         });
 
         describe('wrong input', () => {
-            it('should throw a 400 error', async () => {
-                const context = new Context({
-                    query: {}
-                });
+            const returnedStatus = STATUS.BAD_REQUEST;
+            const context = new Context({
+                body: {}
+            });
 
+            before(async () => {
                 await validationMiddleware.validate(
                     userSchema.schemas.confirm
                 )(context);
+            });
 
-                assert(context.status === STATUS.BAD_REQUEST);
+            it(`should throw a ${returnedStatus} error`, async () => {
+                assert(context.status === returnedStatus);
+            });
+
+            it('should throw a Controller Error', () => {
                 assert(context.body instanceof ControllerError);
             });
         });
     });
 
     describe('register route', () => {
+        const functionName = 'register';
+
         describe('happy path', () => {
-            before(() => {
+            const returnedStatus = STATUS.OK;
+            const context = new Context({
+                body: testRegister
+            });
+
+            before(async () => {
                 sinon.stub(userService, 'findUser').resolves(null);
                 sinon.stub(userService, 'create').resolves({
                     active: true,
@@ -633,12 +993,7 @@ describe('Users component', () => {
                     save: () => Promise.resolve(true)
                 });
                 sinon.stub(mailService, 'sendMail').resolves(true);
-            });
 
-            it('should return user with id 1', async () => {
-                const context = new Context({
-                    body: testRegister
-                });
                 const next = async () => {
                     await userController.register(context, defaultNext);
                 };
@@ -647,10 +1002,12 @@ describe('Users component', () => {
                     context,
                     next
                 );
+            });
 
+            it(`should return a status of ${returnedStatus}`, async () => {
                 const { status } = context;
 
-                assert(status === STATUS.OK);
+                assert(status === returnedStatus);
             });
 
             after(() => {
@@ -661,14 +1018,13 @@ describe('Users component', () => {
         });
 
         describe('customer already exists', () => {
-            before(() => {
-                sinon.stub(userService, 'findUser').resolves({});
+            const returnedStatus = STATUS.BAD_REQUEST;
+            const context = new Context({
+                body: testRegister
             });
 
-            it('should throw a 400 error', async () => {
-                const context = new Context({
-                    body: testRegister
-                });
+            before(async () => {
+                sinon.stub(userService, 'findUser').resolves({});
 
                 const next = async () => {
                     await userController.register(context, defaultNext);
@@ -679,9 +1035,44 @@ describe('Users component', () => {
                     next
                 );
 
-                const status = context.status;
 
-                assert(status === STATUS.BAD_REQUEST);
+            });
+
+            it(`should throw a ${returnedStatus} error`, async () => {
+                const status = context.status;
+                assert(status === returnedStatus);
+            });
+
+            describe('context body', () => {
+                it('should have property method', () => {
+                    const { method } = context.body;
+
+                    assert(!!method);
+                });
+
+                it(`method should equal ${functionName}`, () => {
+                    const { method } = context.body;
+
+                    assert(method === functionName);
+                });
+
+                it('should have property controller', () => {
+                    const { controller } = context.body;
+
+                    assert(!!controller);
+                });
+
+                it(`controller should equal ${source}`, () => {
+                    const { controller } = context.body;
+
+                    assert(controller === source);
+                });
+
+                it('should have property output', () => {
+                    const { output } = context.body;
+
+                    assert(!!output);
+                });
             });
 
             after(() => {
@@ -690,7 +1081,12 @@ describe('Users component', () => {
         });
 
         describe('save error', () => {
-            before(() => {
+            const returnedStatus = STATUS.INTERNAL_ERROR;
+            const context = new Context({
+                body: testRegister
+            });
+
+            before(async () => {
                 sinon.stub(userService, 'findUser').resolves(null);
                 sinon.stub(userService, 'create').resolves({
                     email: testEmail,
@@ -699,22 +1095,50 @@ describe('Users component', () => {
                     address: {},
                     save: () => Promise.reject(false)
                 });
-            });
-
-            it('should throw a 500', async () => {
-                const context = new Context({
-                    body: testRegister
-                });
 
                 const next = async () => {
                     await userController.register(context, defaultNext);
                 };
 
                 await validationMiddleware.validate(userSchema.schemas.register)(context, next);
+            });
 
+            it(`should throw a ${returnedStatus}`, async () => {
                 const status = context.status;
 
-                assert(status === STATUS.INTERNAL_ERROR);
+                assert(status === returnedStatus);
+            });
+
+            describe('context body', () => {
+                it('should have property method', () => {
+                    const { method } = context.body;
+
+                    assert(!!method);
+                });
+
+                it(`method should equal ${functionName}`, () => {
+                    const { method } = context.body;
+
+                    assert(method === functionName);
+                });
+
+                it('should have property controller', () => {
+                    const { controller } = context.body;
+
+                    assert(!!controller);
+                });
+
+                it(`controller should equal ${source}`, () => {
+                    const { controller } = context.body;
+
+                    assert(controller === source);
+                });
+
+                it('should have property output', () => {
+                    const { output } = context.body;
+
+                    assert(output === false);
+                });
             });
 
             after(() => {
@@ -724,7 +1148,12 @@ describe('Users component', () => {
         });
 
         describe('send email error', () => {
-            before(() => {
+            const returnedStatus = STATUS.INTERNAL_ERROR;
+            const context = new Context({
+                body: testRegister
+            });
+
+            before(async () => {
                 sinon.stub(userService, 'findUser').resolves(null);
                 sinon.stub(userService, 'create').resolves({
                     active: true,
@@ -735,12 +1164,6 @@ describe('Users component', () => {
                     save: () => Promise.resolve(true)
                 });
                 sinon.stub(mailService, 'sendMail').rejects(false);
-            });
-
-            it('should throw a 500', async () => {
-                const context = new Context({
-                    body: testRegister
-                });
 
                 const next = async () => {
                     await userController.register(context, defaultNext);
@@ -750,10 +1173,44 @@ describe('Users component', () => {
                     context,
                     next
                 );
+            });
 
+            it(`should throw a ${returnedStatus}`, async () => {
                 const status = context.status;
 
-                assert(status === STATUS.INTERNAL_ERROR);
+                assert(status === returnedStatus);
+            });
+
+            describe('context body', () => {
+                it('should have property method', () => {
+                    const { method } = context.body;
+
+                    assert(!!method);
+                });
+
+                it(`method should equal ${functionName}`, () => {
+                    const { method } = context.body;
+
+                    assert(method === functionName);
+                });
+
+                it('should have property controller', () => {
+                    const { controller } = context.body;
+
+                    assert(!!controller);
+                });
+
+                it(`controller should equal ${source}`, () => {
+                    const { controller } = context.body;
+
+                    assert(controller === source);
+                });
+
+                it('should have property output', () => {
+                    const { output } = context.body;
+
+                    assert(!!output);
+                });
             });
 
             after(() => {
@@ -764,16 +1221,22 @@ describe('Users component', () => {
         });
 
         describe('wrong input', () => {
-            it('should throw a 400 error', async () => {
-                const context = new Context({
-                    body: {}
-                });
+            const returnedStatus = STATUS.BAD_REQUEST;
+            const context = new Context({
+                body: {}
+            });
 
+            before(async () => {
                 await validationMiddleware.validate(
                     userSchema.schemas.register
                 )(context);
+            });
 
-                assert(context.status === STATUS.BAD_REQUEST);
+            it(`should throw a ${returnedStatus} error`, async () => {
+                assert(context.status === returnedStatus);
+            });
+
+            it('should throw a Controller Error', () => {
                 assert(context.body instanceof ControllerError);
             });
         });
