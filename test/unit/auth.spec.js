@@ -25,7 +25,7 @@ const validUser = {
 const findUser = () => Promise.resolve(validUser);
 let userService = {findUser};
 
-describe.only('Auth', () => {
+describe('Auth', () => {
     const serviceName = 'auth.service';
     const functionName = 'authenticate';
     const authConfigs = config.get('auth');
