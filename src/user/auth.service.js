@@ -41,8 +41,9 @@ class AuthService {
                     context.input,
                     error
                 );
-                context.status = STATUS.UNAUTHORIZED;
                 context.throw(STATUS.UNAUTHORIZED, jwtError);
+
+                return;
             }
 
             try {
@@ -52,30 +53,28 @@ class AuthService {
                 };
                 const user = await this.userService.findUser(query);
 
-                if (!user) {
-                    const findError = new this.ServiceError(
-                        'Invalid user',
-                        this.serviceName,
-                        functionName,
-                        context.input,
-                        'User not found'
-                    );
-                    context.status = STATUS.UNAUTHORIZED;
-                    context.throw(STATUS.UNAUTHORIZED, findError);
-
-                    return;
-                }
-
                 context.state.user = user;
             } catch (error) {
-                const findError = new this.ServiceError(
+                const serviceError = new this.ServiceError(
                     'Error finding the user',
                     this.serviceName,
                     functionName,
                     context.input,
                     error
                 );
-                context.status = STATUS.UNAUTHORIZED;
+                context.throw(STATUS.INTERNAL_ERROR, serviceError);
+
+                return;
+            }
+
+            if (!context.state.user) {
+                const findError = new this.ServiceError(
+                    'Invalid user',
+                    this.serviceName,
+                    functionName,
+                    context.input,
+                    'User not found'
+                );
                 context.throw(STATUS.UNAUTHORIZED, findError);
 
                 return;
