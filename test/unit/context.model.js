@@ -1,11 +1,13 @@
 class ContextMock{
-    constructor(request){
+    constructor(request, params = {}, state = {}){
         this.status = 200;
         this.body = '';
         this.type = '';
         this.header = {};
         
         this.request = request;
+        this.params = params;
+        this.state = state;
     }
 
     throw(status, message){
