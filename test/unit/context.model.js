@@ -4,6 +4,12 @@ class ContextMock{
         this.body = '';
         this.type = '';
         this.header = {};
+        this.input = {
+            params,
+            body: request.body,
+            headers: request.headers,
+            query: request.query
+        };
         
         this.request = request;
         this.params = params;
