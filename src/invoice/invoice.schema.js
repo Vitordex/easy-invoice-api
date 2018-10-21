@@ -99,6 +99,17 @@ class InvoiceSchema {
                         .string()
                         .required()
                 }).required().unknown(true)
+            }),
+            postGeneratePdf: this.generateSchema({
+                query: joi.object().keys({
+                    token: joi
+                        .string()
+                        .required(),
+                    invoiceId: joi.string()
+                        .min(13)
+                        .required()
+                }).required().unknown(true),
+                headers: joi.object().unknown(true)
             })
         };
     }

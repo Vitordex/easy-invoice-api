@@ -22,9 +22,7 @@ const {
         Customer,
         Invoice
     },
-    enums: {
-        AUTH
-    },
+    enums: { AUTH },
     invoice: {
         InvoiceRouter,
         InvoiceController,
@@ -39,6 +37,7 @@ const {
         Validation: ValidationMiddleware,
         ErrorHandle: errorMiddleware
     },
+    pdf: { PdfService },
     services: {
         MailService,
         HashingService,
@@ -53,6 +52,7 @@ const {
 } = require('./src/');
 
 const hashKey = fs.readFileSync('./server.hash.key', { encoding: 'utf-8' });
+const pdfTemplate = fs.readFileSync('./src/invoice/invoice.template.html', { encoding: 'utf-8' });
 
 async function initApp(logger) {
     const app = new Koa();
@@ -160,10 +160,14 @@ async function initApp(logger) {
     const invoiceModel = new Invoice(databaseService);
     const invoiceService = new InvoiceService(invoiceModel);
 
+    const pdfServiceOptions = { format: 'Letter' };
+    const pdfService = new PdfService(pdfServiceOptions);
     const invoiceControllerParameters = {
         userService,
         invoiceService,
-        apiErrorModel: ControllerError
+        apiErrorModel: ControllerError,
+        pdfService,
+        pdfTemplate
     };
     const invoiceController = new InvoiceController(invoiceControllerParameters);
 

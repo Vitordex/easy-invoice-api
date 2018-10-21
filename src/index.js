@@ -5,6 +5,7 @@ const enums = require('./enums');
 const invoice = require('./invoice');
 const log = require('./log');
 const middleware = require('./middleware');
+const pdf = require('./pdf');
 const services = require('./services');
 const user = require('./user');
 const values = require('./values');
@@ -17,6 +18,7 @@ module.exports = {
     invoice,
     log,
     middleware,
+    pdf,
     services,
     user,
     values

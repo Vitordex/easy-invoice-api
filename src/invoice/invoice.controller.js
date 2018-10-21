@@ -2,10 +2,10 @@
 const InvoiceService = require('./invoice.service');
 const UserService = require('../user/user.service');
 const ControllerError = require('../log/controller.error.model');
+const PdfService = require('../pdf/pdf.service');
 /* eslint-enable no-unused-vars */
 
-const controllerName = 'invoice';
-const timeService = require('../services/time.service');
+const format = require('string-template');
 
 const {
     API: {
@@ -18,21 +18,29 @@ const {
     }
 } = require('../enums');
 
+const controllerName = 'invoice';
+
 class InvoiceController {
     /**
      * @param {UserService} params.userService
      * @param {InvoiceService} params.invoiceService
      * @param {ControllerError} params.apiErrorModel
+     * @param {PdfService} params.pdfService
+     * @param {String} params.pdfTemplate
      */
     constructor({
         userService,
         invoiceService,
-        apiErrorModel
+        apiErrorModel,
+        pdfService,
+        pdfTemplate
     }) {
         this.userService = userService;
         this.invoiceService = invoiceService;
+        this.pdfService = pdfService;
 
         this.ControllerError = apiErrorModel;
+        this.pdfTemplate = pdfTemplate;
     }
 
     async getInvoice(context, next) {
@@ -53,7 +61,7 @@ class InvoiceController {
                 context.input,
                 error
             );
-            context.throw(STATUS.INTERNAL_ERROR,  controllerError);
+            context.throw(STATUS.INTERNAL_ERROR, controllerError);
 
             return next();
         }
@@ -67,7 +75,7 @@ class InvoiceController {
                 context.input,
                 'Invalid invoice id'
             );
-            context.throw(STATUS.NOT_FOUND,  controllerError);
+            context.throw(STATUS.NOT_FOUND, controllerError);
 
             return next();
         }
@@ -102,7 +110,7 @@ class InvoiceController {
                 context.input,
                 error
             );
-            context.throw(STATUS.INTERNAL_ERROR,  controllerError);
+            context.throw(STATUS.INTERNAL_ERROR, controllerError);
 
             return next();
         }
@@ -151,7 +159,7 @@ class InvoiceController {
                 context.input,
                 error
             );
-            context.throw(STATUS.INTERNAL_ERROR,  controllerError);
+            context.throw(STATUS.INTERNAL_ERROR, controllerError);
 
             return next();
         }
@@ -183,7 +191,7 @@ class InvoiceController {
                 context.input,
                 error
             );
-            context.throw(STATUS.INTERNAL_ERROR,  controllerError);
+            context.throw(STATUS.INTERNAL_ERROR, controllerError);
 
             return next();
         }
@@ -229,7 +237,7 @@ class InvoiceController {
                 context.input,
                 error
             );
-            context.throw(STATUS.INTERNAL_ERROR,  controllerError);
+            context.throw(STATUS.INTERNAL_ERROR, controllerError);
 
             return next();
         }
@@ -268,7 +276,7 @@ class InvoiceController {
                 context.input,
                 error
             );
-            context.throw(STATUS.INTERNAL_ERROR,  controllerError);
+            context.throw(STATUS.INTERNAL_ERROR, controllerError);
 
             return next();
         }
@@ -301,13 +309,79 @@ class InvoiceController {
                 context.input,
                 error
             );
-            context.throw(STATUS.INTERNAL_ERROR,  controllerError);
+            context.throw(STATUS.INTERNAL_ERROR, controllerError);
 
             return next();
         }
 
         context.body = invoices.map((invoice) => invoice.toJSON());
         context.status = 200;
+
+        return next();
+    }
+
+    async postGeneratePdf(context, next) {
+        const functionName = 'postGeneratePdf';
+
+        const { query } = context.input;
+        const { user } = context.state;
+        const { invoiceId } = query;
+
+        if (!user.invoices.find((id) => id.toString() === invoiceId)) {
+            const controllerError = new ControllerError(
+                STATUS.FORBIDDEN,
+                'User does not have rights',
+                controllerName,
+                functionName,
+                context.input,
+                'User does not have rights'
+            );
+            context.throw(STATUS.FORBIDDEN, controllerError);
+
+            return next();
+        }
+
+        let invoice;
+        try {
+            const query = {
+                '_id': invoiceId
+            };
+            invoice = await this.invoiceService.findInvoice(query);
+        } catch (error) {
+            const controllerError = new ControllerError(
+                STATUS.INTERNAL_ERROR,
+                'Invalid user',
+                controllerName,
+                functionName,
+                context.input,
+                error
+            );
+            context.throw(STATUS.INTERNAL_ERROR, controllerError);
+
+            return next();
+        }
+
+        let stream;
+        try {
+            const input = format(this.pdfTemplate, invoice);
+
+            stream = await this.pdfService.generate(input);
+        } catch (error) {
+            const controllerError = new ControllerError(
+                STATUS.INTERNAL_ERROR,
+                'Error generating pdf',
+                controllerName,
+                functionName,
+                context.input,
+                error
+            );
+            context.throw(STATUS.INTERNAL_ERROR, controllerError);
+
+            return next();
+        }
+
+        context.body = stream;
+        context.status = STATUS.PARTIAL_CONTENT;
 
         return next();
     }

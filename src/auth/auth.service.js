@@ -24,7 +24,7 @@ class AuthService {
     authenticate() {
         const functionName = 'authenticate';
         const middleware = async (context, next) => {
-            const userToken = context.input.headers[AUTH.TOKEN_HEADER];
+            const userToken = context.input.headers[AUTH.TOKEN_HEADER] || context.input.query.token;
 
             const verifyOptions = {
                 subject: AUTH.TOKEN_SUBJECT
