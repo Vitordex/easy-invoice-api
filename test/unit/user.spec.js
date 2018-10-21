@@ -41,7 +41,7 @@ let userController;
 /**@type {UserSchema} */
 let userSchema;
 
-describe.only('Users component', () => {
+describe('Users component', () => {
     const source = 'user.controller';
 
     hashingService = new HashingService(
