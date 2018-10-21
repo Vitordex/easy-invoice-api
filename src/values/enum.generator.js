@@ -18,7 +18,7 @@ class EnumGenerator {
         };
 
         Object.keys(hexAccentMap).forEach((letter) => {
-            const regexp = hexAccentMap[letter];
+            const regexp = hexAccentMap[letter]; // eslint-disable-line
             string = string.replace(regexp, letter);
         });
 
@@ -36,7 +36,7 @@ class EnumGenerator {
         /** @param {String} value */
         const iterable = (value) => {
             const key = this.removeAccents(value).toUpperCase();
-            propertiesObject[key] = value;
+            propertiesObject[key] = value; // eslint-disable-line
         };
         array.forEach(iterable);
 

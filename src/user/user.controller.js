@@ -50,7 +50,7 @@ class UserController {
 
         const { user } = context.state;
         try {
-            await user.updateWithDates(body, headers[DATE_HEADER]);
+            await user.updateWithDates(body, headers[DATE_HEADER]); // eslint-disable-line
         } catch (error) {
             const controllerError = new ControllerError(
                 STATUS.INTERNAL_ERROR,
@@ -85,15 +85,16 @@ class UserController {
                     $in: user.customers
                 }
             };
+            const dateLocal = headers[DATE_HEADER];// eslint-disable-line
             await Promise.all([
                 this.userService.deleteUser(user),
                 this.invoiceService.deleteInvoices(
                     deleteInvoicesQuery,
-                    headers[DATE_HEADER]
+                    dateLocal
                 ),
                 this.customerService.deleteCustomers(
                     deleteCustomersQuery,
-                    headers[DATE_HEADER]
+                    dateLocal
                 )
             ]);
         } catch (error) {
