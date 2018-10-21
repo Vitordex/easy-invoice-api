@@ -1,386 +1,1243 @@
 /*globals describe, it, before, after*/
-/**
- * Invalid signature
- * Find error
- * User not found
- * Expired token
- * Wrong subject
- * Happy path - OK
- */
 const assert = require('assert');
+const sinon = require('sinon');
+
 const config = require('../../src/services/config.service');
 
-const JwtService = require('../../src/user/jwt.service');
-const AuthService = require('../../src/user/auth.service');
+const MailService = require('../../src/services/mail.service');
+const HashingService = require('../../src/services/hashing.service');
 
-const ServiceError = require('../../src/log/service.error.model');
+const ValidationMiddleware = require('../../src/middleware/validation.middleware');
 
+const UserService = require('../../src/user/user.service');
+const AuthController = require('../../src/auth/auth.controller');
+const AuthSchema = require('../../src/auth/auth.schema');
+
+const JwtService = require('../../src/auth/jwt.service');
 const Context = require('./context.model');
+
+const ControllerError = require('../../src/log/controller.error.model');
+
+const fs = require('fs');
+const hashKey = fs.readFileSync('./server.hash.key', { encoding: 'utf-8' });
+
+const authConfigs = config.get('auth');
+
+const hashingOptions = authConfigs.password;
 
 const { AUTH, API: { STATUS } } = require('../../src/enums');
 
-const validUser = {
-    id: 1
-};
-const findUser = () => Promise.resolve(validUser);
-let userService = {findUser};
+/**@type {MailService} */
+let mailService;
+/**@type {HashService} */
+let hashingService;
+/**@type {ValidationMiddleware} */
+let validationMiddleware;
+/**@type {User} */
+let userModel;
+/**@type {UserService} */
+let userService;
+/**@type {AuthController} */
+let authController;
+/**@type {AuthSchema} */
+let authSchema;
 
-describe('Auth', () => {
-    const serviceName = 'auth.service';
-    const functionName = 'authenticate';
-    const authConfigs = config.get('auth');
+describe('Auth component', () => {
+    const source = 'auth.controller';
 
-    const authHash = 'hashKey';
+    hashingService = new HashingService(
+        hashingOptions.key,
+        hashingOptions.algorithm,
+        hashingOptions.encoding
+    );
+
+    let testEmail = 'teste@teste.com';
+    let testPassword = 'teste1';
+    let hashedTestPassword = hashingService.createHash(testPassword);
+    let testRegister = {
+        email: testEmail,
+        password: '@Testinho1',
+        phone: '(11) 95555-5555',
+        name: 'Teste teste',
+        state: 'Acre'
+    };
+
+    const defaultNext = () => { };
+
+    validationMiddleware = new ValidationMiddleware();
+    authSchema = new AuthSchema(validationMiddleware.baseSchema);
+
+    mailService = new MailService(config.get('mail.options'));
+
+    userService = new UserService(userModel, hashingService);
+
     const authTokenExpiration = authConfigs.token.expiration;
     const authJwtOptions = {
-        hash: authHash,
+        hash: hashKey,
         tokenExpiration: authTokenExpiration,
         subject: AUTH.AUTH_SUBJECT
     };
     const authJwtService = new JwtService(authJwtOptions);
-    const authService = new AuthService(authJwtService, userService, ServiceError);
 
-    it('happy path', async () => {
-        const token = await authJwtService.generate({ id: 1 });
-        const context = new Context({
-            headers: {
-                [AUTH.TOKEN_HEADER]: token
-            }
-        });
+    const recoverTokenExpiration = authConfigs.token.expiration;
+    const recoverJwtOptions = {
+        hash: hashKey,
+        tokenExpiration: recoverTokenExpiration,
+        subject: AUTH.RESET_SUBJECT
+    };
+    const resetJwtService = new JwtService(recoverJwtOptions);
 
-        const middleware = authService.authenticate();
-        await middleware(context, () => { });
+    const confirmTokenExpiration = authConfigs.token.expiration;
+    const confirmJwtOptions = {
+        hash: hashKey,
+        tokenExpiration: confirmTokenExpiration,
+        subject: AUTH.CONFIRM_SUBJECT
+    };
+    const confirmJwtService = new JwtService(confirmJwtOptions);
+
+    authController = new AuthController({
+        authConfigs,
+        authHash: hashKey,
+        userService,
+        mailService,
+        authJwtService,
+        confirmJwtService,
+        resetJwtService
     });
 
-    describe('invalid signature', () => {
-        const returnedStatus = STATUS.UNAUTHORIZED;
+    describe('login route', () => {
+        const functionName = 'login';
 
-        /**@type {JwtService} */
-        let otherJwtService;
-
-        /**@type {Context} */
-        let context;
-        before(async () => {
-            const otherTokenExpiration = authConfigs.token.expiration;
-            const otherJwtOptions = {
-                hash: 'other',
-                tokenExpiration: otherTokenExpiration,
-                subject: AUTH.AUTH_SUBJECT
-            };
-            otherJwtService = new JwtService(otherJwtOptions);
-
-            const token = await otherJwtService.generate({ id: 1 });
-            context = new Context({
-                headers: {
-                    [AUTH.TOKEN_HEADER]: token
+        describe('happy path', () => {
+            const returnedStatus = STATUS.OK;
+            const context = new Context({
+                body: {
+                    email: testEmail,
+                    password: testPassword
                 }
             });
 
-            const middleware = authService.authenticate();
-            await middleware(context, () => { });
-        });
+            before(async () => {
+                const successUser = {
+                    active: 'static',
+                    email: testEmail,
+                    password: hashedTestPassword,
+                    _id: 1,
+                    toJSON: () => ({
+                        email: testEmail,
+                        password: hashedTestPassword,
+                        _id: 1
+                    }),
+                    save: () => Promise.resolve(true)
+                };
+                sinon.stub(userService, 'findUser').resolves(successUser);
 
-        it(`should return status ${returnedStatus}`, () => {
-            const { status } = context;
+                const next = async () => {
+                    await authController.login(context, defaultNext);
+                };
 
-            assert(status === returnedStatus);
-        });
-
-        it('should return a service error', () => {
-            const { body } = context;
-
-            assert(body instanceof ServiceError);
-        });
-
-        describe('context body', () => {
-            it('should have property method', () => {
-                const { method } = context.body;
-
-                assert(!!method);
+                await validationMiddleware.validate(authSchema.schemas.login)(
+                    context,
+                    next
+                );
             });
 
-            it(`method should equal ${functionName}`, () => {
-                const { method } = context.body;
+            it('should return auth with id 1', async () => {
+                const { body } = context;
 
-                assert(method === functionName);
+                assert(body && body._id === 1);
             });
 
-            it('should have property controller', () => {
-                const { service } = context.body;
+            it('should have a valid token', async () => {
+                const headers = context.header;
+                const jwt = await authJwtService.generate({ id: 1 });
 
-                assert(!!service);
+                assert(headers[AUTH.TOKEN_HEADER] === jwt);
             });
 
-            it(`controller should equal ${serviceName}`, () => {
-                const { service } = context.body;
+            it(`should return status ${returnedStatus}`, () => {
+                const { status } = context;
 
-                assert(service === serviceName);
+                assert(status === returnedStatus);
+            });
+
+            after(() => {
+                userService.findUser.restore();
             });
         });
-    });
 
-    describe('find error', () => {
-        const returnedStatus = STATUS.INTERNAL_ERROR;
-
-        /**@type {Context} */
-        let context;
-        before(async () => {
-            const token = await authJwtService.generate({ id: 1 });
-            context = new Context({
-                headers: {
-                    [AUTH.TOKEN_HEADER]: token
+        describe('invalid customer', () => {
+            const returnedStatus = STATUS.NOT_FOUND;
+            const context = new Context({
+                body: {
+                    email: testEmail,
+                    password: testPassword
                 }
             });
 
-            userService.findUser = () => Promise.reject();
+            before(async () => {
+                sinon.stub(userService, 'findUser').resolves(null);
 
-            const middleware = authService.authenticate();
-            await middleware(context, () => { });
-        });
+                const next = async () => {
+                    await authController.login(context, defaultNext);
+                };
 
-        it(`should return status ${returnedStatus}`, () => {
-            const { status } = context;
-
-            assert(status === returnedStatus);
-        });
-
-        it('should return a service error', () => {
-            const { body } = context;
-
-            assert(body instanceof ServiceError);
-        });
-
-        describe('context body', () => {
-            it('should have property method', () => {
-                const { method } = context.body;
-
-                assert(!!method);
+                await validationMiddleware.validate(authSchema.schemas.login)(
+                    context,
+                    next
+                );
             });
 
-            it(`method should equal ${functionName}`, () => {
-                const { method } = context.body;
+            it(`should throw a ${returnedStatus} error`, async () => {
+                const { status } = context;
 
-                assert(method === functionName);
+                assert(status === returnedStatus);
             });
 
-            it('should have property controller', () => {
-                const { service } = context.body;
+            describe('context body', () => {
+                it('should have property method', () => {
+                    const { method } = context.body;
 
-                assert(!!service);
+                    assert(!!method);
+                });
+
+                it(`method should equal ${functionName}`, () => {
+                    const { method } = context.body;
+
+                    assert(method === functionName);
+                });
+
+                it('should have property controller', () => {
+                    const { controller } = context.body;
+
+                    assert(!!controller);
+                });
+
+                it(`controller should equal ${source}`, () => {
+                    const { controller } = context.body;
+
+                    assert(controller === source);
+                });
+
+                it('should have property output', () => {
+                    const { output } = context.body;
+
+                    assert(!!output);
+                });
+
+                it('controller should equal not found', () => {
+                    const { output } = context.body;
+
+                    assert(output === 'User not found');
+                });
             });
 
-            it(`controller should equal ${serviceName}`, () => {
-                const { service } = context.body;
-
-                assert(service === serviceName);
+            after(() => {
+                userService.findUser.restore();
             });
         });
 
-        after(() => {
-            userService.findUser = findUser;
-        });
-    });
-
-    describe('user not found', () => {
-        const returnedStatus = STATUS.UNAUTHORIZED;
-
-        /**@type {Context} */
-        let context;
-        before(async () => {
-            const token = await authJwtService.generate({ id: 1 });
-            context = new Context({
-                headers: {
-                    [AUTH.TOKEN_HEADER]: token
+        describe('wrong password', () => {
+            const returnedStatus = STATUS.NOT_FOUND;
+            const context = new Context({
+                body: {
+                    email: testEmail,
+                    password: 'teste45'
                 }
             });
 
-            userService.findUser = () => Promise.resolve(null);
+            before(async () => {
+                sinon.stub(userService, 'findUser').resolves({
+                    email: testEmail,
+                    password: hashedTestPassword,
+                    id: 1,
+                    toJSON: () =>
+                        JSON.stringify({
+                            email: testEmail,
+                            password: hashedTestPassword,
+                            id: 1
+                        })
+                });
 
-            const middleware = authService.authenticate();
-            await middleware(context, () => { });
+                const next = async () => {
+                    await authController.login(context, defaultNext);
+                };
+
+                await validationMiddleware.validate(authSchema.schemas.login)(
+                    context,
+                    next
+                );
+            });
+
+            it(`should throw a ${returnedStatus} error`, async () => {
+                const { status } = context;
+
+                assert(status === returnedStatus);
+            });
+
+            describe('context body', () => {
+                it('should have property method', () => {
+                    const { method } = context.body;
+
+                    assert(!!method);
+                });
+
+                it(`method should equal ${functionName}`, () => {
+                    const { method } = context.body;
+
+                    assert(method === functionName);
+                });
+
+                it('should have property controller', () => {
+                    const { controller } = context.body;
+
+                    assert(!!controller);
+                });
+
+                it(`controller should equal ${source}`, () => {
+                    const { controller } = context.body;
+
+                    assert(controller === source);
+                });
+
+                it('should have property output', () => {
+                    const { output } = context.body;
+
+                    assert(!!output);
+                });
+
+                it('controller should equal not found', () => {
+                    const { output } = context.body;
+
+                    assert(output === 'User not found');
+                });
+            });
+
+            after(() => {
+                userService.findUser.restore();
+            });
         });
 
-        it(`should return status ${returnedStatus}`, () => {
-            const { status } = context;
-
-            assert(status === returnedStatus);
-        });
-
-        it('should return a service error', () => {
-            const { body } = context;
-
-            assert(body instanceof ServiceError);
-        });
-
-        describe('context body', () => {
-            it('should have property method', () => {
-                const { method } = context.body;
-
-                assert(!!method);
+        describe('wrong input', () => {
+            const returnedStatus = STATUS.BAD_REQUEST;
+            const context = new Context({
+                body: {}
             });
 
-            it(`method should equal ${functionName}`, () => {
-                const { method } = context.body;
-
-                assert(method === functionName);
+            before(async () => {
+                await validationMiddleware.validate(
+                    authSchema.schemas.login
+                )(context);
             });
 
-            it('should have property controller', () => {
-                const { service } = context.body;
-
-                assert(!!service);
+            it(`should throw a ${returnedStatus} error`, async () => {
+                assert(context.status === returnedStatus);
             });
 
-            it(`controller should equal ${serviceName}`, () => {
-                const { service } = context.body;
-
-                assert(service === serviceName);
-            });
-        });
-    });
-
-    describe('token expired', () => {
-        const returnedStatus = STATUS.UNAUTHORIZED;
-
-        /**@type {JwtService} */
-        let otherJwtService;
-
-        /**@type {Context} */
-        let context;
-        before(async () => {
-            const otherTokenExpiration = '0s';
-            const otherJwtOptions = {
-                hash: authHash,
-                tokenExpiration: otherTokenExpiration,
-                subject: AUTH.AUTH_SUBJECT
-            };
-            otherJwtService = new JwtService(otherJwtOptions);
-
-            const token = await otherJwtService.generate({ id: 1 });
-            context = new Context({
-                headers: {
-                    [AUTH.TOKEN_HEADER]: token
-                }
-            });
-
-            const middleware = authService.authenticate();
-            await middleware(context, () => { });
-        });
-
-        it(`should return status ${returnedStatus}`, () => {
-            const { status } = context;
-
-            assert(status === returnedStatus);
-        });
-
-        it('should return a service error', () => {
-            const { body } = context;
-
-            assert(body instanceof ServiceError);
-        });
-
-        describe('context body', () => {
-            it('should have property method', () => {
-                const { method } = context.body;
-
-                assert(!!method);
-            });
-
-            it(`method should equal ${functionName}`, () => {
-                const { method } = context.body;
-
-                assert(method === functionName);
-            });
-
-            it('should have property controller', () => {
-                const { service } = context.body;
-
-                assert(!!service);
-            });
-
-            it(`controller should equal ${serviceName}`, () => {
-                const { service } = context.body;
-
-                assert(service === serviceName);
-            });
-
-            it('error message should be about subject', () => {
-                const { output } = context.body;
-
-                assert(output.message.includes('expired'));
+            it('should throw a Controller Error', () => {
+                assert(context.body instanceof ControllerError);
             });
         });
     });
 
-    describe('incorrect subject', () => {
-        const returnedStatus = STATUS.UNAUTHORIZED;
+    describe('recover route', () => {
+        const functionName = 'recover';
 
-        /**@type {JwtService} */
-        let otherJwtService;
+        describe('happy path', () => {
+            const returnedStatus = STATUS.OK;
+            const context = new Context({
+                body: {
+                    email: testEmail
+                },
+                origin: 'localhost'
+            });
 
-        /**@type {Context} */
-        let context;
-        before(async () => {
-            const otherTokenExpiration = authConfigs.token.expiration;
-            const otherJwtOptions = {
-                hash: authHash,
-                tokenExpiration: otherTokenExpiration,
-                subject: 'test'
-            };
-            otherJwtService = new JwtService(otherJwtOptions);
+            before(async () => {
+                sinon.stub(userService, 'findUser').resolves({
+                    _id: 1,
+                    email: testEmail,
+                    password: hashedTestPassword,
+                    id: 1,
+                    toJSON: () => ({
+                        email: testEmail,
+                        password: hashedTestPassword,
+                        id: 1
+                    })
+                });
 
-            const token = await otherJwtService.generate({ id: 1 });
-            context = new Context({
-                headers: {
-                    [AUTH.TOKEN_HEADER]: token
+                sinon.stub(mailService, 'sendMail').resolves(true);
+                const next = async () => {
+                    await authController.recover(context, defaultNext);
+                };
+
+                await validationMiddleware.validate(authSchema.schemas.recover)(
+                    context,
+                    next
+                );
+            });
+
+            it('should return status 200', async () => {
+                assert(context.status === returnedStatus);
+            });
+
+            it('should contain a valid token on email call', async () => {
+                const payload = {
+                    id: 1,
+                    email: testEmail
+                };
+                const jwt = await resetJwtService.generate(payload);
+
+                const url = `localhost/auth/reset/password?token=${jwt}`;
+
+                assert(mailService.sendMail.getCall(0).args[3].includes(url));
+            });
+
+            after(() => {
+                userService.findUser.restore();
+                mailService.sendMail.restore();
+            });
+        });
+
+        describe('invalid customer', () => {
+            const returnedStatus = STATUS.NOT_FOUND;
+            const context = new Context({
+                body: {
+                    email: testEmail
                 }
             });
 
-            const middleware = authService.authenticate();
-            await middleware(context, () => { });
+            before(async () => {
+                sinon.stub(userService, 'findUser').resolves(null);
+
+                const next = async () => {
+                    await authController.recover(context, defaultNext);
+                };
+
+                await validationMiddleware.validate(authSchema.schemas.recover)(
+                    context,
+                    next
+                );
+            });
+
+            it(`should throw a ${returnedStatus} error`, async () => {
+                const status = context.status;
+
+                assert(status === returnedStatus);
+            });
+
+            describe('context body', () => {
+                it('should have property method', () => {
+                    const { method } = context.body;
+
+                    assert(!!method);
+                });
+
+                it(`method should equal ${functionName}`, () => {
+                    const { method } = context.body;
+
+                    assert(method === functionName);
+                });
+
+                it('should have property controller', () => {
+                    const { controller } = context.body;
+
+                    assert(!!controller);
+                });
+
+                it(`controller should equal ${source}`, () => {
+                    const { controller } = context.body;
+
+                    assert(controller === source);
+                });
+
+                it('should have property output', () => {
+                    const { output } = context.body;
+
+                    assert(!!output);
+                });
+
+                it('controller should equal not found', () => {
+                    const { output } = context.body;
+
+                    assert(output === 'User not found');
+                });
+            });
+
+            after(() => {
+                userService.findUser.restore();
+            });
         });
 
-        it(`should return status ${returnedStatus}`, () => {
-            const { status } = context;
+        describe('invalid email', () => {
+            const returnedStatus = STATUS.BAD_REQUEST;
+            const context = new Context({
+                body: {
+                    email: testEmail
+                }
+            });
 
-            assert(status === returnedStatus);
+            before(async () => {
+                sinon.stub(userService, 'findUser').resolves({
+                    email: testEmail,
+                    password: hashedTestPassword,
+                    id: 1,
+                    toJSON: () =>
+                        JSON.stringify({
+                            email: testEmail,
+                            password: hashedTestPassword,
+                            id: 1
+                        })
+                });
+
+                sinon.stub(mailService, 'sendMail').throws('error');
+
+                const next = async () => {
+                    await authController.recover(context, defaultNext);
+                };
+
+                await validationMiddleware.validate(authSchema.schemas.recover)(
+                    context,
+                    next
+                );
+            });
+
+            it(`should throw a ${returnedStatus} error`, async () => {
+                const status = context.status;
+
+                assert(status === returnedStatus);
+            });
+
+            describe('context body', () => {
+                it('should have property method', () => {
+                    const { method } = context.body;
+
+                    assert(!!method);
+                });
+
+                it(`method should equal ${functionName}`, () => {
+                    const { method } = context.body;
+
+                    assert(method === functionName);
+                });
+
+                it('should have property controller', () => {
+                    const { controller } = context.body;
+
+                    assert(!!controller);
+                });
+
+                it(`controller should equal ${source}`, () => {
+                    const { controller } = context.body;
+
+                    assert(controller === source);
+                });
+
+                it('should have property output', () => {
+                    const { output } = context.body;
+
+                    assert(!!output);
+                });
+            });
+
+            after(() => {
+                userService.findUser.restore();
+                mailService.sendMail.restore();
+            });
         });
 
-        it('should return a service error', () => {
-            const { body } = context;
+        describe('wrong input', () => {
+            const returnedStatus = STATUS.BAD_REQUEST;
+            const context = new Context({
+                body: {}
+            });
 
-            assert(body instanceof ServiceError);
+            before(async () => {
+                await validationMiddleware.validate(
+                    authSchema.schemas.recover
+                )(context);
+            });
+
+            it(`should throw a ${returnedStatus} error`, async () => {
+                assert(context.status === returnedStatus);
+            });
+
+            it('should throw a Controller Error', () => {
+                assert(context.body instanceof ControllerError);
+            });
+        });
+    });
+
+    describe('changePassword route', () => {
+        const functionName = 'changePassword';
+
+        describe('happy path', () => {
+            const returnedStatus = STATUS.OK;
+            const context = new Context({
+                body: {
+                    password: testPassword
+                }
+            });
+
+            before(async () => {
+                sinon.stub(userService, 'findUser').resolves({
+                    email: testEmail,
+                    password: hashedTestPassword,
+                    id: 1,
+                    save: () => Promise.resolve(true)
+                });
+
+                const payload = {
+                    id: 1,
+                    email: testEmail
+                };
+
+                context.request.headers = {
+                    [AUTH.TOKEN_HEADER]: await resetJwtService.generate(payload)
+                };
+
+                const next = async () => {
+                    await authController.changePassword(context, defaultNext);
+                };
+
+                await validationMiddleware.validate(authSchema.schemas.changePassword)(
+                    context,
+                    next
+                );
+            });
+
+            it('should return status 200', async () => {
+                const { status } = context;
+
+                assert(status === returnedStatus);
+            });
+
+            after(() => {
+                userService.findUser.restore();
+            });
         });
 
-        describe('context body', () => {
-            it('should have property method', () => {
-                const { method } = context.body;
-
-                assert(!!method);
+        describe('invalid token', () => {
+            const returnedStatus = STATUS.UNAUTHORIZED;
+            const context = new Context({
+                body: {
+                    password: testPassword
+                }
             });
 
-            it(`method should equal ${functionName}`, () => {
-                const { method } = context.body;
+            before(async () => {
+                const payload = {
+                    id: 1,
+                    email: testEmail
+                };
 
-                assert(method === functionName);
+                context.request.headers = {
+                    [AUTH.TOKEN_HEADER]: await confirmJwtService.generate(payload)
+                };
+
+                const next = async () => {
+                    await authController.changePassword(context, defaultNext);
+                };
+
+                await validationMiddleware.validate(authSchema.schemas.changePassword)(
+                    context,
+                    next
+                );
             });
 
-            it('should have property controller', () => {
-                const { service } = context.body;
+            it(`should throw a ${returnedStatus} error`, async () => {
+                const status = context.status;
 
-                assert(!!service);
+                assert(status === returnedStatus);
             });
 
-            it(`controller should equal ${serviceName}`, () => {
-                const { service } = context.body;
+            describe('context body', () => {
+                it('should have property method', () => {
+                    const { method } = context.body;
 
-                assert(service === serviceName);
+                    assert(!!method);
+                });
+
+                it(`method should equal ${functionName}`, () => {
+                    const { method } = context.body;
+
+                    assert(method === functionName);
+                });
+
+                it('should have property controller', () => {
+                    const { controller } = context.body;
+
+                    assert(!!controller);
+                });
+
+                it(`controller should equal ${source}`, () => {
+                    const { controller } = context.body;
+
+                    assert(controller === source);
+                });
+
+                it('should have property output', () => {
+                    const { output } = context.body;
+
+                    assert(!!output);
+                });
+            });
+        });
+
+        describe('save error', () => {
+            const returnedStatus = STATUS.INTERNAL_ERROR;
+            const context = new Context({
+                body: {
+                    password: testPassword
+                }
             });
 
-            it('error message should be about subject', () => {
-                const { output } = context.body;
-                
-                assert(output.message.includes('subject'));
+            before(async () => {
+                sinon.stub(userService, 'findUser').resolves({
+                    email: testEmail,
+                    password: hashedTestPassword,
+                    id: 1,
+                    save: () => Promise.reject(true)
+                });
+
+                const payload = {
+                    id: 1,
+                    email: testEmail
+                };
+
+                context.request.headers = {
+                    [AUTH.TOKEN_HEADER]: await resetJwtService.generate(payload)
+                };
+
+                const next = async () => {
+                    await authController.changePassword(context, defaultNext);
+                };
+
+                await validationMiddleware.validate(authSchema.schemas.changePassword)(
+                    context,
+                    next
+                );
+            });
+
+            it(`should throw a ${returnedStatus} status`, async () => {
+                const { status } = context;
+
+                assert(status === returnedStatus);
+            });
+
+            describe('context body', () => {
+                it('should have property method', () => {
+                    const { method } = context.body;
+
+                    assert(!!method);
+                });
+
+                it(`method should equal ${functionName}`, () => {
+                    const { method } = context.body;
+
+                    assert(method === functionName);
+                });
+
+                it('should have property controller', () => {
+                    const { controller } = context.body;
+
+                    assert(!!controller);
+                });
+
+                it(`controller should equal ${source}`, () => {
+                    const { controller } = context.body;
+
+                    assert(controller === source);
+                });
+
+                it('should have property output', () => {
+                    const { output } = context.body;
+
+                    assert(!!output);
+                });
+            });
+
+            after(() => {
+                userService.findUser.restore();
+            });
+        });
+
+        describe('wrong input', () => {
+            const returnedStatus = STATUS.BAD_REQUEST;
+            const context = new Context({
+                body: {}
+            });
+
+            before(async () => {
+                await validationMiddleware.validate(
+                    authSchema.schemas.changePassword
+                )(context);
+            });
+
+            it(`should throw a ${returnedStatus} error`, async () => {
+                assert(context.status === returnedStatus);
+            });
+
+            it('should throw a Controller Error', () => {
+                assert(context.body instanceof ControllerError);
+            });
+        });
+    });
+
+    describe('confirm route', () => {
+        const functionName = 'confirm';
+        const returnedStatus = STATUS.OK;
+
+        describe('happy path', () => {
+            const context = new Context({});
+
+            before(async () => {
+                sinon.stub(userService, 'findUser').resolves({
+                    active: true,
+                    email: testEmail,
+                    password: hashedTestPassword,
+                    _id: 1,
+                    toJSON: () => ({
+                        email: testEmail,
+                        password: hashedTestPassword,
+                        _id: 1
+                    }),
+                    save: () => Promise.resolve(true)
+                });
+
+                context.request.query = {
+                    token: await confirmJwtService.generate()
+                };
+
+                const next = async () => {
+                    await authController.confirm(context, defaultNext);
+                };
+
+                await validationMiddleware.validate(authSchema.schemas.confirm)(
+                    context,
+                    next
+                );
+            });
+
+            it(`should return a status of ${returnedStatus}`, async () => {
+                const { status } = context;
+
+                assert(status === returnedStatus);
+            });
+
+            after(() => {
+                userService.findUser.restore();
+            });
+        });
+
+        describe('invalid customer', () => {
+            const returnedStatus = STATUS.NOT_FOUND;
+            const context = new Context({});
+
+            before(async () => {
+                sinon.stub(userService, 'findUser').resolves(null);
+
+                context.request.query = {
+                    token: await confirmJwtService.generate()
+                };
+
+                const next = async () => {
+                    await authController.confirm(context, defaultNext);
+                };
+
+                await validationMiddleware.validate(authSchema.schemas.confirm)(
+                    context,
+                    next
+                );
+            });
+
+            it(`should throw a ${returnedStatus} error`, async () => {
+                const status = context.status;
+
+                assert(status === returnedStatus);
+            });
+
+            describe('context body', () => {
+                it('should have property method', () => {
+                    const { method } = context.body;
+
+                    assert(!!method);
+                });
+
+                it(`method should equal ${functionName}`, () => {
+                    const { method } = context.body;
+
+                    assert(method === functionName);
+                });
+
+                it('should have property controller', () => {
+                    const { controller } = context.body;
+
+                    assert(!!controller);
+                });
+
+                it(`controller should equal ${source}`, () => {
+                    const { controller } = context.body;
+
+                    assert(controller === source);
+                });
+
+                it('should have property output', () => {
+                    const { output } = context.body;
+
+                    assert(!!output);
+                });
+            });
+
+            after(() => {
+                userService.findUser.restore();
+            });
+        });
+
+        describe('invalid token', () => {
+            const returnedStatus = STATUS.UNAUTHORIZED;
+            const context = new Context({});
+
+            before(async () => {
+                context.request.query = {
+                    token: await authJwtService.generate()
+                };
+
+                const next = async () => {
+                    await authController.confirm(context, defaultNext);
+                };
+
+                await validationMiddleware.validate(authSchema.schemas.confirm)(
+                    context,
+                    next
+                );
+            });
+
+            it(`should throw a ${returnedStatus} error`, async () => {
+                const status = context.status;
+
+                assert(status === returnedStatus);
+            });
+
+            describe('context body', () => {
+                it('should have property method', () => {
+                    const { method } = context.body;
+
+                    assert(!!method);
+                });
+
+                it(`method should equal ${functionName}`, () => {
+                    const { method } = context.body;
+
+                    assert(method === functionName);
+                });
+
+                it('should have property controller', () => {
+                    const { controller } = context.body;
+
+                    assert(!!controller);
+                });
+
+                it(`controller should equal ${source}`, () => {
+                    const { controller } = context.body;
+
+                    assert(controller === source);
+                });
+
+                it('should have property output', () => {
+                    const { output } = context.body;
+
+                    assert(!!output);
+                });
+            });
+        });
+
+        describe('wrong input', () => {
+            const returnedStatus = STATUS.BAD_REQUEST;
+            const context = new Context({
+                body: {}
+            });
+
+            before(async () => {
+                await validationMiddleware.validate(
+                    authSchema.schemas.confirm
+                )(context);
+            });
+
+            it(`should throw a ${returnedStatus} error`, async () => {
+                assert(context.status === returnedStatus);
+            });
+
+            it('should throw a Controller Error', () => {
+                assert(context.body instanceof ControllerError);
+            });
+        });
+    });
+
+    describe('register route', () => {
+        const functionName = 'register';
+
+        describe('happy path', () => {
+            const returnedStatus = STATUS.OK;
+            const context = new Context({
+                body: testRegister
+            });
+
+            before(async () => {
+                sinon.stub(userService, 'findUser').resolves(null);
+                sinon.stub(userService, 'create').resolves({
+                    active: true,
+                    email: testEmail,
+                    password: hashedTestPassword,
+                    id: 1,
+                    address: {},
+                    save: () => Promise.resolve(true)
+                });
+                sinon.stub(mailService, 'sendMail').resolves(true);
+
+                const next = async () => {
+                    await authController.register(context, defaultNext);
+                };
+
+                await validationMiddleware.validate(authSchema.schemas.register)(
+                    context,
+                    next
+                );
+            });
+
+            it(`should return a status of ${returnedStatus}`, async () => {
+                const { status } = context;
+
+                assert(status === returnedStatus);
+            });
+
+            after(() => {
+                userService.findUser.restore();
+                userService.create.restore();
+                mailService.sendMail.restore();
+            });
+        });
+
+        describe('customer already exists', () => {
+            const returnedStatus = STATUS.BAD_REQUEST;
+            const context = new Context({
+                body: testRegister
+            });
+
+            before(async () => {
+                sinon.stub(userService, 'findUser').resolves({});
+
+                const next = async () => {
+                    await authController.register(context, defaultNext);
+                };
+
+                await validationMiddleware.validate(authSchema.schemas.register)(
+                    context,
+                    next
+                );
+
+
+            });
+
+            it(`should throw a ${returnedStatus} error`, async () => {
+                const status = context.status;
+                assert(status === returnedStatus);
+            });
+
+            describe('context body', () => {
+                it('should have property method', () => {
+                    const { method } = context.body;
+
+                    assert(!!method);
+                });
+
+                it(`method should equal ${functionName}`, () => {
+                    const { method } = context.body;
+
+                    assert(method === functionName);
+                });
+
+                it('should have property controller', () => {
+                    const { controller } = context.body;
+
+                    assert(!!controller);
+                });
+
+                it(`controller should equal ${source}`, () => {
+                    const { controller } = context.body;
+
+                    assert(controller === source);
+                });
+
+                it('should have property output', () => {
+                    const { output } = context.body;
+
+                    assert(!!output);
+                });
+            });
+
+            after(() => {
+                userService.findUser.restore();
+            });
+        });
+
+        describe('save error', () => {
+            const returnedStatus = STATUS.INTERNAL_ERROR;
+            const context = new Context({
+                body: testRegister
+            });
+
+            before(async () => {
+                sinon.stub(userService, 'findUser').resolves(null);
+                sinon.stub(userService, 'create').resolves({
+                    email: testEmail,
+                    password: hashedTestPassword,
+                    id: 1,
+                    address: {},
+                    save: () => Promise.reject(false)
+                });
+
+                const next = async () => {
+                    await authController.register(context, defaultNext);
+                };
+
+                await validationMiddleware.validate(authSchema.schemas.register)(context, next);
+            });
+
+            it(`should throw a ${returnedStatus}`, async () => {
+                const status = context.status;
+
+                assert(status === returnedStatus);
+            });
+
+            describe('context body', () => {
+                it('should have property method', () => {
+                    const { method } = context.body;
+
+                    assert(!!method);
+                });
+
+                it(`method should equal ${functionName}`, () => {
+                    const { method } = context.body;
+
+                    assert(method === functionName);
+                });
+
+                it('should have property controller', () => {
+                    const { controller } = context.body;
+
+                    assert(!!controller);
+                });
+
+                it(`controller should equal ${source}`, () => {
+                    const { controller } = context.body;
+
+                    assert(controller === source);
+                });
+
+                it('should have property output', () => {
+                    const { output } = context.body;
+
+                    assert(output === false);
+                });
+            });
+
+            after(() => {
+                userService.findUser.restore();
+                userService.create.restore();
+            });
+        });
+
+        describe('send email error', () => {
+            const returnedStatus = STATUS.INTERNAL_ERROR;
+            const context = new Context({
+                body: testRegister
+            });
+
+            before(async () => {
+                sinon.stub(userService, 'findUser').resolves(null);
+                sinon.stub(userService, 'create').resolves({
+                    active: true,
+                    email: testEmail,
+                    password: hashedTestPassword,
+                    id: 1,
+                    address: {},
+                    save: () => Promise.resolve(true)
+                });
+                sinon.stub(mailService, 'sendMail').rejects(false);
+
+                const next = async () => {
+                    await authController.register(context, defaultNext);
+                };
+
+                await validationMiddleware.validate(authSchema.schemas.register)(
+                    context,
+                    next
+                );
+            });
+
+            it(`should throw a ${returnedStatus}`, async () => {
+                const status = context.status;
+
+                assert(status === returnedStatus);
+            });
+
+            describe('context body', () => {
+                it('should have property method', () => {
+                    const { method } = context.body;
+
+                    assert(!!method);
+                });
+
+                it(`method should equal ${functionName}`, () => {
+                    const { method } = context.body;
+
+                    assert(method === functionName);
+                });
+
+                it('should have property controller', () => {
+                    const { controller } = context.body;
+
+                    assert(!!controller);
+                });
+
+                it(`controller should equal ${source}`, () => {
+                    const { controller } = context.body;
+
+                    assert(controller === source);
+                });
+
+                it('should have property output', () => {
+                    const { output } = context.body;
+
+                    assert(!!output);
+                });
+            });
+
+            after(() => {
+                userService.findUser.restore();
+                userService.create.restore();
+                mailService.sendMail.restore();
+            });
+        });
+
+        describe('wrong input', () => {
+            const returnedStatus = STATUS.BAD_REQUEST;
+            const context = new Context({
+                body: {}
+            });
+
+            before(async () => {
+                await validationMiddleware.validate(
+                    authSchema.schemas.register
+                )(context);
+            });
+
+            it(`should throw a ${returnedStatus} error`, async () => {
+                assert(context.status === returnedStatus);
+            });
+
+            it('should throw a Controller Error', () => {
+                assert(context.body instanceof ControllerError);
             });
         });
     });
