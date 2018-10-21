@@ -954,6 +954,8 @@ describe('Invoice Component', () => {
 
                 sinon.stub(invoiceService, 'findInvoice')
                     .resolves(validInvoiceObject);
+                sinon.stub(invoiceService, 'deleteInvoice')
+                    .resolves(true);
 
                 const next = async () => {
                     await invoiceController.deleteInvoice(context, defaultNext);
@@ -980,6 +982,7 @@ describe('Invoice Component', () => {
 
             after(() => {
                 invoiceService.findInvoice.restore();
+                invoiceService.deleteInvoice.restore();
             });
         });
 
@@ -1231,6 +1234,93 @@ describe('Invoice Component', () => {
 
             after(() => {
                 invoiceService.findInvoice.restore();
+            });
+        });
+
+        describe('save error', () => {
+            const returnedStatus = STATUS.INTERNAL_ERROR;
+
+            before(async () => {
+                const token = await jwtService.generate();
+                const request = {
+                    headers: {
+                        [AUTH.TOKEN_HEADER]: token
+                    }
+                };
+                const params = {
+                    invoiceId: generatedInvoiceId
+                };
+                const state = {
+                    user: {
+                        invoices: [generatedInvoiceId],
+                        save: () => Promise.resolve(true)
+                    }
+                };
+                context = new Context(request, params, state);
+
+                sinon.stub(invoiceService, 'findInvoice')
+                    .resolves(validInvoiceObject);
+                sinon.stub(invoiceService, 'deleteInvoice')
+                    .throws();
+
+                const next = async () => {
+                    await invoiceController.deleteInvoice(context, defaultNext);
+                };
+
+                await validationMiddleware
+                    .validate(invoiceSchema.schemas.deleteInvoice)(
+                        context,
+                        next
+                    );
+            });
+
+            it(`should throw a ${returnedStatus} status`, async () => {
+                const { status } = context;
+
+                assert(status === returnedStatus);
+            });
+
+            it('should return a Controller Error', () => {
+                const { body } = context;
+
+                assert(body instanceof ControllerError);
+            });
+
+            describe('context body', () => {
+                it('should have property method', () => {
+                    const { method } = context.body;
+
+                    assert(!!method);
+                });
+
+                it(`method should equal ${functionName}`, () => {
+                    const { method } = context.body;
+
+                    assert(method === functionName);
+                });
+
+                it('should have property controller', () => {
+                    const { controller } = context.body;
+
+                    assert(!!controller);
+                });
+
+                it(`controller should equal ${source}`, () => {
+                    const { controller } = context.body;
+
+                    assert(controller === source);
+                });
+
+                it('should have property output', () => {
+                    const { output } = context.body;
+
+                    assert(!!output);
+                });
+            });
+
+            after(() => {
+                invoiceService.findInvoice.restore();
+                invoiceService.deleteInvoice.restore();
             });
         });
 

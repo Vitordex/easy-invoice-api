@@ -966,6 +966,8 @@ describe('Customer Component', () => {
 
                 sinon.stub(customerService, 'findCustomer')
                     .resolves(validCustomerObject);
+                sinon.stub(customerService, 'deleteCustomer')
+                    .resolves(true);
 
                 const next = async () => {
                     await customerController.deleteCustomer(context, defaultNext);
@@ -992,6 +994,7 @@ describe('Customer Component', () => {
 
             after(() => {
                 customerService.findCustomer.restore();
+                customerService.deleteCustomer.restore();
             });
         });
 
@@ -1243,6 +1246,93 @@ describe('Customer Component', () => {
 
             after(() => {
                 customerService.findCustomer.restore();
+            });
+        });
+
+        describe('save error', () => {
+            const returnedStatus = STATUS.INTERNAL_ERROR;
+
+            before(async () => {
+                const token = await jwtService.generate();
+                const request = {
+                    headers: {
+                        [AUTH.TOKEN_HEADER]: token
+                    }
+                };
+                const params = {
+                    customerId: generatedCustomerId
+                };
+                const state = {
+                    user: {
+                        customers: [generatedCustomerId],
+                        save: () => Promise.resolve(true)
+                    }
+                };
+                context = new Context(request, params, state);
+
+                sinon.stub(customerService, 'findCustomer')
+                    .resolves(validCustomerObject);
+                sinon.stub(customerService, 'deleteCustomer')
+                    .throws();
+
+                const next = async () => {
+                    await customerController.deleteCustomer(context, defaultNext);
+                };
+
+                await validationMiddleware
+                    .validate(customerSchema.schemas.deleteCustomer)(
+                        context,
+                        next
+                    );
+            });
+
+            it(`should throw a ${returnedStatus} status`, async () => {
+                const { status } = context;
+
+                assert(status === returnedStatus);
+            });
+
+            it('should return a Controller Error', () => {
+                const { body } = context;
+
+                assert(body instanceof ControllerError);
+            });
+
+            describe('context body', () => {
+                it('should have property method', () => {
+                    const { method } = context.body;
+
+                    assert(!!method);
+                });
+
+                it(`method should equal ${functionName}`, () => {
+                    const { method } = context.body;
+
+                    assert(method === functionName);
+                });
+
+                it('should have property controller', () => {
+                    const { controller } = context.body;
+
+                    assert(!!controller);
+                });
+
+                it(`controller should equal ${source}`, () => {
+                    const { controller } = context.body;
+
+                    assert(controller === source);
+                });
+
+                it('should have property output', () => {
+                    const { output } = context.body;
+
+                    assert(!!output);
+                });
+            });
+
+            after(() => {
+                customerService.findCustomer.restore();
+                customerService.deleteCustomer.restore();
             });
         });
 

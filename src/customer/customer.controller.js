@@ -239,7 +239,6 @@ class CustomerController {
             return next();
         }
 
-        customer.deletedAt = timeService().toISOString();
         user.customers = user.customers.reduce((customers, item) => {
             if (item.toString() === customer.id.toString()) return customers;
 
@@ -249,7 +248,7 @@ class CustomerController {
         try {
             await Promise.all([
                 user.save(),
-                customer.save()
+                this.customerService.deleteCustomer(customer)
             ]);
         } catch (error) {
             const saveError = new this.ControllerError(

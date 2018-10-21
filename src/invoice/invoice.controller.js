@@ -248,7 +248,6 @@ class InvoiceController {
             return next();
         }
 
-        invoice.deletedAt = timeService().toISOString();
         user.invoices = user.invoices.reduce((invoices, item) => {
             if (item.toString() === invoice.id.toString()) return invoices;
 
@@ -258,7 +257,7 @@ class InvoiceController {
         try {
             await Promise.all([
                 user.save(),
-                invoice.save()
+                this.invoiceService.deleteInvoice(invoice)
             ]);
         } catch (error) {
             const controllerError = new ControllerError(
