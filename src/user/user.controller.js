@@ -23,28 +23,16 @@ class UserController {
      * 
      * @param {Object} params 
      * @param {UserService} params.userService
-     * @param {String} params.authHash
-     * @param {Object} params.authConfigs
      * @param {MailService} params.mailService
      * @param {ControllerError} params.apiErrorModel
-     * @param {JwtService} params.authJwtService
-     * @param {JwtService} params.confirmJwtService
-     * @param {JwtService} params.resetJwtService
      */
     constructor({
         userService,
         mailService,
-        apiErrorModel,
-        authJwtService,
-        confirmJwtService,
-        resetJwtService
+        apiErrorModel
     }) {
         this.mailService = mailService;
         this.userService = userService;
-
-        this.authJwtService = authJwtService;
-        this.confirmJwtService = confirmJwtService;
-        this.resetJwtService = resetJwtService;
 
         this.ControllerError = apiErrorModel;
     }
