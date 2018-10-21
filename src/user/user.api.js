@@ -2,7 +2,7 @@ const Router = require('koa-router');
 
 /* eslint-disable no-unused-vars */
 const UserController = require('./user.controller'); 
-const AuthService = require('./auth.service');
+const AuthService = require('../auth/auth.service');
 const UserSchema = require('./user.schema');
 const ValidationMiddleware = require('../middleware/validation.middleware');
 const MailService = require('../services/mail.service');
@@ -36,47 +36,6 @@ class UserApi {
     }
 
     buildRoutes() {
-        this.router.post(
-            '/login',
-            this.validationMiddleware.validate(this.userSchema.schemas.login),
-            async (context, next) => {
-                await this.userController.login(context, next);
-            }
-        );
-
-        this.router.post(
-            '/recover',
-            this.validationMiddleware.validate(this.userSchema.schemas.verify),
-            async (context, next) => {
-                await this.userController.recover(context, next);
-            }
-        );
-
-        this.router.patch(
-            '/change/password',
-            this.authService.authenticate(),
-            this.validationMiddleware.validate(this.userSchema.schemas.changePassword),
-            async (context, next) => {
-                await this.userController.changePassword(context, next);
-            }
-        );
-
-        this.router.post(
-            '/register',
-            this.validationMiddleware.validate(this.userSchema.schemas.register),
-            async (context, next) => {
-                await this.userController.register(context, next);
-            }
-        );
-
-        this.router.get(
-            '/confirm',
-            this.validationMiddleware.validate(this.userSchema.schemas.confirm),
-            async (context, next) => {
-                await this.userController.confirm(context, next);
-            }
-        );
-
         this.router.patch(
             '/',
             this.authService.authenticate(),

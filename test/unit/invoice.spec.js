@@ -10,7 +10,7 @@ const InvoiceController = require('../../src/invoice/invoice.controller');
 const InvoiceSchema = require('../../src/invoice/invoice.schema');
 
 const ValidationMiddleware = require('../../src/middleware/validation.middleware');
-const JwtService = require('../../src/user/jwt.service');
+const JwtService = require('../../src/auth/jwt.service');
 
 const ControllerError = require('../../src/log/controller.error.model');
 const ObjectId = require('../../src/database/object.id');
