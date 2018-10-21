@@ -349,13 +349,27 @@ class InvoiceController {
         } catch (error) {
             const controllerError = new ControllerError(
                 STATUS.INTERNAL_ERROR,
-                'Invalid user',
+                'Invalid invoice id',
                 controllerName,
                 functionName,
                 context.input,
                 error
             );
             context.throw(STATUS.INTERNAL_ERROR, controllerError);
+
+            return next();
+        }
+
+        if (!invoice) {
+            const controllerError = new ControllerError(
+                STATUS.NOT_FOUND,
+                'Invalid invoice id',
+                controllerName,
+                functionName,
+                context.input,
+                'Invalid invoice id'
+            );
+            context.throw(STATUS.NOT_FOUND, controllerError);
 
             return next();
         }
@@ -383,7 +397,7 @@ class InvoiceController {
         }
 
         context.body = {url: `${context.request.origin}/${pdfBasePath}`};
-        context.status = STATUS.PARTIAL_CONTENT;
+        context.status = STATUS.OK;
 
         return next();
     }
