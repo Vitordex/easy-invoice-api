@@ -57,11 +57,10 @@ const pdfTemplate = fs.readFileSync('./src/invoice/invoice.template.html', { enc
 
 async function initApp(logger) {
     const app = new Koa();
-
     app.use(bodyParser());
 
     app.use(errorMiddleware(logger));
-    
+
     app.use(serve(__dirname + '/public'));
 
     const mailService = new MailService(config.get('mail.options'));
@@ -138,7 +137,10 @@ async function initApp(logger) {
     const invoiceModel = new Invoice(databaseService);
     const invoiceService = new InvoiceService(invoiceModel);
 
-    const pdfServiceOptions = { format: 'Letter' };
+    const pdfServiceOptions = {
+        format: 'Letter',
+        phatomPath: './node_modules/phantomjs-prebuilt/bin/phatomjs'
+    };
     const pdfService = new PdfService(pdfServiceOptions);
     const invoiceControllerParameters = {
         userService,
