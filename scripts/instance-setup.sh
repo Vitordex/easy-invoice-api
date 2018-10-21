@@ -21,3 +21,6 @@ curl https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setu
 curl https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/AgentDependencies.tar.gz -O
 tar xvf AgentDependencies.tar.gz -C /tmp/
 sudo python ./awslogs-agent-setup.py --region ${AWS_RES_REGION} --dependency-path /tmp/AgentDependencies
+
+#libfontconfig on Debian based
+sudo yum install -y fontconfig
