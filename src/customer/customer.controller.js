@@ -98,7 +98,7 @@ class CustomerController {
         return next();
     }
 
-    async putCustomer(context, next) {
+    async patchCustomer(context, next) {
         const functionName = 'putCustomer';
         const { 
             params, 

@@ -579,11 +579,11 @@ describe('Customer Component', () => {
                     .resolves(validCustomerObject);
 
                 const next = async () => {
-                    await customerController.putCustomer(context, defaultNext);
+                    await customerController.patchCustomer(context, defaultNext);
                 };
 
                 await validationMiddleware
-                    .validate(customerSchema.schemas.putCustomer)(
+                    .validate(customerSchema.schemas.patchCustomer)(
                         context,
                         next
                     );
@@ -629,11 +629,11 @@ describe('Customer Component', () => {
                 context = new Context(request, params, state);
 
                 const next = async () => {
-                    await customerController.putCustomer(context, defaultNext);
+                    await customerController.patchCustomer(context, defaultNext);
                 };
 
                 await validationMiddleware
-                    .validate(customerSchema.schemas.putCustomer)(
+                    .validate(customerSchema.schemas.patchCustomer)(
                         context,
                         next
                     );
@@ -716,11 +716,11 @@ describe('Customer Component', () => {
                     .throws();
 
                 const next = async () => {
-                    await customerController.putCustomer(context, defaultNext);
+                    await customerController.patchCustomer(context, defaultNext);
                 };
 
                 await validationMiddleware
-                    .validate(customerSchema.schemas.putCustomer)(
+                    .validate(customerSchema.schemas.patchCustomer)(
                         context,
                         next
                     );
@@ -795,11 +795,11 @@ describe('Customer Component', () => {
                     .resolves();
 
                 const next = async () => {
-                    await customerController.putCustomer(context, defaultNext);
+                    await customerController.patchCustomer(context, defaultNext);
                 };
 
                 await validationMiddleware
-                    .validate(customerSchema.schemas.putCustomer)(
+                    .validate(customerSchema.schemas.patchCustomer)(
                         context,
                         next
                     );
@@ -870,7 +870,7 @@ describe('Customer Component', () => {
                     });
 
                     await validationMiddleware.validate(
-                        customerSchema.schemas.putCustomer
+                        customerSchema.schemas.patchCustomer
                     )(context);
                 });
 
@@ -896,7 +896,7 @@ describe('Customer Component', () => {
                     });
 
                     await validationMiddleware.validate(
-                        customerSchema.schemas.putCustomer
+                        customerSchema.schemas.patchCustomer
                     )(context);
                 });
 
@@ -920,7 +920,7 @@ describe('Customer Component', () => {
                     });
 
                     await validationMiddleware.validate(
-                        customerSchema.schemas.putCustomer
+                        customerSchema.schemas.patchCustomer
                     )(context);
                 });
 
@@ -1256,7 +1256,7 @@ describe('Customer Component', () => {
                     });
 
                     await validationMiddleware.validate(
-                        customerSchema.schemas.putCustomer
+                        customerSchema.schemas.patchCustomer
                     )(context);
                 });
 
@@ -1282,7 +1282,7 @@ describe('Customer Component', () => {
                     });
 
                     await validationMiddleware.validate(
-                        customerSchema.schemas.putCustomer
+                        customerSchema.schemas.patchCustomer
                     )(context);
                 });
 

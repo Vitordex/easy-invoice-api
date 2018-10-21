@@ -50,12 +50,12 @@ class CustomerApi {
             }
         );
 
-        this.router.put(
+        this.router.patch(
             '/:customerId',
-            this.validationMiddleware.validate(this.customerSchema.schemas.putCustomer),
+            this.validationMiddleware.validate(this.customerSchema.schemas.patchCustomer),
             this.authService.authenticate(),
             async (context, next) => {
-                await this.customerController.putCustomer(context, next);
+                await this.customerController.patchCustomer(context, next);
             }
         );
 
