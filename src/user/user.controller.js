@@ -1,12 +1,7 @@
 /* eslint-disable no-unused-vars */
 const UserService = require('./user.service');
-const { InvoiceService } = require('../invoice/');
-const { CustomerService } = require('../customer/');
-const {
-    Instances: {
-        User
-    }
-} = require('../database/').CommonTypes;
+const InvoiceService = require('../invoice/invoice.service');
+const CustomerService = require('../customer/customer.service');
 const ControllerError = require('../log/controller.error.model');
 /* eslint-enable no-unused-vars */
 
@@ -25,7 +20,6 @@ const controllerName = 'user';
 
 class UserController {
     /**
-     * 
      * @param {Object} params 
      * @param {UserService} params.userService
      * @param {InvoiceService} params.invoiceService
@@ -91,8 +85,6 @@ class UserController {
                     $in: user.customers
                 }
             };
-            user.customers = [];
-            user.invoice = [];
             await Promise.all([
                 this.userService.deleteUser(user),
                 this.invoiceService.deleteInvoices(
@@ -117,6 +109,9 @@ class UserController {
 
             return next();
         }
+
+        context.status = STATUS.OK;
+        return next();
     }
 }
 

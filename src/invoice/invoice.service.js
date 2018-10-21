@@ -97,7 +97,7 @@ class InvoiceService {
      * 
      * @returns {[Invoice]}
      */
-    deleteInvoices(query, dateLocal) {
+    deleteInvoices(query) {
         const softQuery = {
             ...query,
             deletedAt: {
@@ -107,7 +107,7 @@ class InvoiceService {
         const updatedValues = {
             deletedAt: timeService().toISOString()
         };
-        return this.Invoice.updateManyWithDates(softQuery, updatedValues, dateLocal);
+        return this.Invoice.updateMany(softQuery, updatedValues);
     }
 }
 

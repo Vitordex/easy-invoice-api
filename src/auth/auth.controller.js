@@ -1,5 +1,7 @@
 /* eslint-disable no-unused-vars */
 const UserService = require('../user/user.service');
+const InvoiceService = require('../invoice/invoice.service');
+const CustomerService = require('../customer/customer.service');
 const MailService = require('../services/mail.service');
 const ControllerError = require('../log/controller.error.model');
 const JwtService = require('./jwt.service');
@@ -20,9 +22,10 @@ const controllerName = 'auth';
 
 class UserController {
     /**
-     * 
      * @param {Object} params 
      * @param {UserService} params.userService
+     * @param {InvoiceService} params.invoiceService
+     * @param {CustomerService} params.customerService
      * @param {String} params.authHash
      * @param {Object} params.authConfigs
      * @param {MailService} params.mailService
@@ -34,6 +37,8 @@ class UserController {
      */
     constructor({
         userService,
+        invoiceService,
+        customerService,
         mailService,
         apiErrorModel,
         authJwtService,
@@ -43,6 +48,8 @@ class UserController {
     }) {
         this.mailService = mailService;
         this.userService = userService;
+        this.invoiceService = invoiceService;
+        this.customerService = customerService;
 
         this.authJwtService = authJwtService;
         this.confirmJwtService = confirmJwtService;
@@ -107,7 +114,7 @@ class UserController {
 
         const sentUser = user.toJSON();
 
-        if (user.active === 'STATIC') {
+        if (user.active === activeProp.STATIC) {
             user.active = activeProp.ACTIVE;
 
             try {
@@ -125,6 +132,40 @@ class UserController {
 
                 return next();
             }
+        }
+
+        try {
+            const invoiceQuery = {
+                '_id': {$in: sentUser.invoices}
+            };
+            const invoicesPromise = this.invoiceService.findInvoices(invoiceQuery);
+
+            const customerQuery = {
+                '_id': {$in: sentUser.customers}
+            };
+            const customersPromise = this.customerService.findCustomers(customerQuery);
+
+            const tasks = [invoicesPromise, customersPromise];
+
+            const [
+                invoices, 
+                customers
+            ] = await Promise.all(tasks);
+
+            sentUser.invoices = invoices.map((invoice) => invoice.toJSON());
+            sentUser.customers = customers.map((customer) => customer.toJSON());
+        } catch (error) {
+            const controllerError = new ControllerError(
+                STATUS.INTERNAL_ERROR,
+                'Error retrieving user objects',
+                controllerName,
+                functionName,
+                context.input,
+                error
+            );
+            context.throw(STATUS.INTERNAL_ERROR, controllerError);
+
+            return next();
         }
 
         const tokenPayload = {

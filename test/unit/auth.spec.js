@@ -9,7 +9,9 @@ const {
         AuthSchema,
         JwtService
     },
+    customer: { CustomerService },
     enums: { AUTH, API: { STATUS } },
+    invoice: { InvoiceService },
     log: { ControllerError },
     middleware: { Validation: ValidationMiddleware },
     services: {
@@ -36,6 +38,10 @@ let validationMiddleware;
 let userModel;
 /**@type {UserService} */
 let userService;
+/**@type {InvoiceService} */
+let invoiceService;
+/**@type {CustomerService} */
+let customerService;
 /**@type {AuthController} */
 let authController;
 /**@type {AuthSchema} */
@@ -69,6 +75,8 @@ describe('Auth component', () => {
     mailService = new MailService(config.get('mail.options'));
 
     userService = new UserService(userModel, hashingService);
+    invoiceService = new InvoiceService({});
+    customerService = new CustomerService({});
 
     const authTokenExpiration = authConfigs.token.expiration;
     const authJwtOptions = {
@@ -99,6 +107,8 @@ describe('Auth component', () => {
         authConfigs,
         authHash: hashKey,
         userService,
+        invoiceService,
+        customerService,
         mailService,
         authJwtService,
         confirmJwtService,
@@ -132,6 +142,8 @@ describe('Auth component', () => {
                     save: () => Promise.resolve(true)
                 };
                 sinon.stub(userService, 'findUser').resolves(successUser);
+                sinon.stub(invoiceService, 'findInvoices').resolves([]);
+                sinon.stub(customerService, 'findCustomers').resolves([]);
 
                 const next = async () => {
                     await authController.login(context, defaultNext);
@@ -162,8 +174,22 @@ describe('Auth component', () => {
                 assert(status === returnedStatus);
             });
 
+            it('invoices should be an empty array', () => {
+                const user = context.body;
+
+                assert(user.invoices instanceof Array);
+            });
+
+            it('customers should be an empty array', () => {
+                const user = context.body;
+
+                assert(user.customers instanceof Array);
+            });
+
             after(() => {
                 userService.findUser.restore();
+                invoiceService.findInvoices.restore();
+                customerService.findCustomers.restore();
             });
         });
 
@@ -316,6 +342,87 @@ describe('Auth component', () => {
 
             after(() => {
                 userService.findUser.restore();
+            });
+        });
+
+        describe('error retrieving user objects', () => {
+            const returnedStatus = STATUS.INTERNAL_ERROR;
+            const context = new Context({
+                body: {
+                    email: testEmail,
+                    password: testPassword
+                }
+            });
+
+            before(async () => {
+                const successUser = {
+                    active: 'static',
+                    email: testEmail,
+                    password: hashedTestPassword,
+                    _id: 1,
+                    toJSON: () => ({
+                        email: testEmail,
+                        password: hashedTestPassword,
+                        _id: 1
+                    }),
+                    save: () => Promise.resolve(true)
+                };
+                sinon.stub(userService, 'findUser').resolves(successUser);
+                sinon.stub(invoiceService, 'findInvoices').throws();
+                sinon.stub(customerService, 'findCustomers').throws();
+
+                const next = async () => {
+                    await authController.login(context, defaultNext);
+                };
+
+                await validationMiddleware.validate(authSchema.schemas.login)(
+                    context,
+                    next
+                );
+            });
+
+            it(`should throw a ${returnedStatus} error`, async () => {
+                const { status } = context;
+
+                assert(status === returnedStatus);
+            });
+
+            describe('context body', () => {
+                it('should have property method', () => {
+                    const { method } = context.body;
+
+                    assert(!!method);
+                });
+
+                it(`method should equal ${functionName}`, () => {
+                    const { method } = context.body;
+
+                    assert(method === functionName);
+                });
+
+                it('should have property controller', () => {
+                    const { controller } = context.body;
+
+                    assert(!!controller);
+                });
+
+                it(`controller should equal ${source}`, () => {
+                    const { controller } = context.body;
+
+                    assert(controller === source);
+                });
+
+                it('should have property output', () => {
+                    const { output } = context.body;
+
+                    assert(!!output);
+                });
+            });
+
+            after(() => {
+                userService.findUser.restore();
+                invoiceService.findInvoices.restore();
+                customerService.findCustomers.restore();
             });
         });
 

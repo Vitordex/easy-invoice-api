@@ -34,8 +34,8 @@ class UserApi {
     buildRoutes() {
         this.router.patch(
             '/',
-            this.authService.authenticate(),
             this.validationMiddleware.validate(this.userSchema.schemas.patchUser),
+            this.authService.authenticate(),
             async (context, next) => {
                 await this.userController.patchUser(context, next);
             }
@@ -43,8 +43,8 @@ class UserApi {
 
         this.router.delete(
             '/',
-            this.authService.authenticate(),
             this.validationMiddleware.validate(this.userSchema.schemas.deleteUser),
+            this.authService.authenticate(),
             async (context, next) => {
                 await this.userController.deleteUser(context, next);
             }

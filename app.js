@@ -110,31 +110,6 @@ async function initApp(logger) {
     const userService = new UserService(userModel, hashingService);
     const authService = new AuthService(authJwtService, userService, ServiceError);
 
-    //Build auth api
-    const emailTemplates = config.get('mail.templates');
-    const authControllerParameters = {
-        userService,
-        apiErrorModel: ControllerError,
-        authJwtService,
-        confirmJwtService,
-        resetJwtService,
-        mailService,
-        emailTemplates
-    };
-    const authController = new AuthController(authControllerParameters);
-
-    const authSchema = new AuthSchema(validationMiddleware.baseSchema);
-    const authApiParameters = {
-        authService,
-        authController,
-        authSchema,
-        validationMiddleware
-    };
-    const authApi = new AuthRouter(authApiParameters);
-    authApi.buildRoutes();
-
-    app.use(authApi.router.routes());
-
     //Build customer api
     const customerModel = new Customer(databaseService);
     const customerService = new CustomerService(customerModel);
@@ -186,6 +161,33 @@ async function initApp(logger) {
     invoiceApi.buildRoutes();
 
     app.use(invoiceApi.router.routes());
+
+    //Build auth api
+    const emailTemplates = config.get('mail.templates');
+    const authControllerParameters = {
+        userService,
+        invoiceService,
+        customerService,
+        apiErrorModel: ControllerError,
+        authJwtService,
+        confirmJwtService,
+        resetJwtService,
+        mailService,
+        emailTemplates
+    };
+    const authController = new AuthController(authControllerParameters);
+
+    const authSchema = new AuthSchema(validationMiddleware.baseSchema);
+    const authApiParameters = {
+        authService,
+        authController,
+        authSchema,
+        validationMiddleware
+    };
+    const authApi = new AuthRouter(authApiParameters);
+    authApi.buildRoutes();
+
+    app.use(authApi.router.routes());
 
     //Build user api
     const userControllerParameters = {
