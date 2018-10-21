@@ -1,5 +1,6 @@
 const Koa = require('koa');
 const bodyParser = require('koa-bodyparser');
+const serve = require('koa-static');
 const fs = require('fs');
 
 const {
@@ -60,6 +61,8 @@ async function initApp(logger) {
     app.use(bodyParser());
 
     app.use(errorMiddleware(logger));
+    
+    app.use(serve(__dirname + '/public'));
 
     const mailService = new MailService(config.get('mail.options'));
 
