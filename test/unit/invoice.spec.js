@@ -335,8 +335,8 @@ describe('Invoice Component', () => {
         const postValidInvoice = {
             customer: 'e09e774cbf8b5',
             description: 'Descricao da nota aqui asd',
-            addition: 'aopidfhioasdjnosiebm',
-            discount: '15%',
+            addition: 100,
+            discount: 15,
             value: 800,
             type: 'Casa'
         };
@@ -541,8 +541,8 @@ describe('Invoice Component', () => {
         const functionName = 'patchInvoice';
         const putValidInvoiceInput = {
             description: 'Descricao da nota aqui asd',
-            addition: 'aopidfhioasdjnosiebm',
-            discount: '15%',
+            addition: 100,
+            discount: 15,
             value: 800,
             type: 'Casa'
         };
