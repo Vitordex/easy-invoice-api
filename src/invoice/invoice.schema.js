@@ -44,6 +44,8 @@ class InvoiceSchema {
                     addition: joi.number()
                         .required(),
                     discount: joi.number()
+                        .min(0)
+                        .max(100)
                         .required(),
                     value: joi.number()
                         .required(),
@@ -73,6 +75,8 @@ class InvoiceSchema {
                     addition: joi.number()
                         .optional(),
                     discount: joi.number()
+                        .min(0)
+                        .max(100)
                         .optional(),
                     value: joi.number()
                         .optional(),
