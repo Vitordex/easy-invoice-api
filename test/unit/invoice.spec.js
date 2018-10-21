@@ -17,7 +17,7 @@ const ObjectId = require('../../src/database/object.id');
 
 const Context = require('./context.model');
 
-describe.only('Invoice Component', () => {
+describe('Invoice Component', () => {
     const { AUTH, API: { STATUS } } = require('../../src/enums');
 
     const authConfigs = config.get('auth');
