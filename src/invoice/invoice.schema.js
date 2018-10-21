@@ -41,9 +41,9 @@ class InvoiceSchema {
                         .required(),
                     description: joi.string()
                         .required(),
-                    addition: joi.string()
+                    addition: joi.number()
                         .required(),
-                    discount: joi.string()
+                    discount: joi.number()
                         .required(),
                     value: joi.number()
                         .required(),
@@ -70,9 +70,9 @@ class InvoiceSchema {
                         .forbidden(),
                     description: joi.string()
                         .optional(),
-                    addition: joi.string()
+                    addition: joi.number()
                         .optional(),
-                    discount: joi.string()
+                    discount: joi.number()
                         .optional(),
                     value: joi.number()
                         .optional(),
