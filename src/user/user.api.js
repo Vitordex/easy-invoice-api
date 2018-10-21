@@ -40,6 +40,15 @@ class UserApi {
                 await this.userController.patchUser(context, next);
             }
         );
+
+        this.router.delete(
+            '/',
+            this.authService.authenticate(),
+            this.validationMiddleware.validate(this.userSchema.schemas.deleteUser),
+            async (context, next) => {
+                await this.userController.deleteUser(context, next);
+            }
+        );
     }
 }
 

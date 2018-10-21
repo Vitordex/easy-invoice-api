@@ -6,6 +6,7 @@ const HashService = require('../services/hashing.service');
 /* eslint-enable no-unused-vars */
 
 const ObjectId = require('../database/object.id');
+const timeService = require('../services/time.service');
 
 class UserService {
     /**
@@ -58,6 +59,16 @@ class UserService {
         body._id = body._id || newId;
 
         return new this.User(body);
+    }
+
+    /**
+     * Delete a user
+     * @param {User} user User to delete
+     */
+    deleteUser(user){
+        user.deletedAt = timeService().toISOString();
+
+        return user.save();
     }
 }
 

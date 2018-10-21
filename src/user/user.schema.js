@@ -55,6 +55,13 @@ class UserSchema {
                         .regex(/[0-9]+/g)
                         .optional()
                 }).required().unknown(true)
+            }),
+            deleteUser: this.generateSchema({
+                headers: joi.object().keys({
+                    [AUTH.TOKEN_HEADER]: joi
+                        .string()
+                        .required()
+                }).required().unknown(true)
             })
         };
     }

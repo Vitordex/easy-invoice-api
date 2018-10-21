@@ -102,32 +102,10 @@ async function initApp(logger) {
 
     const validationMiddleware = new ValidationMiddleware(ControllerError);
 
-    //Build user api
     const userModel = new User(databaseService);
 
     const userService = new UserService(userModel, hashingService);
     const authService = new AuthService(authJwtService, userService, ServiceError);
-
-    const userControllerParameters = {
-        userService,
-        apiErrorModel: ControllerError,
-        authJwtService,
-        confirmJwtService,
-        resetJwtService
-    };
-    const userController = new UserController(userControllerParameters);
-
-    const userSchema = new UserSchema(validationMiddleware.baseSchema);
-    const userApiParameters = {
-        authService,
-        userController,
-        userSchema,
-        validationMiddleware
-    };
-    const userApi = new UserRouter(userApiParameters);
-    userApi.buildRoutes();
-
-    app.use(userApi.router.routes());
 
     //Build auth api
     const emailTemplates = config.get('mail.templates');
@@ -201,6 +179,27 @@ async function initApp(logger) {
     invoiceApi.buildRoutes();
 
     app.use(invoiceApi.router.routes());
+
+    //Build user api
+    const userControllerParameters = {
+        userService,
+        invoiceService,
+        customerService,
+        apiErrorModel: ControllerError
+    };
+    const userController = new UserController(userControllerParameters);
+
+    const userSchema = new UserSchema(validationMiddleware.baseSchema);
+    const userApiParameters = {
+        authService,
+        userController,
+        userSchema,
+        validationMiddleware
+    };
+    const userApi = new UserRouter(userApiParameters);
+    userApi.buildRoutes();
+
+    app.use(userApi.router.routes());
 
     return app;
 }
