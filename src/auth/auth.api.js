@@ -46,7 +46,7 @@ class UserApi {
 
         this.router.post(
             '/recover',
-            this.validationMiddleware.validate(this.authSchema.schemas.verify),
+            this.validationMiddleware.validate(this.authSchema.schemas.recover),
             async (context, next) => {
                 await this.authController.recover(context, next);
             }

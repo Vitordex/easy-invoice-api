@@ -1,8 +1,6 @@
 /* eslint-disable no-unused-vars */
 const UserService = require('./user.service');
-const MailService = require('../services/mail.service');
 const ControllerError = require('../log/controller.error.model');
-const JwtService = require('../auth/jwt.service');
 /* eslint-enable no-unused-vars */
 
 const {
@@ -23,15 +21,12 @@ class UserController {
      * 
      * @param {Object} params 
      * @param {UserService} params.userService
-     * @param {MailService} params.mailService
      * @param {ControllerError} params.apiErrorModel
      */
     constructor({
         userService,
-        mailService,
         apiErrorModel
     }) {
-        this.mailService = mailService;
         this.userService = userService;
 
         this.ControllerError = apiErrorModel;

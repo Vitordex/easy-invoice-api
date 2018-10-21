@@ -5,21 +5,18 @@ const UserController = require('./user.controller');
 const AuthService = require('../auth/auth.service');
 const UserSchema = require('./user.schema');
 const ValidationMiddleware = require('../middleware/validation.middleware');
-const MailService = require('../services/mail.service');
 /* eslint-enable no-unused-vars */
 
 class UserApi {
     /**
      * @param {Object} params
      * @param {AuthService} params.authService The authentication service for the protexted routes
-     * @param {MailService} params.mailingService Mailing service to verify
      * @param {UserController} params.userController The controller with all the methods for user routes
      * @param {UserSchema} params.userSchema The input validation for user routes
      * @param {ValidationMiddleware} params.validationMiddleware The middleware for validating route input
      */
     constructor({
         authService,
-        mailingService,
         userController,
         userSchema,
         validationMiddleware
@@ -28,7 +25,6 @@ class UserApi {
             prefix: '/users'
         });
         this.authService = authService;
-        this.mailingService = mailingService;
         this.validationMiddleware = validationMiddleware;
 
         this.userController = userController;
