@@ -323,9 +323,8 @@ class InvoiceController {
     async postGeneratePdf(context, next) {
         const functionName = 'postGeneratePdf';
 
-        const { query } = context.input;
+        const { invoiceId } = context.input.body;
         const { user } = context.state;
-        const { invoiceId } = query;
 
         if (!user.invoices.find((id) => id.toString() === invoiceId)) {
             const controllerError = new ControllerError(
@@ -361,11 +360,14 @@ class InvoiceController {
             return next();
         }
 
-        let stream;
+        const pdfBasePath = `pdfs/${user._id}/${invoice._id}.pdf`;
         try {
-            const input = format(this.pdfTemplate, invoice);
+            const input = format(this.pdfTemplate, invoice.toJSON());
 
-            stream = await this.pdfService.generate(input);
+            await this.pdfService.generateFile(
+                input, 
+                `./public/${pdfBasePath}`
+            );
         } catch (error) {
             const controllerError = new ControllerError(
                 STATUS.INTERNAL_ERROR,
@@ -380,7 +382,7 @@ class InvoiceController {
             return next();
         }
 
-        context.body = stream;
+        context.body = {url: `${context.request.origin}/${pdfBasePath}`};
         context.status = STATUS.PARTIAL_CONTENT;
 
         return next();
