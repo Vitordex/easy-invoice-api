@@ -46,14 +46,14 @@ class InvoiceController {
             invoice = await this.invoiceService.findInvoice({ _id: invoiceId });
         } catch (error) {
             const controllerError = new ControllerError(
-                STATUS.NOT_FOUND,
+                STATUS.INTERNAL_ERROR,
                 'Invalid invoice id',
                 controllerName,
                 functionName,
                 context.input,
                 error
             );
-            context.throw(STATUS.NOT_FOUND,  controllerError);
+            context.throw(STATUS.INTERNAL_ERROR,  controllerError);
 
             return next();
         }
@@ -144,14 +144,14 @@ class InvoiceController {
             invoice = await this.invoiceService.findInvoice({ _id: params.invoiceId });
         } catch (error) {
             const controllerError = new ControllerError(
-                STATUS.NOT_FOUND,
+                STATUS.INTERNAL_ERROR,
                 'Invalid invoice id',
                 controllerName,
                 functionName,
                 context.input,
                 error
             );
-            context.throw(STATUS.NOT_FOUND,  controllerError);
+            context.throw(STATUS.INTERNAL_ERROR,  controllerError);
 
             return next();
         }
@@ -222,14 +222,14 @@ class InvoiceController {
             invoice = await this.invoiceService.findInvoice({ _id: params.invoiceId });
         } catch (error) {
             const controllerError = new ControllerError(
-                STATUS.NOT_FOUND,
+                STATUS.INTERNAL_ERROR,
                 'Invalid invoice id',
                 controllerName,
                 functionName,
                 context.input,
                 error
             );
-            context.throw(STATUS.NOT_FOUND,  controllerError);
+            context.throw(STATUS.INTERNAL_ERROR,  controllerError);
 
             return next();
         }
