@@ -77,8 +77,8 @@ class InvoiceApi {
             }
         );
 
-        this.router.get(
-            '/generate/pdf',
+        this.router.post(
+            '/generate/pdf/file',
             this.validationMiddleware.validate(this.invoiceSchema.schemas.postGeneratePdf),
             this.authService.authenticate(),
             async (context, next) => {
