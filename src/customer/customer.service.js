@@ -2,9 +2,9 @@
 const CommonTypes = require('../database/common.types');
 const { Customer } = CommonTypes.Instances;
 const { Model } = CommonTypes;
-const HashService = require('../services/hashing.service');
 /* eslint-enable no-unused-vars */
 
+const timeService = require('../services/time.service');
 const ObjectId = require('../database/object.id');
 
 class CustomerService {
@@ -16,7 +16,7 @@ class CustomerService {
     }
 
     /**
-     * Find a set of users
+     * Find a set of customers
      * @param {Object} query 
      * 
      * @returns {Customer}
@@ -31,10 +31,10 @@ class CustomerService {
     }
 
     /**
-     * Function to create a single user
-     * @param {Object} body The user document body
+     * Function to create a single customer
+     * @param {Object} body The customer document body
      * 
-     * @returns {User}
+     * @returns {Customer}
      */
     async create(body) {
         const newId = new ObjectId().toHex();
@@ -56,6 +56,37 @@ class CustomerService {
                 $exists: false
             }
         });
+    }
+
+    /**
+     * Delete a customer
+     * @param {Customer} customer Customer to delete
+     */
+    deleteCustomer(customer){
+        customer.deletedAt = timeService().toISOString();
+
+        return customer.save();
+    }
+
+    /**
+     * Delete a set of customers
+     * @param {Object} query 
+     * @param {Object} newValues
+     * @param {Number} dateLocal
+     * 
+     * @returns {[Customer]}
+     */
+    deleteCustomers(query, dateLocal) {
+        const softQuery = {
+            ...query,
+            deletedAt: {
+                $exists: false
+            }
+        };
+        const updatedValues = {
+            deletedAt: timeService().toISOString()
+        };
+        return this.Customer.updateManyWithDates(softQuery, updatedValues, dateLocal);
     }
 }
 
