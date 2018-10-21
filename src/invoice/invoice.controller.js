@@ -5,7 +5,6 @@ const ControllerError = require('../log/controller.error.model');
 /* eslint-enable no-unused-vars */
 
 const controllerName = 'invoice';
-const timeService = require('../services/time.service');
 
 const {
     API: {
