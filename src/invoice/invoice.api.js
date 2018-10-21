@@ -76,6 +76,15 @@ class InvoiceApi {
                 await this.invoiceController.listInvoices(context, next);
             }
         );
+
+        this.router.post(
+            '/generate/pdf/file',
+            this.validationMiddleware.validate(this.invoiceSchema.schemas.postGeneratePdf),
+            this.authService.authenticate(),
+            async (context, next) => {
+                await this.invoiceController.postGeneratePdf(context, next);
+            }
+        );
     }
 }
 

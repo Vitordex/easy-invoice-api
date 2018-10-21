@@ -2,9 +2,10 @@
 const InvoiceService = require('./invoice.service');
 const UserService = require('../user/user.service');
 const ControllerError = require('../log/controller.error.model');
+const PdfService = require('../pdf/pdf.service');
 /* eslint-enable no-unused-vars */
 
-const controllerName = 'invoice';
+const format = require('string-template');
 
 const {
     API: {
@@ -17,21 +18,29 @@ const {
     }
 } = require('../enums');
 
+const controllerName = 'invoice';
+
 class InvoiceController {
     /**
      * @param {UserService} params.userService
      * @param {InvoiceService} params.invoiceService
      * @param {ControllerError} params.apiErrorModel
+     * @param {PdfService} params.pdfService
+     * @param {String} params.pdfTemplate
      */
     constructor({
         userService,
         invoiceService,
-        apiErrorModel
+        apiErrorModel,
+        pdfService,
+        pdfTemplate
     }) {
         this.userService = userService;
         this.invoiceService = invoiceService;
+        this.pdfService = pdfService;
 
         this.ControllerError = apiErrorModel;
+        this.pdfTemplate = pdfTemplate;
     }
 
     async getInvoice(context, next) {
@@ -52,7 +61,7 @@ class InvoiceController {
                 context.input,
                 error
             );
-            context.throw(STATUS.INTERNAL_ERROR,  controllerError);
+            context.throw(STATUS.INTERNAL_ERROR, controllerError);
 
             return next();
         }
@@ -66,7 +75,7 @@ class InvoiceController {
                 context.input,
                 'Invalid invoice id'
             );
-            context.throw(STATUS.NOT_FOUND,  controllerError);
+            context.throw(STATUS.NOT_FOUND, controllerError);
 
             return next();
         }
@@ -101,7 +110,7 @@ class InvoiceController {
                 context.input,
                 error
             );
-            context.throw(STATUS.INTERNAL_ERROR,  controllerError);
+            context.throw(STATUS.INTERNAL_ERROR, controllerError);
 
             return next();
         }
@@ -150,7 +159,7 @@ class InvoiceController {
                 context.input,
                 error
             );
-            context.throw(STATUS.INTERNAL_ERROR,  controllerError);
+            context.throw(STATUS.INTERNAL_ERROR, controllerError);
 
             return next();
         }
@@ -182,7 +191,7 @@ class InvoiceController {
                 context.input,
                 error
             );
-            context.throw(STATUS.INTERNAL_ERROR,  controllerError);
+            context.throw(STATUS.INTERNAL_ERROR, controllerError);
 
             return next();
         }
@@ -228,7 +237,7 @@ class InvoiceController {
                 context.input,
                 error
             );
-            context.throw(STATUS.INTERNAL_ERROR,  controllerError);
+            context.throw(STATUS.INTERNAL_ERROR, controllerError);
 
             return next();
         }
@@ -267,7 +276,7 @@ class InvoiceController {
                 context.input,
                 error
             );
-            context.throw(STATUS.INTERNAL_ERROR,  controllerError);
+            context.throw(STATUS.INTERNAL_ERROR, controllerError);
 
             return next();
         }
@@ -300,13 +309,95 @@ class InvoiceController {
                 context.input,
                 error
             );
-            context.throw(STATUS.INTERNAL_ERROR,  controllerError);
+            context.throw(STATUS.INTERNAL_ERROR, controllerError);
 
             return next();
         }
 
         context.body = invoices.map((invoice) => invoice.toJSON());
         context.status = 200;
+
+        return next();
+    }
+
+    async postGeneratePdf(context, next) {
+        const functionName = 'postGeneratePdf';
+
+        const { invoiceId } = context.input.body;
+        const { user } = context.state;
+
+        if (!user.invoices.find((id) => id.toString() === invoiceId)) {
+            const controllerError = new ControllerError(
+                STATUS.FORBIDDEN,
+                'User does not have rights',
+                controllerName,
+                functionName,
+                context.input,
+                'User does not have rights'
+            );
+            context.throw(STATUS.FORBIDDEN, controllerError);
+
+            return next();
+        }
+
+        let invoice;
+        try {
+            const query = {
+                '_id': invoiceId
+            };
+            invoice = await this.invoiceService.findInvoice(query);
+        } catch (error) {
+            const controllerError = new ControllerError(
+                STATUS.INTERNAL_ERROR,
+                'Invalid invoice id',
+                controllerName,
+                functionName,
+                context.input,
+                error
+            );
+            context.throw(STATUS.INTERNAL_ERROR, controllerError);
+
+            return next();
+        }
+
+        if (!invoice) {
+            const controllerError = new ControllerError(
+                STATUS.NOT_FOUND,
+                'Invalid invoice id',
+                controllerName,
+                functionName,
+                context.input,
+                'Invalid invoice id'
+            );
+            context.throw(STATUS.NOT_FOUND, controllerError);
+
+            return next();
+        }
+
+        const pdfBasePath = `pdfs/${user._id}/${invoice._id}.pdf`;
+        try {
+            const input = format(this.pdfTemplate, invoice.toJSON());
+
+            await this.pdfService.generateFile(
+                input, 
+                `./public/${pdfBasePath}`
+            );
+        } catch (error) {
+            const controllerError = new ControllerError(
+                STATUS.INTERNAL_ERROR,
+                'Error generating pdf',
+                controllerName,
+                functionName,
+                context.input,
+                error
+            );
+            context.throw(STATUS.INTERNAL_ERROR, controllerError);
+
+            return next();
+        }
+
+        context.body = {url: `${context.request.origin}/${pdfBasePath}`};
+        context.status = STATUS.OK;
 
         return next();
     }
