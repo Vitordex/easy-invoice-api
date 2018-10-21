@@ -1,30 +1,20 @@
 /*globals describe, it, before*/
 const assert = require('assert');
-
-const config = require('../../src/services/config.service');
-
-const MailService = require('../../src/services/mail.service');
-const HashingService = require('../../src/services/hashing.service');
-
-const ValidationMiddleware = require('../../src/middleware/validation.middleware');
-
-const UserService = require('../../src/user/user.service');
-const UserController = require('../../src/user/user.controller');
-const UserSchema = require('../../src/user/user.schema');
-
-const JwtService = require('../../src/auth/jwt.service');
-const Context = require('./context.model');
-const ObjectId = require('../../src/database/object.id');
-
-const ControllerError = require('../../src/log/controller.error.model');
-
 const fs = require('fs');
 
+const {
+    auth: { JwtService },
+    database: { ObjectId },
+    enums: { AUTH, API: { STATUS } },
+    log: {ControllerError},
+    middleware: {Validation: ValidationMiddleware},
+    services: {MailService, HashingService, ConfigService: config},
+    user: {UserSchema, UserService, UserController}
+} = require('../../src/');
+const Context = require('./context.model');
+
 const authConfigs = config.get('auth');
-
 const hashingOptions = authConfigs.password;
-
-const { AUTH, API: { STATUS } } = require('../../src/enums');
 
 /**@type {MailService} */
 let mailService;
@@ -101,13 +91,13 @@ describe('Users component', () => {
             email: email,
             password: password
         };
-        
+
         /**@type {Context} */
         let context;
 
         describe('Happy path', () => {
             const returnedStatus = STATUS.OK;
-            const successUser = {...putValidUserInput};
+            const successUser = { ...putValidUserInput };
 
             before(async () => {
                 const token = await jwtService.generate();
@@ -164,7 +154,7 @@ describe('Users component', () => {
                     headers: {
                         [AUTH.TOKEN_HEADER]: token
                     },
-                    body: {...putValidUserInput}
+                    body: { ...putValidUserInput }
                 };
 
                 const state = {

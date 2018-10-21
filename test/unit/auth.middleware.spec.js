@@ -1,29 +1,22 @@
 /*globals describe, it, before, after*/
-/**
- * Invalid signature
- * Find error
- * User not found
- * Expired token
- * Wrong subject
- * Happy path - OK
- */
 const assert = require('assert');
-const config = require('../../src/services/config.service');
 
-const JwtService = require('../../src/auth/jwt.service');
-const AuthService = require('../../src/auth/auth.service');
-
-const ServiceError = require('../../src/log/service.error.model');
-
+const {
+    auth: {
+        AuthService,
+        JwtService
+    },
+    enums: { AUTH, API: { STATUS } },
+    log: { ServiceError },
+    services: { ConfigService: config }
+} = require('../../src/');
 const Context = require('./context.model');
-
-const { AUTH, API: { STATUS } } = require('../../src/enums');
 
 const validUser = {
     id: 1
 };
 const findUser = () => Promise.resolve(validUser);
-let userService = {findUser};
+let userService = { findUser };
 
 describe('Auth', () => {
     const serviceName = 'auth.service';
@@ -379,7 +372,7 @@ describe('Auth', () => {
 
             it('error message should be about subject', () => {
                 const { output } = context.body;
-                
+
                 assert(output.message.includes('subject'));
             });
         });

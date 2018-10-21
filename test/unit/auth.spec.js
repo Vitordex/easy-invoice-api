@@ -1,31 +1,30 @@
 /*globals describe, it, before, after*/
 const assert = require('assert');
 const sinon = require('sinon');
+const fs = require('fs');
 
-const config = require('../../src/services/config.service');
-
-const MailService = require('../../src/services/mail.service');
-const HashingService = require('../../src/services/hashing.service');
-
-const ValidationMiddleware = require('../../src/middleware/validation.middleware');
-
-const UserService = require('../../src/user/user.service');
-const AuthController = require('../../src/auth/auth.controller');
-const AuthSchema = require('../../src/auth/auth.schema');
-
-const JwtService = require('../../src/auth/jwt.service');
+const {
+    auth: {
+        AuthController,
+        AuthSchema,
+        JwtService
+    },
+    enums: { AUTH, API: { STATUS } },
+    log: { ControllerError },
+    middleware: { Validation: ValidationMiddleware },
+    services: {
+        MailService,
+        HashingService,
+        ConfigService: config
+    },
+    user: { UserService }
+} = require('../../src/');
 const Context = require('./context.model');
 
-const ControllerError = require('../../src/log/controller.error.model');
-
-const fs = require('fs');
 const hashKey = fs.readFileSync('./server.hash.key', { encoding: 'utf-8' });
 
 const authConfigs = config.get('auth');
-
 const hashingOptions = authConfigs.password;
-
-const { AUTH, API: { STATUS } } = require('../../src/enums');
 
 /**@type {MailService} */
 let mailService;

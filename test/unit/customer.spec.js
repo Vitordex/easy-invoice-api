@@ -1,19 +1,20 @@
 /* globals describe, it, before, after*/
 const sinon = require('sinon');
 const assert = require('assert');
-
-const config = require('../../src/services/config.service');
 const fs = require('fs');
 
-const CustomerService = require('../../src/customer/customer.service');
-const CustomerController = require('../../src/customer/customer.controller');
-const CustomerSchema = require('../../src/customer/customer.schema');
-
-const ValidationMiddleware = require('../../src/middleware/validation.middleware');
-const JwtService = require('../../src/auth/jwt.service');
-
-const ControllerError = require('../../src/log/controller.error.model');
-const ObjectId = require('../../src/database/object.id');
+const {
+    auth: {JwtService},
+    customer: {
+        CustomerController,
+        CustomerService,
+        CustomerSchema
+    },
+    database: {ObjectId},
+    log: {ControllerError},
+    middleware: {Validation: ValidationMiddleware},
+    services: {ConfigService: config}
+} = require('../../src/');
 
 const Context = require('./context.model');
 

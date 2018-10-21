@@ -1,25 +1,20 @@
 /*globals describe, it, after*/
 const assert = require('assert');
-const timeService = require('../../src/services/time.service');
 
-const config = require('../../src/services/config.service');
-
-const DatabaseService = require('../../src/database/database.service');
-const UserModel = require('../../src/database/user.model');
-const CustomerModel = require('../../src/database/customer.model');
-const InvoiceModel = require('../../src/database/invoice.model');
+const {
+    database: {
+        DatabaseService,
+        User: UserModel,
+        Customer: CustomerModel,
+        Invoice: InvoiceModel,
+        ObjectId
+    },
+    services: { ConfigService: config, TimeService: timeService },
+    values: { DATABASE: { PROPS: { STATES } } }
+} = require('../../src/');
 
 const dbConfigs = config.get('database');
 const databaseService = new DatabaseService();
-const ObjectId = require('../../src/database/object.id');
-
-const {
-    DATABASE: {
-        PROPS: {
-            STATES
-        } 
-    } 
-} = require('../../src/values');
 
 let createdUser;
 let User;

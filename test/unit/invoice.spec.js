@@ -1,20 +1,20 @@
 /* globals describe, it, before, after*/
 const sinon = require('sinon');
 const assert = require('assert');
-
-const config = require('../../src/services/config.service');
 const fs = require('fs');
 
-const InvoiceService = require('../../src/invoice/invoice.service');
-const InvoiceController = require('../../src/invoice/invoice.controller');
-const InvoiceSchema = require('../../src/invoice/invoice.schema');
-
-const ValidationMiddleware = require('../../src/middleware/validation.middleware');
-const JwtService = require('../../src/auth/jwt.service');
-
-const ControllerError = require('../../src/log/controller.error.model');
-const ObjectId = require('../../src/database/object.id');
-
+const {
+    auth: { JwtService },
+    database: { ObjectId },
+    invoice: {
+        InvoiceController,
+        InvoiceService,
+        InvoiceSchema
+    },
+    log: { ControllerError },
+    middleware: { Validation: ValidationMiddleware },
+    services: { ConfigService: config }
+} = require('../../src/');
 const Context = require('./context.model');
 
 describe('Invoice Component', () => {

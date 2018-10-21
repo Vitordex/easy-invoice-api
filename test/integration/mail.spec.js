@@ -1,8 +1,13 @@
 /*globals describe, it*/
 const assert = require('assert');
-const config = require('../../src/services/config.service');
 
-const MailService = require('../../src/services/mail.service');
+const {
+    services: {
+        MailService,
+        ConfigService: config
+    }
+} = require('../../src/');
+
 const mailOptions = config.get('mail.options');
 
 describe('Mail service', () => {
@@ -23,7 +28,7 @@ describe('Mail service', () => {
         const mailService = new MailService(invalidOptions);
 
         try {
-            await mailService.sendMail('teste', 'alo', 'Teste', 'corpo de teste');   
+            await mailService.sendMail('teste', 'alo', 'Teste', 'corpo de teste');
         } catch (error) {
             return;
         }
