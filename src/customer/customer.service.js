@@ -76,7 +76,7 @@ class CustomerService {
      * 
      * @returns {[Customer]}
      */
-    deleteCustomers(query, dateLocal) {
+    deleteCustomers(query) {
         const softQuery = {
             ...query,
             deletedAt: {
@@ -86,7 +86,7 @@ class CustomerService {
         const updatedValues = {
             deletedAt: timeService().toISOString()
         };
-        return this.Customer.updateManyWithDates(softQuery, updatedValues, dateLocal);
+        return this.Customer.updateMany(softQuery, updatedValues);
     }
 }
 
