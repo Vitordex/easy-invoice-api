@@ -13,6 +13,7 @@ const {
     },
     log: { ControllerError },
     middleware: { Validation: ValidationMiddleware },
+    pdf: { PdfService },
     services: { ConfigService: config }
 } = require('../../src/');
 const Context = require('./context.model');
@@ -51,10 +52,13 @@ describe('Invoice Component', () => {
     };
 
     const invoiceService = new InvoiceService({});
+    const pdfService = new PdfService({ format: 'Letter' });
 
     const invoiceControllerOptions = {
         invoiceService,
-        apiErrorModel: ControllerError
+        apiErrorModel: ControllerError,
+        pdfService,
+        pdfTemplate: 'alo'
     };
     const invoiceController = new InvoiceController(invoiceControllerOptions);
 
@@ -1559,6 +1563,488 @@ describe('Invoice Component', () => {
                     assert(body.output.find(
                         (error) => error.type === 'any.empty')
                     );
+                });
+            });
+        });
+    });
+
+    describe('generate pdf file route', () => {
+        const defaultNext = () => { };
+        const functionName = 'postGeneratePdf';
+
+        const validBody = {
+            invoiceId: generatedInvoiceId
+        };
+        const origin = 'localhost';
+
+        describe('Happy path', () => {
+            before(async () => {
+                const token = await jwtService.generate();
+                const request = {
+                    headers: {
+                        [AUTH.TOKEN_HEADER]: token
+                    },
+                    body: validBody,
+                    origin
+                };
+                const state = {
+                    user: {
+                        _id: generatedUserId,
+                        invoices: [generatedInvoiceId],
+                        save: () => Promise.resolve(true)
+                    }
+                };
+                context = new Context(request, {}, state);
+
+                sinon.stub(invoiceService, 'findInvoice')
+                    .resolves(validInvoiceObject);
+                sinon.stub(pdfService, 'generateFile')
+                    .resolves(true);
+
+                const next = async () => {
+                    await invoiceController.postGeneratePdf(context, defaultNext);
+                };
+
+                await validationMiddleware
+                    .validate(invoiceSchema.schemas.postGeneratePdf)(
+                        context,
+                        next
+                    );
+            });
+
+            it(`should return status ${STATUS.OK}`, () => {
+                const { status } = context;
+
+                assert(status === STATUS.OK);
+            });
+
+            it('should have property url', () => {
+                const { url } = context.body;
+
+                assert(!!url);
+            });
+
+            it('url should have specific value', () => {
+                const { url } = context.body;
+                const expectedUrl =
+                    `${origin}/pdfs/${generatedUserId}/${generatedInvoiceId}.pdf`;
+
+                assert(url === expectedUrl);
+            });
+
+            after(() => {
+                invoiceService.findInvoice.restore();
+                pdfService.generateFile.restore();
+            });
+        });
+
+        describe('User does not have rights for invoice', () => {
+            const returnedStatus = STATUS.FORBIDDEN;
+
+            before(async () => {
+                const token = await jwtService.generate();
+                const request = {
+                    headers: {
+                        [AUTH.TOKEN_HEADER]: token
+                    },
+                    body: validBody
+                };
+                const state = {
+                    user: {
+                        invoices: [],
+                        save: () => Promise.resolve(true)
+                    }
+                };
+                context = new Context(request, {}, state);
+
+                const next = async () => {
+                    await invoiceController.postGeneratePdf(context, defaultNext);
+                };
+
+                await validationMiddleware
+                    .validate(invoiceSchema.schemas.postGeneratePdf)(
+                        context,
+                        next
+                    );
+            });
+
+            it(`should return status ${returnedStatus}`, () => {
+                const { status } = context;
+
+                assert(status === returnedStatus);
+            });
+
+            it('should return a Controller Error', () => {
+                const { body } = context;
+
+                assert(body instanceof ControllerError);
+            });
+
+            describe('context body', () => {
+                it('should have property method', () => {
+                    const { method } = context.body;
+
+                    assert(!!method);
+                });
+
+                it(`method should equal ${functionName}`, () => {
+                    const { method } = context.body;
+
+                    assert(method === functionName);
+                });
+
+                it('should have property controller', () => {
+                    const { controller } = context.body;
+
+                    assert(!!controller);
+                });
+
+                it(`controller should equal ${source}`, () => {
+                    const { controller } = context.body;
+
+                    assert(controller === source);
+                });
+
+                it('should have property output', () => {
+                    const { output } = context.body;
+
+                    assert(!!output);
+                });
+
+                it('controller should equal not found', () => {
+                    const { output } = context.body;
+
+                    assert(output === 'User does not have rights');
+                });
+            });
+        });
+
+        describe('Find error', () => {
+            const returnedStatus = STATUS.INTERNAL_ERROR;
+
+            before(async () => {
+                const token = await jwtService.generate();
+                const request = {
+                    headers: {
+                        [AUTH.TOKEN_HEADER]: token
+                    },
+                    body: validBody
+                };
+                const state = {
+                    user: {
+                        invoices: [generatedInvoiceId],
+                        save: () => Promise.resolve(true)
+                    }
+                };
+                context = new Context(request, {}, state);
+
+                sinon.stub(invoiceService, 'findInvoice')
+                    .throws();
+
+                const next = async () => {
+                    await invoiceController.postGeneratePdf(context, defaultNext);
+                };
+
+                await validationMiddleware
+                    .validate(invoiceSchema.schemas.postGeneratePdf)(
+                        context,
+                        next
+                    );
+            });
+
+            it(`should return status ${returnedStatus}`, () => {
+                const { status } = context;
+
+                assert(status === returnedStatus);
+            });
+
+            it('should return a Controller Error', () => {
+                const { body } = context;
+
+                assert(body instanceof ControllerError);
+            });
+
+            describe('context body', () => {
+                it('should have property method', () => {
+                    const { method } = context.body;
+
+                    assert(!!method);
+                });
+
+                it(`method should equal ${functionName}`, () => {
+                    const { method } = context.body;
+
+                    assert(method === functionName);
+                });
+
+                it('should have property controller', () => {
+                    const { controller } = context.body;
+
+                    assert(!!controller);
+                });
+
+                it(`controller should equal ${source}`, () => {
+                    const { controller } = context.body;
+
+                    assert(controller === source);
+                });
+            });
+
+            after(() => {
+                invoiceService.findInvoice.restore();
+            });
+        });
+
+        describe('Invoice not found', () => {
+            const returnedStatus = STATUS.NOT_FOUND;
+
+            before(async () => {
+                const token = await jwtService.generate();
+                const request = {
+                    headers: {
+                        [AUTH.TOKEN_HEADER]: token
+                    },
+                    body: validBody
+                };
+                const state = {
+                    user: {
+                        invoices: [generatedInvoiceId],
+                        save: () => Promise.resolve(true)
+                    }
+                };
+                context = new Context(request, {}, state);
+
+                sinon.stub(invoiceService, 'findInvoice')
+                    .resolves();
+
+                const next = async () => {
+                    await invoiceController.postGeneratePdf(context, defaultNext);
+                };
+
+                await validationMiddleware
+                    .validate(invoiceSchema.schemas.postGeneratePdf)(
+                        context,
+                        next
+                    );
+            });
+
+            it(`should return status ${returnedStatus}`, () => {
+                const { status } = context;
+
+                assert(status === returnedStatus);
+            });
+
+            it('should return a Controller Error', () => {
+                const { body } = context;
+
+                assert(body instanceof ControllerError);
+            });
+
+            describe('context body', () => {
+                it('should have property method', () => {
+                    const { method } = context.body;
+
+                    assert(!!method);
+                });
+
+                it(`method should equal ${functionName}`, () => {
+                    const { method } = context.body;
+
+                    assert(method === functionName);
+                });
+
+                it('should have property controller', () => {
+                    const { controller } = context.body;
+
+                    assert(!!controller);
+                });
+
+                it(`controller should equal ${source}`, () => {
+                    const { controller } = context.body;
+
+                    assert(controller === source);
+                });
+
+                it('should have property output', () => {
+                    const { output } = context.body;
+
+                    assert(!!output);
+                });
+
+                it('controller should equal not found', () => {
+                    const { output } = context.body;
+
+                    assert(output === 'Invalid invoice id');
+                });
+            });
+
+            after(() => {
+                invoiceService.findInvoice.restore();
+            });
+        });
+
+        describe('generate pdf error', () => {
+            const returnedStatus = STATUS.INTERNAL_ERROR;
+
+            before(async () => {
+                const token = await jwtService.generate();
+                const request = {
+                    headers: {
+                        [AUTH.TOKEN_HEADER]: token
+                    },
+                    body: validBody
+                };
+                const state = {
+                    user: {
+                        _id: generatedUserId,
+                        invoices: [generatedInvoiceId],
+                        save: () => Promise.resolve(true)
+                    }
+                };
+                context = new Context(request, {}, state);
+
+                sinon.stub(invoiceService, 'findInvoice')
+                    .resolves(validInvoiceObject);
+                sinon.stub(pdfService, 'generateFile')
+                    .throws();
+
+                const next = async () => {
+                    await invoiceController.postGeneratePdf(context, defaultNext);
+                };
+
+                await validationMiddleware
+                    .validate(invoiceSchema.schemas.postGeneratePdf)(
+                        context,
+                        next
+                    );
+            });
+
+            it(`should return status ${returnedStatus}`, () => {
+                const { status } = context;
+
+                assert(status === returnedStatus);
+            });
+
+            it('should return a Controller Error', () => {
+                const { body } = context;
+
+                assert(body instanceof ControllerError);
+            });
+
+            describe('context body', () => {
+                it('should have property method', () => {
+                    const { method } = context.body;
+
+                    assert(!!method);
+                });
+
+                it(`method should equal ${functionName}`, () => {
+                    const { method } = context.body;
+
+                    assert(method === functionName);
+                });
+
+                it('should have property controller', () => {
+                    const { controller } = context.body;
+
+                    assert(!!controller);
+                });
+
+                it(`controller should equal ${source}`, () => {
+                    const { controller } = context.body;
+
+                    assert(controller === source);
+                });
+
+                it('should have property output', () => {
+                    const { output } = context.body;
+
+                    assert(!!output);
+                });
+            });
+
+            after(() => {
+                invoiceService.findInvoice.restore();
+                pdfService.generateFile.restore();
+            });
+        });
+
+        describe('wrong input', () => {
+            const returnedStatus = STATUS.BAD_REQUEST;
+
+            describe('no token in headers', () => {
+                before(async () => {
+                    context = new Context({
+                        headers: {}
+                    });
+
+                    await validationMiddleware.validate(
+                        invoiceSchema.schemas.patchInvoice
+                    )(context);
+                });
+
+                it(`should throw a ${returnedStatus} error`, async () => {
+                    assert(context.status === returnedStatus);
+                });
+
+                it('should have property required for token header', async () => {
+                    const { body } = context;
+
+                    assert(body.output.find(
+                        (error) => error.type === 'any.required')
+                    );
+                });
+            });
+
+            describe('invalid token in headers', () => {
+                before(async () => {
+                    context = new Context({
+                        headers: {
+                            [AUTH.TOKEN_HEADER]: ''
+                        }
+                    });
+
+                    await validationMiddleware.validate(
+                        invoiceSchema.schemas.patchInvoice
+                    )(context);
+                });
+
+                it(`should throw a ${returnedStatus} error`, async () => {
+                    assert(context.status === returnedStatus);
+                });
+
+                it('should have property required for token header', async () => {
+                    const { body } = context;
+
+                    assert(body.output.find(
+                        (error) => error.type === 'any.empty')
+                    );
+                });
+            });
+
+            describe('no body', () => {
+                before(async () => {
+                    context = new Context({
+                        headers: {}
+                    });
+
+                    await validationMiddleware.validate(
+                        invoiceSchema.schemas.patchInvoice
+                    )(context);
+                });
+
+                it(`should throw a ${returnedStatus} error`, async () => {
+                    assert(context.status === returnedStatus);
+                });
+
+                it('should have property required for token header', async () => {
+                    const { body } = context;
+
+                    assert(body.output.find(
+                        (error) =>
+                            error.type === 'any.required' &&
+                            error.key === 'body'
+                    ));
                 });
             });
         });
