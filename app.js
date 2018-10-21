@@ -113,15 +113,13 @@ async function initApp(logger) {
         apiErrorModel: ControllerError,
         authJwtService,
         confirmJwtService,
-        resetJwtService,
-        mailService
+        resetJwtService
     };
     const userController = new UserController(userControllerParameters);
 
     const userSchema = new UserSchema(validationMiddleware.baseSchema);
     const userApiParameters = {
         authService,
-        mailService,
         userController,
         userSchema,
         validationMiddleware
@@ -132,20 +130,21 @@ async function initApp(logger) {
     app.use(userApi.router.routes());
 
     //Build auth api
+    const emailTemplates = config.get('mail.templates');
     const authControllerParameters = {
         userService,
         apiErrorModel: ControllerError,
         authJwtService,
         confirmJwtService,
         resetJwtService,
-        mailService
+        mailService,
+        emailTemplates
     };
     const authController = new AuthController(authControllerParameters);
 
     const authSchema = new AuthSchema(validationMiddleware.baseSchema);
     const authApiParameters = {
         authService,
-        mailService,
         authController,
         authSchema,
         validationMiddleware

@@ -5,6 +5,8 @@ const ControllerError = require('../log/controller.error.model');
 const JwtService = require('./jwt.service');
 /* eslint-enable no-unused-vars */
 
+const format = require('string-template');
+
 const {
     AUTH,
     API: {
@@ -28,6 +30,7 @@ class UserController {
      * @param {JwtService} params.authJwtService
      * @param {JwtService} params.confirmJwtService
      * @param {JwtService} params.resetJwtService
+     * @param {Object} params.emailTemplates
      */
     constructor({
         userService,
@@ -35,7 +38,8 @@ class UserController {
         apiErrorModel,
         authJwtService,
         confirmJwtService,
-        resetJwtService
+        resetJwtService,
+        emailTemplates
     }) {
         this.mailService = mailService;
         this.userService = userService;
@@ -45,6 +49,8 @@ class UserController {
         this.resetJwtService = resetJwtService;
 
         this.ControllerError = apiErrorModel;
+
+        this.emailTemplates = emailTemplates;
     }
 
     async login(context, next) {
@@ -116,7 +122,7 @@ class UserController {
                     error
                 );
                 context.throw(STATUS.INTERNAL_ERROR, controllerError);
-    
+
                 return next();
             }
         }
@@ -158,14 +164,16 @@ class UserController {
         const token = await this.resetJwtService.generate(generateOptions);
 
         try {
+            const recoverTemplate = this.emailTemplates.recover;
+            const fillOptions = {
+                origin: context.request.origin,
+                token
+            };
             await this.mailService.sendMail(
-                'Teste Verificação',
+                recoverTemplate.from,
                 email,
-                'Troca de senha - Empresa',
-                `Houve uma solicitação de troca de senha 
-para este email. Se você deseja realizar a troca 
-favor clique no link ${context.request.origin}/auth/reset/password?token=${token}
-Se não ignore este email`
+                recoverTemplate.subject,
+                format(recoverTemplate.body, fillOptions)
             );
         } catch (error) {
             const controllerError = new ControllerError(
@@ -271,17 +279,22 @@ Se não ignore este email`
             return next();
         }
 
-        const tokenPayload = {
-            id: user._id
-        };
-        const token = await this.confirmJwtService.generate(tokenPayload);
-
         try {
+            const tokenPayload = {
+                id: user._id
+            };
+            const token = await this.confirmJwtService.generate(tokenPayload);
+            
+            const confirmTemplate = this.emailTemplates.confirm;
+            const fillOptions = {
+                origin: context.request.origin,
+                token
+            };
             await this.mailService.sendMail(
-                'Suporte <suporte@orcamentofacil.com>',
+                confirmTemplate.from,
                 user.email,
-                'Verificação de Email',
-                `${context.request.origin}/auth/confirm?token=${token}`
+                confirmTemplate.subject,
+                format(confirmTemplate.body, fillOptions)
             );
         } catch (error) {
             const controllerError = new ControllerError(

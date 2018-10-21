@@ -94,6 +94,7 @@ describe('Auth component', () => {
     };
     const confirmJwtService = new JwtService(confirmJwtOptions);
 
+    const emailTemplates = config.get('mail.templates');
     authController = new AuthController({
         authConfigs,
         authHash: hashKey,
@@ -101,7 +102,8 @@ describe('Auth component', () => {
         mailService,
         authJwtService,
         confirmJwtService,
-        resetJwtService
+        resetJwtService,
+        emailTemplates
     });
 
     describe('login route', () => {
