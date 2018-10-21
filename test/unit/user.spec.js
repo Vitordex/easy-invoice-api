@@ -1,6 +1,5 @@
-/*globals describe, it, before, after*/
+/*globals describe, it, before*/
 const assert = require('assert');
-const sinon = require('sinon');
 
 const config = require('../../src/services/config.service');
 
@@ -15,11 +14,11 @@ const UserSchema = require('../../src/user/user.schema');
 
 const JwtService = require('../../src/auth/jwt.service');
 const Context = require('./context.model');
+const ObjectId = require('../../src/database/object.id');
 
 const ControllerError = require('../../src/log/controller.error.model');
 
 const fs = require('fs');
-const hashKey = fs.readFileSync('./server.hash.key', { encoding: 'utf-8' });
 
 const authConfigs = config.get('auth');
 
@@ -42,7 +41,7 @@ let userController;
 /**@type {UserSchema} */
 let userSchema;
 
-describe('Users component', () => {
+describe.only('Users component', () => {
     const source = 'user.controller';
 
     hashingService = new HashingService(
@@ -51,19 +50,6 @@ describe('Users component', () => {
         hashingOptions.encoding
     );
 
-    let testEmail = 'teste@teste.com';
-    let testPassword = 'teste1';
-    let hashedTestPassword = hashingService.createHash(testPassword);
-    let testRegister = {
-        email: testEmail,
-        password: '@Testinho1',
-        phone: '(11) 95555-5555',
-        name: 'Teste teste',
-        state: 'Acre'
-    };
-
-    const defaultNext = () => { };
-
     validationMiddleware = new ValidationMiddleware();
     userSchema = new UserSchema(validationMiddleware.baseSchema);
 
@@ -71,37 +57,255 @@ describe('Users component', () => {
 
     userService = new UserService(userModel, hashingService);
 
+    const authConfigs = config.get('auth');
+
     const authTokenExpiration = authConfigs.token.expiration;
+    const hashKey = fs.readFileSync('./server.hash.key', { encoding: 'utf-8' });
     const authJwtOptions = {
         hash: hashKey,
         tokenExpiration: authTokenExpiration,
         subject: AUTH.AUTH_SUBJECT
     };
-    const authJwtService = new JwtService(authJwtOptions);
-
-    const recoverTokenExpiration = authConfigs.token.expiration;
-    const recoverJwtOptions = {
-        hash: hashKey,
-        tokenExpiration: recoverTokenExpiration,
-        subject: AUTH.RESET_SUBJECT
-    };
-    const resetJwtService = new JwtService(recoverJwtOptions);
-
-    const confirmTokenExpiration = authConfigs.token.expiration;
-    const confirmJwtOptions = {
-        hash: hashKey,
-        tokenExpiration: confirmTokenExpiration,
-        subject: AUTH.CONFIRM_SUBJECT
-    };
-    const confirmJwtService = new JwtService(confirmJwtOptions);
+    const jwtService = new JwtService(authJwtOptions);
 
     userController = new UserController({
         authConfigs,
         authHash: hashKey,
         userService,
-        mailService,
-        authJwtService,
-        confirmJwtService,
-        resetJwtService
+        mailService
+    });
+
+    const generatedUserId = new ObjectId().toHex();
+    const validUserJSON = {
+        _id: generatedUserId,
+        id: generatedUserId,
+        name: 'Testando teste',
+        email: 'teste@teste.com'
+    };
+
+    const validToJSON = () => validUserJSON;
+    const validUserObject = {
+        ...validUserJSON,
+        toJSON: validToJSON,
+        save: () => Promise.resolve(true),
+        updateWithDates: () => Promise.resolve(true)
+    };
+
+    const defaultNext = () => { };
+
+    describe('update user route', () => {
+        const functionName = 'patchUser';
+        const email = 'teste@email.com';
+        const password = '@Teste54';
+        const putValidUserInput = {
+            email: email,
+            password: password
+        };
+        
+        /**@type {Context} */
+        let context;
+
+        describe('Happy path', () => {
+            const returnedStatus = STATUS.OK;
+            const successUser = {...putValidUserInput};
+
+            before(async () => {
+                const token = await jwtService.generate();
+                const request = {
+                    headers: {
+                        [AUTH.TOKEN_HEADER]: token
+                    },
+                    body: successUser
+                };
+                const state = {
+                    user: validUserObject
+                };
+                context = new Context(request, {}, state);
+
+                const next = async () => {
+                    await userController.patchUser(context, defaultNext);
+                };
+
+                await validationMiddleware
+                    .validate(userSchema.schemas.patchUser)(
+                        context,
+                        next
+                    );
+            });
+
+            it(`should return status ${returnedStatus}`, () => {
+                const { status } = context;
+
+                assert(status === returnedStatus);
+            });
+
+            it('should return an empty body', () => {
+                const { body } = context;
+
+                assert(!body);
+            });
+
+            it('password should be hashed', async () => {
+                const hashed = await userService.hashPassword(password);
+
+                assert(successUser.password === hashed);
+            });
+        });
+
+        describe('save error', () => {
+            const returnedStatus = STATUS.INTERNAL_ERROR;
+            const errorUpdateUser = {
+                updateWithDates: () => Promise.reject()
+            };
+
+            before(async () => {
+                const token = await jwtService.generate();
+                const request = {
+                    headers: {
+                        [AUTH.TOKEN_HEADER]: token
+                    },
+                    body: {...putValidUserInput}
+                };
+
+                const state = {
+                    user: errorUpdateUser
+                };
+                context = new Context(request, {}, state);
+
+                const next = async () => {
+                    await userController.patchUser(context, defaultNext);
+                };
+
+                await validationMiddleware
+                    .validate(userSchema.schemas.patchUser)(
+                        context,
+                        next
+                    );
+            });
+
+            it(`should throw a ${returnedStatus} status`, async () => {
+                const { status } = context;
+
+                assert(status === returnedStatus);
+            });
+
+            it('should return a Controller Error', () => {
+                const { body } = context;
+
+                assert(body instanceof ControllerError);
+            });
+
+            describe('context body', () => {
+                it('should have property method', () => {
+                    const { method } = context.body;
+
+                    assert(!!method);
+                });
+
+                it(`method should equal ${functionName}`, () => {
+                    const { method } = context.body;
+
+                    assert(method === functionName);
+                });
+
+                it('should have property controller', () => {
+                    const { controller } = context.body;
+
+                    assert(!!controller);
+                });
+
+                it(`controller should equal ${source}`, () => {
+                    const { controller } = context.body;
+
+                    assert(controller === source);
+                });
+
+                it('should have property output', () => {
+                    const { output } = context.body;
+
+                    assert(!!output);
+                });
+            });
+        });
+
+        describe('wrong input', () => {
+            const returnedStatus = STATUS.BAD_REQUEST;
+
+            describe('no token in headers', () => {
+                before(async () => {
+                    context = new Context({
+                        headers: {}
+                    });
+
+                    await validationMiddleware.validate(
+                        userSchema.schemas.patchUser
+                    )(context);
+                });
+
+                it(`should throw a ${returnedStatus} error`, async () => {
+                    assert(context.status === returnedStatus);
+                });
+
+                it('should have property required for token header', async () => {
+                    const { body } = context;
+
+                    assert(body.output.find(
+                        (error) => error.type === 'any.required')
+                    );
+                });
+            });
+
+            describe('invalid token in headers', () => {
+                before(async () => {
+                    context = new Context({
+                        headers: {
+                            [AUTH.TOKEN_HEADER]: ''
+                        }
+                    });
+
+                    await validationMiddleware.validate(
+                        userSchema.schemas.patchUser
+                    )(context);
+                });
+
+                it(`should throw a ${returnedStatus} error`, async () => {
+                    assert(context.status === returnedStatus);
+                });
+
+                it('should have property required for token header', async () => {
+                    const { body } = context;
+
+                    assert(body.output.find(
+                        (error) => error.type === 'any.empty')
+                    );
+                });
+            });
+
+            describe('no body', () => {
+                before(async () => {
+                    context = new Context({
+                        headers: {}
+                    });
+
+                    await validationMiddleware.validate(
+                        userSchema.schemas.patchUser
+                    )(context);
+                });
+
+                it(`should throw a ${returnedStatus} error`, async () => {
+                    assert(context.status === returnedStatus);
+                });
+
+                it('should have property required for token header', async () => {
+                    const { body } = context;
+
+                    assert(body.output.find(
+                        (error) =>
+                            error.type === 'any.required' &&
+                            error.key === 'body'
+                    ));
+                });
+            });
+        });
     });
 });
