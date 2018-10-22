@@ -11,8 +11,16 @@ const {
 const mailOptions = config.get('mail.options');
 
 describe('Mail service', () => {
+    const log = {
+        info: () => {},
+        error: () => {}
+    };
+    const logger = {
+        child: () => log
+    };
+
     it('happy path', async () => {
-        const mailService = new MailService(mailOptions);
+        const mailService = new MailService(mailOptions, logger);
 
         await mailService.verifyConnection();
     });
@@ -25,7 +33,7 @@ describe('Mail service', () => {
                 pass: 'teste'
             }
         };
-        const mailService = new MailService(invalidOptions);
+        const mailService = new MailService(invalidOptions, logger);
 
         try {
             await mailService.sendMail('teste', 'alo', 'Teste', 'corpo de teste');

@@ -39,22 +39,31 @@ let invoiceService;
 let customerService;
 
 describe('Users component', () => {
+    const log = {
+        info: () => {},
+        error: () => {}
+    };
+    const logger = {
+        child: () => log
+    };
+
     const source = 'user.controller';
 
     hashingService = new HashingService(
         hashingOptions.key,
         hashingOptions.algorithm,
-        hashingOptions.encoding
+        hashingOptions.encoding,
+        logger
     );
 
     validationMiddleware = new ValidationMiddleware();
     userSchema = new UserSchema(validationMiddleware.baseSchema);
 
-    mailService = new MailService(config.get('mail.options'));
+    mailService = new MailService(config.get('mail.options'), logger);
 
-    userService = new UserService(userModel, hashingService);
-    invoiceService = new InvoiceService({});
-    customerService = new CustomerService({});
+    userService = new UserService(userModel, hashingService, logger);
+    invoiceService = new InvoiceService({}, logger);
+    customerService = new CustomerService({}, logger);
 
     const authConfigs = config.get('auth');
 
@@ -63,7 +72,8 @@ describe('Users component', () => {
     const authJwtOptions = {
         hash: hashKey,
         tokenExpiration: authTokenExpiration,
-        subject: AUTH.AUTH_SUBJECT
+        subject: AUTH.AUTH_SUBJECT,
+        logger
     };
     const jwtService = new JwtService(authJwtOptions);
 

@@ -47,13 +47,22 @@ let authSchema;
 describe('Auth component', () => {
     const source = 'auth.controller';
 
+    const log = {
+        info: () => {},
+        error: () => {}
+    };
+    const logger = {
+        child: () => log
+    };
+
     const authConfigs = config.get('auth');
     const hashingOptions = authConfigs.password;
 
     hashingService = new HashingService(
         hashingOptions.key,
         hashingOptions.algorithm,
-        hashingOptions.encoding
+        hashingOptions.encoding,
+        logger
     );
 
     let testEmail = 'teste@teste.com';
@@ -72,17 +81,18 @@ describe('Auth component', () => {
     validationMiddleware = new ValidationMiddleware();
     authSchema = new AuthSchema(validationMiddleware.baseSchema);
 
-    mailService = new MailService(config.get('mail.options'));
+    mailService = new MailService(config.get('mail.options'), logger);
 
-    userService = new UserService(userModel, hashingService);
-    invoiceService = new InvoiceService({});
-    customerService = new CustomerService({});
+    userService = new UserService(userModel, hashingService, logger);
+    invoiceService = new InvoiceService({}, logger);
+    customerService = new CustomerService({}, logger);
 
     const authTokenExpiration = authConfigs.token.expiration;
     const authJwtOptions = {
         hash: hashKey,
         tokenExpiration: authTokenExpiration,
-        subject: AUTH.AUTH_SUBJECT
+        subject: AUTH.AUTH_SUBJECT,
+        logger
     };
     const authJwtService = new JwtService(authJwtOptions);
 
@@ -91,7 +101,8 @@ describe('Auth component', () => {
     const recoverJwtOptions = {
         hash: hashKey,
         tokenExpiration: recoverTokenExpiration,
-        subject: AUTH.RESET_SUBJECT
+        subject: AUTH.RESET_SUBJECT,
+        logger
     };
     const resetJwtService = new JwtService(recoverJwtOptions);
 
@@ -100,7 +111,8 @@ describe('Auth component', () => {
     const confirmJwtOptions = {
         hash: hashKey,
         tokenExpiration: confirmTokenExpiration,
-        subject: AUTH.CONFIRM_SUBJECT
+        subject: AUTH.CONFIRM_SUBJECT,
+        logger
     };
     const confirmJwtService = new JwtService(confirmJwtOptions);
 

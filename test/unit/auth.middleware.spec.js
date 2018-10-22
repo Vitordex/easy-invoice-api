@@ -19,6 +19,14 @@ const findUser = () => Promise.resolve(validUser);
 let userService = { findUser };
 
 describe('Auth', () => {
+    const log = {
+        info: () => {},
+        error: () => {}
+    };
+    const logger = {
+        child: () => log
+    };
+
     const serviceName = 'auth.service';
     const functionName = 'authenticate';
     const authConfigs = config.get('auth');
@@ -28,7 +36,8 @@ describe('Auth', () => {
     const authJwtOptions = {
         hash: authHash,
         tokenExpiration: authTokenExpiration,
-        subject: AUTH.AUTH_SUBJECT
+        subject: AUTH.AUTH_SUBJECT,
+        logger
     };
     const authJwtService = new JwtService(authJwtOptions);
     const authService = new AuthService(authJwtService, userService, ServiceError);
@@ -58,7 +67,8 @@ describe('Auth', () => {
             const otherJwtOptions = {
                 hash: 'other',
                 tokenExpiration: otherTokenExpiration,
-                subject: AUTH.AUTH_SUBJECT
+                subject: AUTH.AUTH_SUBJECT,
+                logger
             };
             otherJwtService = new JwtService(otherJwtOptions);
 
@@ -245,7 +255,8 @@ describe('Auth', () => {
             const otherJwtOptions = {
                 hash: authHash,
                 tokenExpiration: otherTokenExpiration,
-                subject: AUTH.AUTH_SUBJECT
+                subject: AUTH.AUTH_SUBJECT,
+                logger
             };
             otherJwtService = new JwtService(otherJwtOptions);
 
@@ -318,7 +329,8 @@ describe('Auth', () => {
             const otherJwtOptions = {
                 hash: authHash,
                 tokenExpiration: otherTokenExpiration,
-                subject: 'test'
+                subject: 'test',
+                logger
             };
             otherJwtService = new JwtService(otherJwtOptions);
 

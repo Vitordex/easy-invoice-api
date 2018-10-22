@@ -80,7 +80,7 @@ async function initApp(logger) {
 
     app.use(serve(__dirname + '/public'));
 
-    const mailService = new MailService(config.get('mail.options'));
+    const mailService = new MailService(config.get('mail.options'), logger);
 
     const authConfigs = config.get('auth');
 
@@ -88,7 +88,8 @@ async function initApp(logger) {
     const authJwtOptions = {
         hash: hashKey,
         tokenExpiration: authTokenExpiration,
-        subject: AUTH.AUTH_SUBJECT
+        subject: AUTH.AUTH_SUBJECT,
+        logger
     };
     const authJwtService = new JwtService(authJwtOptions);
 
@@ -97,7 +98,8 @@ async function initApp(logger) {
     const recoverJwtOptions = {
         hash: hashKey,
         tokenExpiration: recoverTokenExpiration,
-        subject: AUTH.RESET_SUBJECT
+        subject: AUTH.RESET_SUBJECT,
+        logger
     };
     const resetJwtService = new JwtService(recoverJwtOptions);
 
@@ -106,7 +108,8 @@ async function initApp(logger) {
     const confirmJwtOptions = {
         hash: hashKey,
         tokenExpiration: confirmTokenExpiration,
-        subject: AUTH.CONFIRM_SUBJECT
+        subject: AUTH.CONFIRM_SUBJECT,
+        logger
     };
     const confirmJwtService = new JwtService(confirmJwtOptions);
 
@@ -125,12 +128,12 @@ async function initApp(logger) {
 
     const userModel = new User(databaseService);
 
-    const userService = new UserService(userModel, hashingService);
+    const userService = new UserService(userModel, hashingService, logger);
     const authService = new AuthService(authJwtService, userService, ServiceError);
 
     //Build customer api
     const customerModel = new Customer(databaseService);
-    const customerService = new CustomerService(customerModel);
+    const customerService = new CustomerService(customerModel, logger);
 
     const customerControllerOptions = {
         userService,
@@ -154,13 +157,13 @@ async function initApp(logger) {
 
     //Build invoice api
     const invoiceModel = new Invoice(databaseService);
-    const invoiceService = new InvoiceService(invoiceModel);
+    const invoiceService = new InvoiceService(invoiceModel, logger);
 
     const pdfServiceOptions = {
         format: 'Letter',
         phatomPath: './node_modules/phantomjs-prebuilt/bin/phatomjs'
     };
-    const pdfService = new PdfService(pdfServiceOptions);
+    const pdfService = new PdfService(pdfServiceOptions, logger);
     const invoiceControllerParameters = {
         userService,
         invoiceService,

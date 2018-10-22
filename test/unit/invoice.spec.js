@@ -19,6 +19,14 @@ const {
 const Context = require('./context.model');
 
 describe('Invoice Component', () => {
+    const log = {
+        info: () => {},
+        error: () => {}
+    };
+    const logger = {
+        child: () => log
+    };
+
     const { AUTH, API: { STATUS } } = require('../../src/enums');
 
     const authConfigs = config.get('auth');
@@ -28,7 +36,8 @@ describe('Invoice Component', () => {
     const authJwtOptions = {
         hash: hashKey,
         tokenExpiration: authTokenExpiration,
-        subject: AUTH.AUTH_SUBJECT
+        subject: AUTH.AUTH_SUBJECT,
+        logger
     };
     const jwtService = new JwtService(authJwtOptions);
 
@@ -51,8 +60,8 @@ describe('Invoice Component', () => {
         updateWithDates: () => Promise.resolve(true)
     };
 
-    const invoiceService = new InvoiceService({});
-    const pdfService = new PdfService({ format: 'Letter' });
+    const invoiceService = new InvoiceService({}, logger);
+    const pdfService = new PdfService({ format: 'Letter' }, logger);
 
     const invoiceControllerOptions = {
         invoiceService,

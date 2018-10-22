@@ -19,6 +19,14 @@ const {
 const Context = require('./context.model');
 
 describe('Customer Component', () => {
+    const log = {
+        info: () => {},
+        error: () => {}
+    };
+    const logger = {
+        child: () => log
+    };
+
     const { AUTH, API: { STATUS } } = require('../../src/enums');
 
     const authConfigs = config.get('auth');
@@ -28,7 +36,8 @@ describe('Customer Component', () => {
     const authJwtOptions = {
         hash: hashKey,
         tokenExpiration: authTokenExpiration,
-        subject: AUTH.AUTH_SUBJECT
+        subject: AUTH.AUTH_SUBJECT,
+        logger
     };
     const jwtService = new JwtService(authJwtOptions);
 
@@ -51,7 +60,7 @@ describe('Customer Component', () => {
         updateWithDates: () => Promise.resolve(true)
     };
 
-    const customerService = new CustomerService({});
+    const customerService = new CustomerService({}, logger);
 
     const customerControllerOptions = {
         customerService,
