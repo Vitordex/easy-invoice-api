@@ -13,6 +13,10 @@ class LogService {
         });
     }
 
+    child(options){
+        return this.logger.child(options);
+    }
+
     log(object, message, level = 'info') {
         let logFunction;
 
