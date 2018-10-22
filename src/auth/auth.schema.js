@@ -1,5 +1,4 @@
 const joi = require('joi');
-const safe = require('safe-regex');
 
 const { AUTH } = require('../enums');
 const { STATES, ACTIVE } = require('../values').DATABASE.PROPS;
