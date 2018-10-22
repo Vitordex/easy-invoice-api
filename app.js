@@ -92,7 +92,8 @@ async function initApp(logger) {
     };
     const authJwtService = new JwtService(authJwtOptions);
 
-    const recoverTokenExpiration = authConfigs.token.expiration;
+    const recoverConfigs = config.get('recover');
+    const recoverTokenExpiration = recoverConfigs.token.expiration;
     const recoverJwtOptions = {
         hash: hashKey,
         tokenExpiration: recoverTokenExpiration,
@@ -100,7 +101,8 @@ async function initApp(logger) {
     };
     const resetJwtService = new JwtService(recoverJwtOptions);
 
-    const confirmTokenExpiration = authConfigs.token.expiration;
+    const confirmConfigs = config.get('confirm');
+    const confirmTokenExpiration = confirmConfigs.token.expiration;
     const confirmJwtOptions = {
         hash: hashKey,
         tokenExpiration: confirmTokenExpiration,

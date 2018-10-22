@@ -25,9 +25,6 @@ const Context = require('./context.model');
 
 const hashKey = fs.readFileSync('./server.hash.key', { encoding: 'utf-8' });
 
-const authConfigs = config.get('auth');
-const hashingOptions = authConfigs.password;
-
 /**@type {MailService} */
 let mailService;
 /**@type {HashService} */
@@ -49,6 +46,9 @@ let authSchema;
 
 describe('Auth component', () => {
     const source = 'auth.controller';
+
+    const authConfigs = config.get('auth');
+    const hashingOptions = authConfigs.password;
 
     hashingService = new HashingService(
         hashingOptions.key,
@@ -86,7 +86,8 @@ describe('Auth component', () => {
     };
     const authJwtService = new JwtService(authJwtOptions);
 
-    const recoverTokenExpiration = authConfigs.token.expiration;
+    const recoverConfigs = config.get('recover');
+    const recoverTokenExpiration = recoverConfigs.token.expiration;
     const recoverJwtOptions = {
         hash: hashKey,
         tokenExpiration: recoverTokenExpiration,
@@ -94,7 +95,8 @@ describe('Auth component', () => {
     };
     const resetJwtService = new JwtService(recoverJwtOptions);
 
-    const confirmTokenExpiration = authConfigs.token.expiration;
+    const confirmConfigs = config.get('confirm');
+    const confirmTokenExpiration = confirmConfigs.token.expiration;
     const confirmJwtOptions = {
         hash: hashKey,
         tokenExpiration: confirmTokenExpiration,
