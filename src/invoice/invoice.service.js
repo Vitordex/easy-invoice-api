@@ -5,7 +5,10 @@ const {
     }, Model
 } = require('../database/common.types');
 const HashService = require('../services/hashing.service');
+const LogService = require('../log/log.service');
 /* eslint-enable no-unused-vars */
+
+const ServiceLog = require('../log/service.log.model');
 
 const timeService = require('../services/time.service');
 const ObjectId = require('../database/object.id');
@@ -13,9 +16,12 @@ const ObjectId = require('../database/object.id');
 class InvoiceService {
     /**
      * @param {Model} invoiceModel 
+     * @param {LogService} logger
      */
-    constructor(invoiceModel) {
+    constructor(invoiceModel, logger) {
         this.Invoice = invoiceModel;
+
+        this.logger = logger.child({ service: 'invoice.service' });
     }
 
     /**
@@ -25,11 +31,24 @@ class InvoiceService {
      * @returns {Invoice}
      */
     findInvoice(query) {
+        const functionName = 'findInvoice';
+        const params = { query };
+
         return this.Invoice.findOne({
             ...query,
             deletedAt: {
                 $exists: false
             }
+        }).then((result) => {
+            const log = new ServiceLog(functionName, params, result).toObject();
+            this.logger.info(log);
+
+            return result;
+        }).catch((err) => {
+            const log = new ServiceLog(functionName, params, err).toObject();
+            this.logger.error(log);
+
+            return Promise.reject(err);
         });
     }
 
@@ -53,11 +72,24 @@ class InvoiceService {
      * @returns {[Invoice]}
      */
     findInvoices(query) {
+        const functionName = 'findInvoices';
+        const params = { query };
+
         return this.Invoice.find({
             ...query,
             deletedAt: {
                 $exists: false
             }
+        }).then((result) => {
+            const log = new ServiceLog(functionName, params, result).toObject();
+            this.logger.info(log);
+
+            return result;
+        }).catch((err) => {
+            const log = new ServiceLog(functionName, params, err).toObject();
+            this.logger.error(log);
+
+            return Promise.reject(err);
         });
     }
 
@@ -70,23 +102,51 @@ class InvoiceService {
      * @returns {[Invoice]}
      */
     updateInvoices(query, newValues, dateLocal) {
+        const functionName = 'updateInvoices';
+        const params = { query, newValues, dateLocal };
+
         const softQuery = {
             ...query,
             deletedAt: {
                 $exists: false
             }
         };
-        return this.Invoice.updateManyWithDates(softQuery, newValues, dateLocal);
+        return this.Invoice.updateManyWithDates(softQuery, newValues, dateLocal)
+            .then((result) => {
+                const log = new ServiceLog(functionName, params, result).toObject();
+                this.logger.info(log);
+
+                return result;
+            }).catch((err) => {
+                const log = new ServiceLog(functionName, params, err).toObject();
+                this.logger.error(log);
+
+                return Promise.reject(err);
+            });
     }
 
     /**
      * Delete a invoice
      * @param {Invoice} invoice Invoice to delete
      */
-    deleteInvoice(invoice){
+    deleteInvoice(invoice) {
+        const functionName = 'deleteInvoice';
+        const params = { invoice };
+
         invoice.deletedAt = timeService().toISOString();
 
-        return invoice.save();
+        return invoice.save()
+            .then((result) => {
+                const log = new ServiceLog(functionName, params, result).toObject();
+                this.logger.info(log);
+
+                return result;
+            }).catch((err) => {
+                const log = new ServiceLog(functionName, params, err).toObject();
+                this.logger.error(log);
+
+                return Promise.reject(err);
+            });
     }
 
     /**
@@ -98,6 +158,9 @@ class InvoiceService {
      * @returns {[Invoice]}
      */
     deleteInvoices(query) {
+        const functionName = 'deleteInvoices';
+        const params = { query };
+
         const softQuery = {
             ...query,
             deletedAt: {
@@ -107,7 +170,18 @@ class InvoiceService {
         const updatedValues = {
             deletedAt: timeService().toISOString()
         };
-        return this.Invoice.updateMany(softQuery, updatedValues);
+        return this.Invoice.updateMany(softQuery, updatedValues)
+            .then((result) => {
+                const log = new ServiceLog(functionName, params, result).toObject();
+                this.logger.info(log);
+
+                return result;
+            }).catch((err) => {
+                const log = new ServiceLog(functionName, params, err).toObject();
+                this.logger.error(log);
+
+                return Promise.reject(err);
+            });
     }
 }
 
