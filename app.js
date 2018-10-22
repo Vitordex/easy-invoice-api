@@ -1,4 +1,5 @@
 const Koa = require('koa');
+const helmet = require('koa-helmet');
 const bodyParser = require('koa-bodyparser');
 const serve = require('koa-static');
 const fs = require('fs');
@@ -57,6 +58,22 @@ const pdfTemplate = fs.readFileSync('./src/invoice/invoice.template.html', { enc
 
 async function initApp(logger) {
     const app = new Koa();
+
+    const securityOptions = {
+        hpkp: {
+            maxAge: 90 * 24 * 60 * 60 * 1000,
+            sha256s: [
+                '1525C85D9C9355589AEAC85C461EA7AF9B677E65E6CB66369C0D3B8AB763C0AB',
+                'F0B44F780621386EAA7D71EFF3D8D44B32B207DDC9B8FB9C12D3279BE8DE445B'
+            ]
+        },
+        frameguard: true,
+        xssFilter: true,
+        noSniff: true,
+        referrerPolicy: true
+    };
+    app.use(helmet(securityOptions));
+
     app.use(bodyParser());
 
     app.use(errorMiddleware(logger));

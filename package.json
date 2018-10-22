@@ -7,7 +7,9 @@
     "test": "mocha $(find -name *.spec.js)",
     "start": "bash ./scripts/start.sh",
     "test-unit": "mocha test/unit/",
-    "test-integration": "mocha test/integration/ --timeout 10000"
+    "test-coverage-unit": "nyc mocha test/unit/",
+    "test-integration": "mocha test/integration/ --timeout 10000",
+    "audit": "npm audit"
   },
   "author": "Vitor Ribeiro Pais Del Pezzo",
   "license": "ISC",
@@ -24,6 +26,7 @@
     "jsonwebtoken": "^8.3.0",
     "koa": "^2.5.2",
     "koa-bodyparser": "^4.2.1",
+    "koa-helmet": "^4.0.0",
     "koa-passport": "^4.1.1",
     "koa-router": "^7.4.0",
     "koa-static": "^5.0.0",
@@ -34,7 +37,9 @@
     "string-template": "^1.0.0"
   },
   "devDependencies": {
+    "eslint-plugin-security": "^1.4.0",
     "mocha": "^5.2.0",
+    "nyc": "^13.1.0",
     "sinon": "^6.2.0"
   }
 }

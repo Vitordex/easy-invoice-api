@@ -20,7 +20,7 @@ class ModelCreator {
     create(name, structure, optionals = {}, allowedProperties) {
         const updated_local = {};
         Object.keys(structure).forEach((key) => {
-            updated_local[key] = {
+            updated_local[key] = { // eslint-disable-line
                 type: Date,
                 default: new Date(Date.now())
             };
@@ -52,7 +52,7 @@ class ModelCreator {
     toJson(allowedProperties) {
         return function () {
             return allowedProperties.reduce((json, property) => {
-                json[property] = this[property];
+                json[property] = this[property]; // eslint-disable-line
 
                 return json;
             }, {});

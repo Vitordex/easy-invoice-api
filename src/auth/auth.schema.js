@@ -1,8 +1,10 @@
 const joi = require('joi');
+const safe = require('safe-regex');
 
 const { AUTH } = require('../enums');
 const { STATES, ACTIVE } = require('../values').DATABASE.PROPS;
 
+const recoverEmailRegex = /^.+@.+(\..{3})(\..{2}){0,1}$/gi; // eslint-disable-line
 class AuthSchema {
     constructor(baseSchema) {
         this.baseSchema = baseSchema;
@@ -22,7 +24,7 @@ class AuthSchema {
                         .string()
                         .email()
                         .max(200)
-                        .regex(/^.+@.+(\..{3})(\..{2}){0,1}$/gi)
+                        .regex(recoverEmailRegex)
                         .required(),
                     password: joi
                         .string()
@@ -36,7 +38,7 @@ class AuthSchema {
                         .string()
                         .max(200)
                         .email()
-                        .regex(/^.+@.+(\..{3})(\..{2}){0,1}$/gi)
+                        .regex(recoverEmailRegex)
                         .required()
                 }).required()
             }),
@@ -59,7 +61,7 @@ class AuthSchema {
                         .length(13)
                         .optional(),
                     email: joi.string()
-                        .regex(/[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/)
+                        .regex(/[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/) // eslint-disable-line
                         .required()
                         .min(5)
                         .max(255),

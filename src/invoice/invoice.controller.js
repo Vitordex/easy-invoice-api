@@ -178,7 +178,7 @@ class InvoiceController {
             return next();
         }
 
-        const updateLocal = headers[DATE_HEADER];
+        const updateLocal = headers[DATE_HEADER]; // eslint-disable-line
 
         try {
             await invoice.updateWithDates(body, updateLocal);
