@@ -14,9 +14,16 @@
             "algorithm": "sha1",
             "encoding": "hex",
             "key": "secret"
-        },
-        "optionals": {
-            "expiresIn": "2d"
+        }
+    },
+    "recover":{
+        "token": {
+            "expiration": "1h"
+        }
+    },
+    "confirm":{
+        "token": {
+            "expiration": "1h"
         }
     },
     "mail": {
