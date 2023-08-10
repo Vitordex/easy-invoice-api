@@ -13,11 +13,17 @@ sudo systemctl start amazon-ssm-agent
 
 #Install Cloudwatch Agent
 mkdir /var/log/${API_NAME}/
-sudo chmod +755 /var
-sudo chmod +755 /var/log
-sudo chmod +777 /var/log/${API_NAME}
+sudo chmod +766 /var
+sudo chmod +766 /var/log
+sudo chmod -R +766 /var/log/${API_NAME}
 
 curl https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py -O
 curl https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/AgentDependencies.tar.gz -O
 tar xvf AgentDependencies.tar.gz -C /tmp/
 sudo python ./awslogs-agent-setup.py --region ${AWS_RES_REGION} --dependency-path /tmp/AgentDependencies
+
+#libfontconfig on Debian based
+sudo yum install -y fontconfig
+
+sudo mkdir ./public/pdfs
+sudo chmod -R +766 ./public

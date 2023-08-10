@@ -1,7 +1,7 @@
 const Router = require('koa-router');
 
 /* eslint-disable no-unused-vars */
-const AuthService = require('../user/auth.service');
+const AuthService = require('../auth/auth.service');
 const InvoiceController = require('./invoice.controller');
 const InvoiceSchema = require('./invoice.schema');
 const ValidationMiddleware = require('../middleware/validation.middleware');
@@ -74,6 +74,15 @@ class InvoiceApi {
             this.authService.authenticate(),
             async (context, next) => {
                 await this.invoiceController.listInvoices(context, next);
+            }
+        );
+
+        this.router.post(
+            '/generate/pdf/file',
+            this.validationMiddleware.validate(this.invoiceSchema.schemas.postGeneratePdf),
+            this.authService.authenticate(),
+            async (context, next) => {
+                await this.invoiceController.postGeneratePdf(context, next);
             }
         );
     }

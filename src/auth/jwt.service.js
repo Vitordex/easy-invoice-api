@@ -1,3 +1,7 @@
+const LogService = require('../log/log.service'); // eslint-disable-line
+
+const ServiceLog = require('../log/service.log.model');
+
 const jwt = require('jsonwebtoken');
 
 class JwtService {
@@ -5,11 +9,13 @@ class JwtService {
      * @param {String} param.hash 
      * @param {String} param.tokenExpiration 
      * @param {String} param.subject 
+     * @param {LogService} param.logger
      */
     constructor({
         hash,
         tokenExpiration,
-        subject
+        subject,
+        logger
     }) {
         this.hash = hash;
         this.expiration = tokenExpiration;
@@ -17,12 +23,17 @@ class JwtService {
         this.ignoreExpiration = !tokenExpiration;
 
         this.subject = subject;
+
+        this.logger = logger.child({ service: 'jwt.service' });
     }
 
     /**
      * @param {String} token 
      */
     verify(token) {
+        const functionName = 'verify';
+        const params = { token };
+
         const verifyOptions = {
             subject: this.subject,
             ignoreExpiration: this.ignoreExpiration
@@ -38,7 +49,18 @@ class JwtService {
             jwt.verify(token, this.hash, verifyOptions, verifyAction);
         };
 
-        return new Promise(promiseAction);
+        return new Promise(promiseAction)
+            .then((result) => {
+                const log = new ServiceLog(functionName, params, result).toObject();
+                this.logger.info(log);
+
+                return result;
+            }).catch((err) => {
+                const log = new ServiceLog(functionName, params, err).toObject();
+                this.logger.error(log);
+
+                return Promise.reject(err);
+            });
     }
 
     /**
@@ -48,6 +70,9 @@ class JwtService {
      * @returns {Promise<String>}
      */
     generate(payload = {}) {
+        const functionName = 'generate';
+        const params = { payload };
+
         const promiseAction = (resolve, reject) => {
             const signOptions = {
                 subject: this.subject,
@@ -59,11 +84,22 @@ class JwtService {
 
                 resolve(hash);
             };
-            
+
             jwt.sign(payload, this.hash, signOptions, signAction);
         };
 
-        return new Promise(promiseAction);
+        return new Promise(promiseAction)
+            .then((result) => {
+                const log = new ServiceLog(functionName, params, result).toObject();
+                this.logger.info(log);
+
+                return result;
+            }).catch((err) => {
+                const log = new ServiceLog(functionName, params, err).toObject();
+                this.logger.error(log);
+
+                return Promise.reject(err);
+            });
     }
 }
 

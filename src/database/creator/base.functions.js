@@ -8,8 +8,8 @@ async function updateWithDates(newStructure, dateLocal = timeService().valueOf()
     if (lastUpdated > updateTime) return Promise.resolve();
 
     Object.keys(newStructure).forEach((key) => {
-        document[key] = newStructure[key];
-        document.updated_local[key] = updateTime.toISOString();
+        document[key] = newStructure[key]; // eslint-disable-line
+        document.updated_local[key] = updateTime.toISOString(); // eslint-disable-line
     });
 
     return document.save();
@@ -24,8 +24,8 @@ async function updateManyWithDates(query, newStructure, dateLocal = timeService(
         if (lastUpdated > updateTime) return array;
 
         Object.keys(newStructure).forEach((key) =>{
-            document[key] = newStructure[key];
-            document.updated_local[key] = updateTime.toISOString();
+            document[key] = newStructure[key]; // eslint-disable-line
+            document.updated_local[key] = updateTime.toISOString(); // eslint-disable-line
         });
 
         return document.save();

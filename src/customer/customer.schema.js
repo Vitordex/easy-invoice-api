@@ -60,7 +60,7 @@ class CustomerSchema {
                         .required()
                 }).required()
             }),
-            putCustomer: this.generateSchema({
+            patchCustomer: this.generateSchema({
                 headers: joi.object().keys({
                     [AUTH.TOKEN_HEADER]: joi
                         .string()

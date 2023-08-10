@@ -41,9 +41,11 @@ class InvoiceSchema {
                         .required(),
                     description: joi.string()
                         .required(),
-                    addition: joi.string()
+                    addition: joi.number()
                         .required(),
-                    discount: joi.string()
+                    discount: joi.number()
+                        .min(0)
+                        .max(100)
                         .required(),
                     value: joi.number()
                         .required(),
@@ -70,9 +72,11 @@ class InvoiceSchema {
                         .forbidden(),
                     description: joi.string()
                         .optional(),
-                    addition: joi.string()
+                    addition: joi.number()
                         .optional(),
-                    discount: joi.string()
+                    discount: joi.number()
+                        .min(0)
+                        .max(100)
                         .optional(),
                     value: joi.number()
                         .optional(),
@@ -99,6 +103,18 @@ class InvoiceSchema {
                         .string()
                         .required()
                 }).required().unknown(true)
+            }),
+            postGeneratePdf: this.generateSchema({
+                headers: joi.object().keys({
+                    [AUTH.TOKEN_HEADER]: joi
+                        .string()
+                        .required()
+                }).required().unknown(true),
+                body: joi.object().keys({
+                    invoiceId: joi.string()
+                        .min(13)
+                        .required()
+                })
             })
         };
     }

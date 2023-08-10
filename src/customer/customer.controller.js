@@ -1,6 +1,5 @@
 /* eslint-disable no-unused-vars */
 const CustomerService = require('./customer.service');
-const UserService = require('../user/user.service');
 const ControllerError = require('../log/controller.error.model');
 /* eslint-enable no-unused-vars */
 
@@ -11,16 +10,13 @@ const { API: { STATUS } } = require('../enums');
 
 class CustomerController {
     /**
-     * @param {UserService} params.userService
      * @param {CustomerService} params.customerService
      * @param {ControllerError} params.apiErrorModel
      */
     constructor({
-        userService,
         customerService,
         apiErrorModel
     }) {
-        this.userService = userService;
         this.customerService = customerService;
 
         this.ControllerError = apiErrorModel;
@@ -36,14 +32,14 @@ class CustomerController {
             customer = await this.customerService.findCustomer({ _id: customerId });
         } catch (error) {
             const controllerError = new ControllerError(
-                STATUS.NOT_FOUND,
+                STATUS.INTERNAL_ERROR,
                 'Invalid customer id',
                 controllerName,
                 functionName,
                 context.input,
                 error
             );
-            context.throw(STATUS.NOT_FOUND, controllerError);
+            context.throw(STATUS.INTERNAL_ERROR, controllerError);
 
             return next();
         }
@@ -102,7 +98,7 @@ class CustomerController {
         return next();
     }
 
-    async putCustomer(context, next) {
+    async patchCustomer(context, next) {
         const functionName = 'putCustomer';
         const { 
             params, 
@@ -130,21 +126,21 @@ class CustomerController {
             customer = await this.customerService.findCustomer({ _id: params.customerId });
         } catch (error) {
             const controllerError = new ControllerError(
-                STATUS.NOT_FOUND,
+                STATUS.INTERNAL_ERROR,
                 'Invalid customer id',
                 controllerName,
                 functionName,
                 context.input,
                 error
             );
-            context.throw(STATUS.NOT_FOUND, controllerError);
+            context.throw(STATUS.INTERNAL_ERROR, controllerError);
 
             return next();
         }
 
         if (!customer) {
             const controllerError = new ControllerError(
-                STATUS.NOT_FOUND,
+                STATUS.INTERNAL_ERROR,
                 'Invalid customer id',
                 controllerName,
                 functionName,
@@ -216,15 +212,15 @@ class CustomerController {
         try {
             customer = await this.customerService.findCustomer({ _id: params.customerId });
         } catch (error) {
-            const findError = new this.ControllerError(
-                STATUS.NOT_FOUND,
+            const controllerError = new this.ControllerError(
+                STATUS.INTERNAL_ERROR,
                 'Invalid customer id',
                 controllerName,
                 functionName,
                 context.input,
                 error
             );
-            context.throw(STATUS.NOT_FOUND, findError);
+            context.throw(STATUS.INTERNAL_ERROR, controllerError);
 
             return next();
         }
@@ -243,7 +239,6 @@ class CustomerController {
             return next();
         }
 
-        customer.deletedAt = timeService().toISOString();
         user.customers = user.customers.reduce((customers, item) => {
             if (item.toString() === customer.id.toString()) return customers;
 
@@ -253,7 +248,7 @@ class CustomerController {
         try {
             await Promise.all([
                 user.save(),
-                customer.save()
+                this.customerService.deleteCustomer(customer)
             ]);
         } catch (error) {
             const saveError = new this.ControllerError(

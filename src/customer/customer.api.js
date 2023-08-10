@@ -1,7 +1,7 @@
 const Router = require('koa-router');
 
 /* eslint-disable no-unused-vars */
-const AuthService = require('../user/auth.service');
+const AuthService = require('../auth/auth.service');
 const CustomerController = require('./customer.controller');
 const CustomerSchema = require('./customer.schema');
 const ValidationMiddleware = require('../middleware/validation.middleware');
@@ -50,12 +50,12 @@ class CustomerApi {
             }
         );
 
-        this.router.put(
+        this.router.patch(
             '/:customerId',
-            this.validationMiddleware.validate(this.customerSchema.schemas.putCustomer),
+            this.validationMiddleware.validate(this.customerSchema.schemas.patchCustomer),
             this.authService.authenticate(),
             async (context, next) => {
-                await this.customerController.putCustomer(context, next);
+                await this.customerController.patchCustomer(context, next);
             }
         );
 

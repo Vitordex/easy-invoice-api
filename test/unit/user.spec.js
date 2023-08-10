@@ -1,35 +1,23 @@
 /*globals describe, it, before, after*/
-const assert = require('assert');
 const sinon = require('sinon');
+const assert = require('assert');
+const fs = require('fs');
 
-const config = require('../../src/services/config.service');
-
-const MailService = require('../../src/services/mail.service');
-const HashingService = require('../../src/services/hashing.service');
-
-const ValidationMiddleware = require('../../src/middleware/validation.middleware');
-
-const UserService = require('../../src/user/user.service');
-const UserController = require('../../src/user/user.controller');
-const UserSchema = require('../../src/user/user.schema');
-
-const JwtToken = require('../../src/user/jwt.model');
-const JwtService = require('../../src/user/jwt.service');
+const {
+    auth: { JwtService },
+    database: { ObjectId },
+    enums: { AUTH, API: { STATUS } },
+    log: {ControllerError},
+    middleware: {Validation: ValidationMiddleware},
+    services: {MailService, HashingService, ConfigService: config},
+    user: {UserSchema, UserService, UserController},
+    invoice: {InvoiceService},
+    customer: {CustomerService}
+} = require('../../src/');
 const Context = require('./context.model');
 
-const ControllerError = require('../../src/log/controller.error.model');
-
-const fs = require('fs');
-const hashKey = fs.readFileSync('./server.hash.key', { encoding: 'utf-8' });
-const invalidHash = 'secret';
-
 const authConfigs = config.get('auth');
-
-const authOptionals = authConfigs.optionals;
-
 const hashingOptions = authConfigs.password;
-
-const { AUTH, API: { STATUS } } = require('../../src/enums');
 
 /**@type {MailService} */
 let mailService;
@@ -45,728 +33,510 @@ let userService;
 let userController;
 /**@type {UserSchema} */
 let userSchema;
+/**@type {InvoiceService} */
+let invoiceService;
+/**@type {CustomerService} */
+let customerService;
 
 describe('Users component', () => {
+    const log = {
+        info: () => {},
+        error: () => {}
+    };
+    const logger = {
+        child: () => log
+    };
+
+    const source = 'user.controller';
+
     hashingService = new HashingService(
         hashingOptions.key,
         hashingOptions.algorithm,
-        hashingOptions.encoding
+        hashingOptions.encoding,
+        logger
     );
-
-    let testEmail = 'teste@teste.com';
-    let testPassword = 'teste1';
-    let hashedTestPassword = hashingService.createHash(testPassword);
-    let testRegister = {
-        email: testEmail,
-        password: '@Testinho1',
-        phone: '(11) 95555-5555',
-        name: 'Teste teste',
-        state: 'Acre'
-    };
-
-    const defaultNext = () => { };
 
     validationMiddleware = new ValidationMiddleware();
     userSchema = new UserSchema(validationMiddleware.baseSchema);
 
-    mailService = new MailService(config.get('mail.options'));
+    mailService = new MailService(config.get('mail.options'), logger);
 
-    userService = new UserService(userModel, hashingService);
+    userService = new UserService(userModel, hashingService, logger);
+    invoiceService = new InvoiceService({}, logger);
+    customerService = new CustomerService({}, logger);
+
+    const authConfigs = config.get('auth');
 
     const authTokenExpiration = authConfigs.token.expiration;
+    const hashKey = fs.readFileSync('./server.hash.key', { encoding: 'utf-8' });
     const authJwtOptions = {
         hash: hashKey,
         tokenExpiration: authTokenExpiration,
-        subject: AUTH.AUTH_SUBJECT
+        subject: AUTH.AUTH_SUBJECT,
+        logger
     };
-    const authJwtService = new JwtService(authJwtOptions);
-
-    const recoverTokenExpiration = authConfigs.token.expiration;
-    const recoverJwtOptions = {
-        hash: hashKey,
-        tokenExpiration: recoverTokenExpiration,
-        subject: AUTH.RESET_SUBJECT
-    };
-    const resetJwtService = new JwtService(recoverJwtOptions);
-
-    const confirmTokenExpiration = authConfigs.token.expiration;
-    const confirmJwtOptions = {
-        hash: hashKey,
-        tokenExpiration: confirmTokenExpiration,
-        subject: AUTH.CONFIRM_SUBJECT
-    };
-    const confirmJwtService = new JwtService(confirmJwtOptions);
+    const jwtService = new JwtService(authJwtOptions);
 
     userController = new UserController({
         authConfigs,
         authHash: hashKey,
         userService,
-        mailService,
-        authJwtService,
-        confirmJwtService,
-        resetJwtService
+        invoiceService,
+        customerService,
+        mailService
     });
 
-    describe('login route', () => {
-        describe('happy path', () => {
-            before(() => {
-                sinon.stub(userService, 'findUser').resolves({
-                    active: 'static',
-                    email: testEmail,
-                    password: hashedTestPassword,
-                    _id: 1,
-                    toJSON: () => ({
-                        email: testEmail,
-                        password: hashedTestPassword,
-                        _id: 1
-                    }),
-                    save: () => Promise.resolve(true)
-                });
-            });
+    const generatedUserId = new ObjectId().toHex();
+    const validUserJSON = {
+        _id: generatedUserId,
+        id: generatedUserId,
+        name: 'Testando teste',
+        email: 'teste@teste.com'
+    };
 
-            it('should return user with id 1', async () => {
-                const context = new Context({
-                    body: {
-                        email: testEmail,
-                        password: testPassword
-                    }
-                });
+    const validToJSON = () => validUserJSON;
+    const validUserObject = {
+        ...validUserJSON,
+        toJSON: validToJSON,
+        save: () => Promise.resolve(true),
+        updateWithDates: () => Promise.resolve(true)
+    };
+
+    const defaultNext = () => { };
+
+    describe('update user route', () => {
+        const functionName = 'patchUser';
+        const email = 'teste@email.com';
+        const password = '@Teste54';
+        const putValidUserInput = {
+            email: email,
+            password: password
+        };
+
+        /**@type {Context} */
+        let context;
+
+        describe('Happy path', () => {
+            const returnedStatus = STATUS.OK;
+            const successUser = { ...putValidUserInput };
+
+            before(async () => {
+                const token = await jwtService.generate();
+                const request = {
+                    headers: {
+                        [AUTH.TOKEN_HEADER]: token
+                    },
+                    body: successUser
+                };
+                const state = {
+                    user: validUserObject
+                };
+                context = new Context(request, {}, state);
 
                 const next = async () => {
-                    await userController.login(context, defaultNext);
+                    await userController.patchUser(context, defaultNext);
                 };
 
-                await validationMiddleware.validate(userSchema.schemas.login)(
-                    context,
-                    next
-                );
-
-                const responseBody = context.body;
-                const headers = context.header;
-                const jwt = await authJwtService.generate({ id: 1 });
-
-                assert(responseBody && responseBody._id === 1);
-                assert(headers[AUTH.TOKEN_HEADER] === jwt);
+                await validationMiddleware
+                    .validate(userSchema.schemas.patchUser)(
+                        context,
+                        next
+                    );
             });
 
-            after(() => {
-                userService.findUser.restore();
-            });
-        });
+            it(`should return status ${returnedStatus}`, () => {
+                const { status } = context;
 
-        describe('invalid customer', () => {
-            before(() => {
-                sinon.stub(userService, 'findUser').resolves(null);
+                assert(status === returnedStatus);
             });
 
-            it('should throw a 404 error', async () => {
-                const context = new Context({
-                    body: {
-                        email: testEmail,
-                        password: testPassword
-                    }
-                });
+            it('should return an empty body', () => {
+                const { body } = context;
 
-                const next = async () => {
-                    await userController.login(context, defaultNext);
-                };
-
-                await validationMiddleware.validate(userSchema.schemas.login)(
-                    context,
-                    next
-                );
-
-                const status = context.status;
-
-                assert(status === STATUS.NOT_FOUND);
+                assert(!body);
             });
 
-            after(() => {
-                userService.findUser.restore();
-            });
-        });
+            it('password should be hashed', async () => {
+                const hashed = await userService.hashPassword(password);
 
-        describe('wrong password', () => {
-            before(() => {
-                sinon.stub(userService, 'findUser').resolves({
-                    email: testEmail,
-                    password: hashedTestPassword,
-                    id: 1,
-                    toJSON: () =>
-                        JSON.stringify({
-                            email: testEmail,
-                            password: hashedTestPassword,
-                            id: 1
-                        })
-                });
-            });
-
-            it('should throw a 404 error', async () => {
-                const context = new Context({
-                    body: {
-                        email: testEmail,
-                        password: 'teste45'
-                    }
-                });
-
-                const next = async () => {
-                    await userController.login(context, defaultNext);
-                };
-
-                await validationMiddleware.validate(userSchema.schemas.login)(
-                    context,
-                    next
-                );
-
-                const status = context.status;
-
-                assert(status === STATUS.NOT_FOUND);
-            });
-
-            after(() => {
-                userService.findUser.restore();
-            });
-        });
-
-        describe('wrong input', () => {
-            it('should throw a 400 error', async () => {
-                const context = new Context({
-                    body: {}
-                });
-
-                await validationMiddleware.validate(
-                    userSchema.schemas.login
-                )(context);
-
-                assert(context.status === STATUS.BAD_REQUEST);
-                assert(context.body instanceof ControllerError);
-            });
-        });
-    });
-
-    describe('recover route', () => {
-        describe('happy path', () => {
-            before(() => {
-                sinon.stub(userService, 'findUser').resolves({
-                    email: testEmail,
-                    password: hashedTestPassword,
-                    id: 1,
-                    toJSON: () => ({
-                        email: testEmail,
-                        password: hashedTestPassword,
-                        id: 1
-                    })
-                });
-
-                sinon.stub(mailService, 'sendMail').resolves(true);
-            });
-
-            it('should return status 200', async () => {
-                const context = new Context({
-                    body: {
-                        email: testEmail,
-                        password: testPassword
-                    },
-                    origin: 'localhost'
-                });
-
-                await validationMiddleware.validate(userSchema.schemas.recover)(
-                    context,
-                    async () => {
-                        await userController.recover(context, async () => {
-                            const jwt = await new JwtToken({
-                                id: 1,
-                                email: testEmail
-                            }, hashKey, authOptionals).hash();
-                            const url = `localhost/users/reset/password?token=${jwt}`;
-
-                            assert(mailService.sendMail.getCall(0).args[3].includes(url));
-                            assert(context.status === STATUS.OK);
-                        });
-                    }
-                );
-            });
-
-            after(() => {
-                userService.findUser.restore();
-                mailService.sendMail.restore();
-            });
-        });
-
-        describe('invalid customer', () => {
-            before(() => {
-                sinon.stub(userService, 'findUser').resolves(null);
-            });
-
-            it('should throw a 404 error', async () => {
-                const context = new Context({
-                    body: {
-                        email: testEmail,
-                        password: testPassword
-                    }
-                });
-
-                await validationMiddleware.validate(userSchema.schemas.recover)(
-                    context,
-                    async () => {
-                        await userController.recover(context, () => {
-                            const status = context.status;
-
-                            assert(status === STATUS.NOT_FOUND);
-                        });
-                    }
-                );
-            });
-
-            after(() => {
-                userService.findUser.restore();
-            });
-        });
-
-        describe('invalid email', () => {
-            before(() => {
-                sinon.stub(userService, 'findUser').resolves({
-                    email: testEmail,
-                    password: hashedTestPassword,
-                    id: 1,
-                    toJSON: () =>
-                        JSON.stringify({
-                            email: testEmail,
-                            password: hashedTestPassword,
-                            id: 1
-                        })
-                });
-
-                sinon.stub(mailService, 'sendMail').throws('error');
-            });
-
-            it('should throw a 400 error', async () => {
-                const context = new Context({
-                    body: {
-                        email: testEmail,
-                        password: testPassword
-                    }
-                });
-
-                await validationMiddleware.validate(userSchema.schemas.recover)(
-                    context,
-                    async () => {
-                        await userController.recover(context, () => {
-                            const status = context.status;
-
-                            assert(status === STATUS.BAD_REQUEST);
-                        });
-                    }
-                );
-            });
-
-            after(() => {
-                userService.findUser.restore();
-                mailService.sendMail.restore();
-            });
-        });
-
-        describe('wrong input', () => {
-            it('should throw a 400 error', async () => {
-                const context = new Context({
-                    body: {}
-                });
-
-                await validationMiddleware.validate(
-                    userSchema.schemas.recover
-                )(context);
-
-                assert(context.status === STATUS.BAD_REQUEST);
-                assert(context.body instanceof ControllerError);
-            });
-        });
-    });
-
-    describe('changePassword route', () => {
-        describe('happy path', () => {
-            before(() => {
-                sinon.stub(userService, 'findUser').resolves({
-                    email: testEmail,
-                    password: hashedTestPassword,
-                    id: 1,
-                    save: () => Promise.resolve(true)
-                });
-            });
-
-            it('should return status 200', async () => {
-                const context = new Context({
-                    body: {
-                        password: testPassword
-                    },
-                    query: {
-                        token: await new JwtToken({
-                            id: 1,
-                            email: testEmail
-                        }, hashKey, authOptionals).hash()
-                    }
-                });
-
-                await validationMiddleware.validate(userSchema.schemas.changePassword)(
-                    context,
-                    async () => {
-                        await userController.changePassword(context, async () => {
-                            assert(context.status === STATUS.OK);
-                        });
-                    }
-                );
-            });
-
-            after(() => {
-                userService.findUser.restore();
-            });
-        });
-
-        describe('invalid token', () => {
-            it('should throw a 401 error', async () => {
-                const context = new Context({
-                    body: {
-                        password: testPassword
-                    },
-                    query: {
-                        token: await new JwtToken({
-                            id: 1,
-                            email: testEmail
-                        }, 'test', authOptionals).hash()
-                    }
-                });
-
-                await validationMiddleware.validate(userSchema.schemas.changePassword)(
-                    context,
-                    async () => {
-                        await userController.changePassword(context, () => {
-                            const status = context.status;
-
-                            assert(status === STATUS.UNAUTHORIZED);
-                        });
-                    }
-                );
+                assert(successUser.password === hashed);
             });
         });
 
         describe('save error', () => {
-            before(() => {
-                sinon.stub(userService, 'findUser').resolves({
-                    email: testEmail,
-                    password: hashedTestPassword,
-                    id: 1,
-                    save: () => Promise.reject(true)
-                });
+            const returnedStatus = STATUS.INTERNAL_ERROR;
+            const errorUpdateUser = {
+                updateWithDates: () => Promise.reject()
+            };
+
+            before(async () => {
+                const token = await jwtService.generate();
+                const request = {
+                    headers: {
+                        [AUTH.TOKEN_HEADER]: token
+                    },
+                    body: { ...putValidUserInput }
+                };
+
+                const state = {
+                    user: errorUpdateUser
+                };
+                context = new Context(request, {}, state);
+
+                const next = async () => {
+                    await userController.patchUser(context, defaultNext);
+                };
+
+                await validationMiddleware
+                    .validate(userSchema.schemas.patchUser)(
+                        context,
+                        next
+                    );
             });
 
-            it('should throw a 500 status', async () => {
-                const context = new Context({
-                    body: {
-                        email: testEmail,
-                        password: testPassword
-                    }
-                });
+            it(`should throw a ${returnedStatus} status`, async () => {
+                const { status } = context;
 
-                await validationMiddleware.validate(userSchema.schemas.changePassword)(
-                    context,
-                    async () => {
-                        await userController.changePassword(context, () => {
-                            const status = context.status;
-
-                            assert(status === STATUS.INTERNAL_ERROR);
-                        });
-                    }
-                );
+                assert(status === returnedStatus);
             });
 
-            after(() => {
-                userService.findUser.restore();
+            it('should return a Controller Error', () => {
+                const { body } = context;
+
+                assert(body instanceof ControllerError);
+            });
+
+            describe('context body', () => {
+                it('should have property method', () => {
+                    const { method } = context.body;
+
+                    assert(!!method);
+                });
+
+                it(`method should equal ${functionName}`, () => {
+                    const { method } = context.body;
+
+                    assert(method === functionName);
+                });
+
+                it('should have property controller', () => {
+                    const { controller } = context.body;
+
+                    assert(!!controller);
+                });
+
+                it(`controller should equal ${source}`, () => {
+                    const { controller } = context.body;
+
+                    assert(controller === source);
+                });
+
+                it('should have property output', () => {
+                    const { output } = context.body;
+
+                    assert(!!output);
+                });
             });
         });
 
         describe('wrong input', () => {
-            it('should throw a 400 error', async () => {
-                const context = new Context({
-                    body: {}
+            const returnedStatus = STATUS.BAD_REQUEST;
+
+            describe('no token in headers', () => {
+                before(async () => {
+                    context = new Context({
+                        headers: {}
+                    });
+
+                    await validationMiddleware.validate(
+                        userSchema.schemas.patchUser
+                    )(context);
                 });
 
-                await validationMiddleware.validate(
-                    userSchema.schemas.changePassword
-                )(context);
+                it(`should throw a ${returnedStatus} error`, async () => {
+                    assert(context.status === returnedStatus);
+                });
 
-                assert(context.status === STATUS.BAD_REQUEST);
-                assert(context.body instanceof ControllerError);
+                it('should have property required for token header', async () => {
+                    const { body } = context;
+
+                    assert(body.output.find(
+                        (error) => error.type === 'any.required')
+                    );
+                });
+            });
+
+            describe('invalid token in headers', () => {
+                before(async () => {
+                    context = new Context({
+                        headers: {
+                            [AUTH.TOKEN_HEADER]: ''
+                        }
+                    });
+
+                    await validationMiddleware.validate(
+                        userSchema.schemas.patchUser
+                    )(context);
+                });
+
+                it(`should throw a ${returnedStatus} error`, async () => {
+                    assert(context.status === returnedStatus);
+                });
+
+                it('should have property required for token header', async () => {
+                    const { body } = context;
+
+                    assert(body.output.find(
+                        (error) => error.type === 'any.empty')
+                    );
+                });
+            });
+
+            describe('no body', () => {
+                before(async () => {
+                    context = new Context({
+                        headers: {}
+                    });
+
+                    await validationMiddleware.validate(
+                        userSchema.schemas.patchUser
+                    )(context);
+                });
+
+                it(`should throw a ${returnedStatus} error`, async () => {
+                    assert(context.status === returnedStatus);
+                });
+
+                it('should have property required for token header', async () => {
+                    const { body } = context;
+
+                    assert(body.output.find(
+                        (error) =>
+                            error.type === 'any.required' &&
+                            error.key === 'body'
+                    ));
+                });
             });
         });
     });
 
-    describe('confirm route', () => {
-        describe('happy path', () => {
-            before(() => {
-                sinon.stub(userService, 'findUser').resolves({
-                    active: true,
-                    email: testEmail,
-                    password: hashedTestPassword,
-                    _id: 1,
-                    toJSON: () => ({
-                        email: testEmail,
-                        password: hashedTestPassword,
-                        _id: 1
-                    }),
-                    save: () => Promise.resolve(true)
-                });
-            });
+    describe('delete user route', () => {
+        const functionName = 'deleteUser';
 
-            it('should return user with id 1', async () => {
-                const context = new Context({
-                    query: {
-                        token: await confirmJwtService.generate()
+        /**@type {Context} */
+        let context;
+
+        describe('Happy path', () => {
+            const returnedStatus = STATUS.OK;
+
+            before(async () => {
+                const token = await jwtService.generate();
+                const request = {
+                    headers: {
+                        [AUTH.TOKEN_HEADER]: token
                     }
-                });
+                };
+                const state = {
+                    user: validUserObject
+                };
+                context = new Context(request, {}, state);
+
+                sinon.stub(invoiceService, 'deleteInvoices')
+                    .resolves(true);
+                sinon.stub(customerService, 'deleteCustomers')
+                    .resolves(true);
 
                 const next = async () => {
-                    await userController.confirm(context, defaultNext);
+                    await userController.deleteUser(context, defaultNext);
                 };
 
-                await validationMiddleware.validate(userSchema.schemas.confirm)(
-                    context,
-                    next
-                );
+                await validationMiddleware
+                    .validate(userSchema.schemas.deleteUser)(
+                        context,
+                        next
+                    );
+            });
 
+            it(`should return status ${returnedStatus}`, () => {
                 const { status } = context;
 
-                assert(status === STATUS.OK);
+                assert(status === returnedStatus);
+            });
+
+            it('should return an empty body', () => {
+                const { body } = context;
+
+                assert(!body);
             });
 
             after(() => {
-                userService.findUser.restore();
-            });
-        });
-
-        describe('invalid customer', () => {
-            before(() => {
-                sinon.stub(userService, 'findUser').resolves(null);
-            });
-
-            it('should throw a 404 error', async () => {
-                const context = new Context({
-                    query: {
-                        token: await confirmJwtService.generate()
-                    }
-                });
-
-                const next = async () => {
-                    await userController.confirm(context, defaultNext);
-                };
-
-                await validationMiddleware.validate(userSchema.schemas.confirm)(
-                    context,
-                    next
-                );
-
-                const status = context.status;
-
-                assert(status === STATUS.NOT_FOUND);
-            });
-
-            after(() => {
-                userService.findUser.restore();
-            });
-        });
-
-        describe('invalid token', () => {
-            it('should throw a 401 error', async () => {
-                const context = new Context({
-                    query: {
-                        token: await new JwtToken({}, invalidHash, authOptionals).hash()
-                    }
-                });
-
-                const next = async () => {
-                    await userController.confirm(context, defaultNext);
-                };
-
-                await validationMiddleware.validate(userSchema.schemas.confirm)(
-                    context,
-                    next
-                );
-
-                const status = context.status;
-
-                assert(status === STATUS.UNAUTHORIZED);
-            });
-        });
-
-        describe('wrong input', () => {
-            it('should throw a 400 error', async () => {
-                const context = new Context({
-                    query: {}
-                });
-
-                await validationMiddleware.validate(
-                    userSchema.schemas.confirm
-                )(context);
-
-                assert(context.status === STATUS.BAD_REQUEST);
-                assert(context.body instanceof ControllerError);
-            });
-        });
-    });
-
-    describe('register route', () => {
-        describe('happy path', () => {
-            before(() => {
-                sinon.stub(userService, 'findUser').resolves(null);
-                sinon.stub(userService, 'create').resolves({
-                    active: true,
-                    email: testEmail,
-                    password: hashedTestPassword,
-                    id: 1,
-                    address: {},
-                    save: () => Promise.resolve(true)
-                });
-                sinon.stub(mailService, 'sendMail').resolves(true);
-            });
-
-            it('should return user with id 1', async () => {
-                const context = new Context({
-                    body: testRegister
-                });
-                const next = async () => {
-                    await userController.register(context, defaultNext);
-                };
-
-                await validationMiddleware.validate(userSchema.schemas.register)(
-                    context,
-                    next
-                );
-
-                const { status } = context;
-
-                assert(status === STATUS.OK);
-            });
-
-            after(() => {
-                userService.findUser.restore();
-                userService.create.restore();
-                mailService.sendMail.restore();
-            });
-        });
-
-        describe('customer already exists', () => {
-            before(() => {
-                sinon.stub(userService, 'findUser').resolves({});
-            });
-
-            it('should throw a 400 error', async () => {
-                const context = new Context({
-                    body: testRegister
-                });
-
-                const next = async () => {
-                    await userController.register(context, defaultNext);
-                };
-
-                await validationMiddleware.validate(userSchema.schemas.register)(
-                    context,
-                    next
-                );
-
-                const status = context.status;
-
-                assert(status === STATUS.BAD_REQUEST);
-            });
-
-            after(() => {
-                userService.findUser.restore();
+                invoiceService.deleteInvoices.restore();
+                customerService.deleteCustomers.restore();
             });
         });
 
         describe('save error', () => {
-            before(() => {
-                sinon.stub(userService, 'findUser').resolves(null);
-                sinon.stub(userService, 'create').resolves({
-                    email: testEmail,
-                    password: hashedTestPassword,
-                    id: 1,
-                    address: {},
-                    save: () => Promise.reject(false)
-                });
-            });
+            const returnedStatus = STATUS.INTERNAL_ERROR;
+            const errorUpdateUser = {
+                updateWithDates: () => Promise.reject()
+            };
 
-            it('should throw a 500', async () => {
-                const context = new Context({
-                    body: testRegister
-                });
-
-                const next = async () => {
-                    await userController.register(context, defaultNext);
+            before(async () => {
+                const token = await jwtService.generate();
+                const request = {
+                    headers: {
+                        [AUTH.TOKEN_HEADER]: token
+                    }
                 };
 
-                await validationMiddleware.validate(userSchema.schemas.register)(context, next);
+                const state = {
+                    user: errorUpdateUser
+                };
+                context = new Context(request, {}, state);
 
-                const status = context.status;
+                sinon.stub(invoiceService, 'deleteInvoices')
+                    .resolves(true);
+                sinon.stub(customerService, 'deleteCustomers')
+                    .resolves(true);
 
-                assert(status === STATUS.INTERNAL_ERROR);
+                const next = async () => {
+                    await userController.deleteUser(context, defaultNext);
+                };
+
+                await validationMiddleware
+                    .validate(userSchema.schemas.deleteUser)(
+                        context,
+                        next
+                    );
+            });
+
+            it(`should throw a ${returnedStatus} status`, async () => {
+                const { status } = context;
+
+                assert(status === returnedStatus);
+            });
+
+            it('should return a Controller Error', () => {
+                const { body } = context;
+
+                assert(body instanceof ControllerError);
+            });
+
+            describe('context body', () => {
+                it('should have property method', () => {
+                    const { method } = context.body;
+
+                    assert(!!method);
+                });
+
+                it(`method should equal ${functionName}`, () => {
+                    const { method } = context.body;
+
+                    assert(method === functionName);
+                });
+
+                it('should have property controller', () => {
+                    const { controller } = context.body;
+
+                    assert(!!controller);
+                });
+
+                it(`controller should equal ${source}`, () => {
+                    const { controller } = context.body;
+
+                    assert(controller === source);
+                });
+
+                it('should have property output', () => {
+                    const { output } = context.body;
+
+                    assert(!!output);
+                });
             });
 
             after(() => {
-                userService.findUser.restore();
-                userService.create.restore();
-            });
-        });
-
-        describe('send email error', () => {
-            before(() => {
-                sinon.stub(userService, 'findUser').resolves(null);
-                sinon.stub(userService, 'create').resolves({
-                    active: true,
-                    email: testEmail,
-                    password: hashedTestPassword,
-                    id: 1,
-                    address: {},
-                    save: () => Promise.resolve(true)
-                });
-                sinon.stub(mailService, 'sendMail').rejects(false);
-            });
-
-            it('should throw a 500', async () => {
-                const context = new Context({
-                    body: testRegister
-                });
-
-                const next = async () => {
-                    await userController.register(context, defaultNext);
-                };
-
-                await validationMiddleware.validate(userSchema.schemas.register)(
-                    context,
-                    next
-                );
-
-                const status = context.status;
-
-                assert(status === STATUS.INTERNAL_ERROR);
-            });
-
-            after(() => {
-                userService.findUser.restore();
-                userService.create.restore();
-                mailService.sendMail.restore();
+                invoiceService.deleteInvoices.restore();
+                customerService.deleteCustomers.restore();
             });
         });
 
         describe('wrong input', () => {
-            it('should throw a 400 error', async () => {
-                const context = new Context({
-                    body: {}
+            const returnedStatus = STATUS.BAD_REQUEST;
+
+            describe('no token in headers', () => {
+                before(async () => {
+                    context = new Context({
+                        headers: {}
+                    });
+
+                    await validationMiddleware.validate(
+                        userSchema.schemas.deleteUser
+                    )(context);
                 });
 
-                await validationMiddleware.validate(
-                    userSchema.schemas.register
-                )(context);
+                it(`should throw a ${returnedStatus} error`, async () => {
+                    assert(context.status === returnedStatus);
+                });
 
-                assert(context.status === STATUS.BAD_REQUEST);
-                assert(context.body instanceof ControllerError);
+                it('should have property required for token header', async () => {
+                    const { body } = context;
+
+                    assert(body.output.find(
+                        (error) => error.type === 'any.required')
+                    );
+                });
+            });
+
+            describe('invalid token in headers', () => {
+                before(async () => {
+                    context = new Context({
+                        headers: {
+                            [AUTH.TOKEN_HEADER]: ''
+                        }
+                    });
+
+                    await validationMiddleware.validate(
+                        userSchema.schemas.patchUser
+                    )(context);
+                });
+
+                it(`should throw a ${returnedStatus} error`, async () => {
+                    assert(context.status === returnedStatus);
+                });
+
+                it('should have property required for token header', async () => {
+                    const { body } = context;
+
+                    assert(body.output.find(
+                        (error) => error.type === 'any.empty')
+                    );
+                });
+            });
+
+            describe('no body', () => {
+                before(async () => {
+                    context = new Context({
+                        headers: {}
+                    });
+
+                    await validationMiddleware.validate(
+                        userSchema.schemas.patchUser
+                    )(context);
+                });
+
+                it(`should throw a ${returnedStatus} error`, async () => {
+                    assert(context.status === returnedStatus);
+                });
+
+                it('should have property required for token header', async () => {
+                    const { body } = context;
+
+                    assert(body.output.find(
+                        (error) =>
+                            error.type === 'any.required' &&
+                            error.key === 'body'
+                    ));
+                });
             });
         });
     });
