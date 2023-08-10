@@ -1,2 +1,7 @@
+node_modules/*
 package-lock.json
-node_modules/
+node_modules/moment/package.json
+.vscode/*
+public/pdfs/*
+.nyc_output/a013123c-f245-4925-b2c5-ca7f939cf986.json
+.nyc_output/*

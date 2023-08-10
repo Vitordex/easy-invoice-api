@@ -1,0 +1,59 @@
+{
+    "server": {
+        "port": 3000,
+        "logger": {
+            "name": "email-validation",
+            "path": "/var/log/easy-invoice-api/api.log"
+        }
+    },
+    "auth":{
+        "token": {
+            "expiration": "6h"
+        },
+        "password":{
+            "algorithm": "sha1",
+            "encoding": "hex",
+            "key": "secret"
+        }
+    },
+    "recover":{
+        "token": {
+            "expiration": "1h"
+        }
+    },
+    "confirm":{
+        "token": {
+            "expiration": "1h"
+        }
+    },
+    "mail": {
+        "options":{
+            "service": "gmail",
+            "auth": {
+                "user": "t35t3t@gmail.com",
+                "pass": "teste"
+            }
+        },
+        "templates": {
+            "recover": {
+                "from": "Teste Verificação",
+                "subject": "Troca de senha - Empresa",
+                "body": "Houve uma solicitação de troca de senha \npara este email. Se você deseja realizar a troca \nfavor clique no link {origin}/auth/reset/password?token={token}\nSe não ignore este email"
+            },
+            "confirm": {
+                "from": "Suporte <suporte@orcamentofacil.com>",
+                "subject": "Verificação de Email",
+                "body": "{origin}/auth/confirm?token={token}"
+            }
+        }
+    },
+    "database": {
+        "auth": {
+            "driver": "mongodb+srv",
+            "host": "xdgames-cluster-rqe3g.mongodb.net",
+            "user": "easy-invoice",
+            "pass": "secret",
+            "dbName": "easy-invoice"
+        }
+    }
+}

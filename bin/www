@@ -1,0 +1,58 @@
+#!/usr/bin/env node
+
+const bluebird = require('bluebird');
+const config = require('../src/services/config.service');
+const LogService = require('../src/log/log.service');
+const logOptions = config.get('server.logger');
+const logger = new LogService(logOptions.name, logOptions.path);
+
+const http = require('http');
+const initApp = require('../app.js');
+
+const port = config.get('server.port');
+
+let serverAddress;
+
+function onError(error) {
+    if (error.syscall !== 'listen') throw error;
+
+    var bind = typeof port === 'string'
+        ? 'Pipe ' + port
+        : 'Port ' + port;
+
+    switch (error.code) {
+    case 'EACCES':
+        logger.fatal(bind + ' requires elevated privileges');
+        process.exit(1);
+        break;
+    case 'EADDRINUSE':
+        logger.fatal(bind + ' is already in use');
+        process.exit(1);
+        break;
+    default:
+        throw error;
+    }
+}
+
+function onListening() {
+    const addr = serverAddress;
+    const bind = typeof addr === 'string'
+        ? 'pipe ' + addr
+        : 'port ' + addr.port;
+    logger.debug('Listening on ' + bind);
+}
+
+async function main() {
+    global.Promise = bluebird.Promise;
+    
+    const app = await initApp(logger);
+    const server = http.createServer(app.callback());
+
+    server.listen(port);
+    serverAddress = server.address();
+
+    server.on('error', onError);
+    server.on('listening', onListening);
+}
+
+main();

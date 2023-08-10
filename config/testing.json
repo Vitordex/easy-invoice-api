@@ -1,0 +1,51 @@
+{
+    "server": {
+        "port": 3000,
+        "logger": {
+            "name": "email-validation"
+        }
+    },
+    "auth":{
+        "token": {
+            "expiration": "6h"
+        },
+        "password":{
+            "algorithm": "sha1",
+            "encoding": "hex",
+            "key": "secret"
+        },
+        "optionals": {
+            "expiresIn": "2d"
+        }
+    },
+    "mail": {
+        "options":{
+            "service": "gmail",
+            "auth": {
+                "user": "t35t3t@gmail.com",
+                "pass": "teste"
+            }
+        },
+        "templates": {
+            "recover": {
+                "from": "Teste Verificação",
+                "subject": "Troca de senha - Empresa",
+                "body": "Houve uma solicitação de troca de senha \npara este email. Se você deseja realizar a troca \nfavor clique no link {origin}/auth/reset/password?token={token}\nSe não ignore este email"
+            },
+            "confirm": {
+                "from": "Suporte <suporte@orcamentofacil.com>",
+                "subject": "Verificação de Email",
+                "body": "{origin}/auth/confirm?token={token}"
+            }
+        }
+    },
+    "database": {
+        "auth": {
+            "driver": "mongodb",
+            "host": "mongo:27017",
+            "user": "teste",
+            "pass": "secret",
+            "dbName": "easy-invoice"
+        }
+    }
+}
