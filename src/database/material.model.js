@@ -17,7 +17,8 @@ class Material {
             icon: String,
             modifier: [String],
             price: Number,
-            count: Number
+            count: Number,
+            deletedAt: Date
         };
 
         const Material = creator.create(

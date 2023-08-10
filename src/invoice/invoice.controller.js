@@ -1,6 +1,5 @@
 /* eslint-disable no-unused-vars */
 const InvoiceService = require('./invoice.service');
-const UserService = require('../user/user.service');
 const ControllerError = require('../log/controller.error.model');
 const PdfService = require('../pdf/pdf.service');
 /* eslint-enable no-unused-vars */
@@ -22,20 +21,17 @@ const controllerName = 'invoice';
 
 class InvoiceController {
     /**
-     * @param {UserService} params.userService
      * @param {InvoiceService} params.invoiceService
      * @param {ControllerError} params.apiErrorModel
      * @param {PdfService} params.pdfService
      * @param {String} params.pdfTemplate
      */
     constructor({
-        userService,
         invoiceService,
         apiErrorModel,
         pdfService,
         pdfTemplate
     }) {
-        this.userService = userService;
         this.invoiceService = invoiceService;
         this.pdfService = pdfService;
 

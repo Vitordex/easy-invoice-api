@@ -1,4 +1,38 @@
 const Koa = require('koa');
+const DatabaseService = require('./src/database/database.service');
+const JwtService = require('./src/user/jwt.service');
+const AuthService = require('./src/user/auth.service');
+const MailService = require('./src/services/mail.service');
+const HashingService = require('./src/services/hashing.service');
+const ValidationMiddleware = require('./src/middleware/validation.middleware');
+
+const User = require('./src/database/user.model');
+const UserService = require('./src/user/user.service');
+const UserController = require('./src/user/user.controller');
+const UserSchema = require('./src/user/user.schema');
+const UserRouter = require('./src/user/user.api');
+
+const Customer = require('./src/database/customer.model');
+const CustomerService = require('./src/customer/customer.service');
+const CustomerController = require('./src/customer/customer.controller');
+const CustomerSchema = require('./src/customer/customer.schema');
+const CustomerRouter = require('./src/customer/customer.api');
+
+const Invoice = require('./src/database/invoice.model');
+const InvoiceService = require('./src/invoice/invoice.service');
+const InvoiceController = require('./src/invoice/invoice.controller');
+const InvoiceSchema = require('./src/invoice/invoice.schema');
+const InvoiceRouter = require('./src/invoice/invoice.api');
+
+const Material = require('./src/database/material.model');
+const MaterialService = require('./src/material/material.service');
+const MaterialController = require('./src/material/material.controller');
+const MaterialSchema = require('./src/material/material.schema');
+const MaterialRouter = require('./src/material/material.api');
+
+const ControllerError = require('./src/log/controller.error.model');
+const ServiceError = require('./src/log/service.error.model');
+
 const helmet = require('koa-helmet');
 const bodyParser = require('koa-bodyparser');
 const serve = require('koa-static');
@@ -165,7 +199,6 @@ async function initApp(logger) {
     };
     const pdfService = new PdfService(pdfServiceOptions, logger);
     const invoiceControllerParameters = {
-        userService,
         invoiceService,
         apiErrorModel: ControllerError,
         pdfService,
@@ -185,6 +218,29 @@ async function initApp(logger) {
     invoiceApi.buildRoutes();
 
     app.use(invoiceApi.router.routes());
+
+    //Build material api
+    const materialModel = new Material(databaseService);
+    const materialService = new MaterialService(materialModel);
+
+    const materialControllerParameters = {
+        materialService,
+        apiErrorModel: ControllerError
+    };
+    const materialController = new MaterialController(materialControllerParameters);
+
+    const materialSchema = new MaterialSchema(validationMiddleware.baseSchema);
+
+    const materialApiParameters = {
+        authService,
+        materialController,
+        materialSchema,
+        validationMiddleware
+    };
+    const materialApi = new MaterialRouter(materialApiParameters);
+    materialApi.buildRoutes();
+
+    app.use(materialApi.router.routes());
 
     //Build auth api
     const emailTemplates = config.get('mail.templates');
